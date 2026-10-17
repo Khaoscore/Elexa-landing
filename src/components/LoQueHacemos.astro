@@ -1,0 +1,158 @@
+---
+/* «Lo que hacemos» — texto «Frame 15» (15:627, 488 × 268) a la izquierda y la
+   foto de Luis Felipe «Vector 5» (155:620, 589 × 354) a la derecha, centrados
+   en vertical. La foto ya viene recortada con su forma desde Figma (es una
+   imagen estática, no un dato), con 1 px de margen por el trazo.
+
+   En el frame móvil («Frame 94», 303:4443) la foto va primero, a lo ancho de
+   la forma del hero (366, a 12 de los bordes), con su propio recorte
+   («Vector 5», 303:4444, 366 × 354), y el texto («Frame 15», 303:4445)
+   debajo, a 31. El ícono de Instagram ahí mide 24 (303:4447). */
+import { INSTAGRAM_URL } from '../data/site';
+---
+
+<section class="nosotros contenedor" id="nosotros" aria-labelledby="nosotros-titulo">
+  <div class="nosotros__texto">
+    <a class="nosotros__ig display" href={INSTAGRAM_URL} target="_blank" rel="noopener">
+      <picture>
+        <source media="(max-width: 767px)" srcset="/img/nosotros/instagram-movil.svg" width="24" height="24" />
+        <img src="/img/iconos/instagram.svg" alt="" width="30" height="30" />
+      </picture>
+      @luis_inversionista
+    </a>
+    <h2 class="display t-h1" id="nosotros-titulo">Lo que <span class="acento">hacemos</span></h2>
+    <div class="nosotros__cuerpo">
+      <p>
+        Desarrollamos y estructuramos inversiones inmobiliarias colectivas que ayudan a nuestros socios a <strong
+          >proteger, crecer y hacer rentar su patrimonio.</strong
+        >
+      </p>
+      <p>
+        <strong>Luis Felipe Puerto Tobón</strong> — Fundador y Director General, creó un equipo que origina,
+        estructura, desarrolla y opera cada proyecto.
+      </p>
+    </div>
+  </div>
+
+  <picture class="nosotros__foto">
+    <source media="(max-width: 767px)" srcset="/img/nosotros/luis-felipe-movil.webp" width="368" height="356" />
+    <img
+      src="/img/nosotros/luis-felipe.webp"
+      alt="Luis Felipe Puerto Tobón, fundador de Elexa, en la oficina frente al logo de la empresa."
+      width="591"
+      height="356"
+      loading="lazy"
+    />
+  </picture>
+</section>
+
+<style>
+  .nosotros {
+    display: flex;
+    flex-direction: column;
+    gap: 31px;
+    margin-top: 31px;
+  }
+
+  .nosotros__texto {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    max-width: 488px;
+  }
+
+  /* Mobile/Header 4 (20/24) con el ícono de 24; en escritorio 24/30 y 30. */
+  .nosotros__ig {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-md);
+    align-self: flex-start;
+    font-size: 20px;
+    line-height: 24px;
+    color: var(--brand-300);
+    text-decoration: none;
+  }
+  .nosotros__ig:hover {
+    text-decoration: underline;
+  }
+
+  h2 {
+    color: var(--brand-500);
+  }
+
+  /* Los dos párrafos van separados por un renglón vacío (dos saltos en
+     Figma). En el frame móvil el texto es 16/20, pero el renglón vacío y los
+     dos que lo tocan quedaron con 22: el bloque mide 166 y el segundo
+     párrafo arranca 26 más abajo del final del primero. */
+  .nosotros__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: 26px;
+    color: var(--ink-300);
+    line-height: 20px;
+  }
+
+  .nosotros__foto {
+    order: -1;
+    display: block;
+    max-width: 589px;
+  }
+
+  .nosotros__foto img {
+    width: calc(100% + 2px);
+    height: auto;
+    margin: -1px;
+  }
+
+  /* La foto móvil (368 × 356 con el trazo) sobresale 1 px por cada lado de
+     los 366 de la forma: sin max-width para que no se encoja a 366. */
+  @media (max-width: 767px) {
+    .nosotros__foto {
+      max-width: none;
+      margin-inline: calc(var(--margen-panel) - var(--margen));
+    }
+
+    .nosotros__foto img {
+      max-width: none;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .nosotros {
+      gap: var(--space-2xl);
+      margin-top: 64px;
+    }
+
+    .nosotros__ig {
+      font-size: 24px;
+      line-height: 30px;
+    }
+
+    .nosotros__cuerpo {
+      gap: 22px;
+      line-height: 22px;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .nosotros {
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 76.5px;
+    }
+
+    .nosotros__foto {
+      order: 0;
+    }
+
+    .nosotros__texto {
+      width: 488px;
+    }
+
+    .nosotros__foto {
+      width: 589px;
+      height: 354px;
+    }
+  }
+</style>

@@ -1,0 +1,355 @@
+---
+/* Galería de tres marcos de 387 de ancho con 20 de separación, con la forma
+   de las tarjetas (muescas de 64 de ancho arriba a la izquierda y abajo a la
+   derecha). Dos usos en el archivo:
+   · «Nuestra historia» — «Frame 59» (48:1262), marcos de 486 de alto con
+     muescas de 64;
+   · «Cómo hacer parte» — «Frame 59» (279:806), marcos de 615: el mismo
+     marco estirado, con muescas de 81,5 de alto.
+
+   Sin `fotos` ni `videos` son el marcador de posición cuadriculado del diseño
+   (el del medio está girado 180° en Figma, que con esta forma da lo mismo).
+
+   · `fotos`: tienen que venir ya recortadas con la forma, como las del
+     equipo, con 1 px de margen por el trazo (389 × alto + 2).
+   · `videos`: en `src` la ruta sin extensión de cada uno; al lado tiene que
+     haber .mp4 y .webp (el póster, su primer cuadro). Los recorta la
+     máscara de `.muescas` (src/lib/formas.ts), así que sirve cualquier
+     formato: un reel 9:16 se ve centrado y cortado arriba y abajo. Arrancan
+     solos y sin sonido; el botón redondo de la muesca de abajo les da sonido
+     (y apaga el de los demás). El marco entero es un enlace a `instagram`:
+     al pasar el mouse el video se difumina bajo un velo morado.
+
+   En el teléfono («Frame 59» 303:4710 y 303:5273) los marcos van uno debajo
+   del otro y en las dos páginas son el de 387 × 486 achicado a 342 de ancho
+   (× 0,8837): 342 × 429,5 con muescas de 56,56 × 56,56. Entre marco y marco
+   hay 20 en «Nuestra historia» y 32 en «Cómo hacer parte» (`espacioMovil`). */
+import { estiloMuescas } from '../lib/formas';
+
+type Foto = { src: string; alt: string };
+type Video = { src: string; instagram: string };
+
+interface Props {
+  fotos?: Foto[];
+  videos?: Video[];
+  /** Alto del marco en Figma (el ancho es siempre 387). */
+  alto?: number;
+  /** Alto de las muescas (el ancho es siempre 64). */
+  altoMuesca?: number;
+  /** Separación con la sección de arriba en escritorio. */
+  separacion?: number;
+  /** Separación con la sección de arriba en el teléfono (< 768). */
+  separacionMovil?: number;
+  /** Espacio entre un marco y el siguiente en el teléfono (< 768). */
+  espacioMovil?: number;
+}
+
+const marco = { src: '/img/nosotros/marco.png', alt: '' };
+const {
+  fotos = [marco, marco, marco],
+  videos,
+  alto = 486,
+  altoMuesca = 64,
+  separacion = 79,
+  separacionMovil = 40,
+  espacioMovil = 20,
+} = Astro.props;
+
+/* 64 × 342 / 387: la muesca del marco de escritorio achicado al del teléfono. */
+const MUESCA_MOVIL = 56.56;
+
+const escritorio = estiloMuescas([
+  { esquina: 'tl', ancho: 64, alto: altoMuesca },
+  { esquina: 'br', ancho: 64, alto: altoMuesca },
+]);
+const movil = estiloMuescas([
+  { esquina: 'tl', ancho: MUESCA_MOVIL, alto: MUESCA_MOVIL },
+  { esquina: 'br', ancho: MUESCA_MOVIL, alto: MUESCA_MOVIL },
+]);
+
+/* Las dos formas van en variables propias y el <style> elige cuál pasa a
+   `.muescas`: si el style del elemento trajera `--muescas-mascara`, ninguna
+   media query podría pisarla. */
+const forma = {
+  '--mascara-escritorio': escritorio['--muescas-mascara'],
+  '--trazo-escritorio': escritorio['--muescas-trazo'],
+  '--mascara-movil': movil['--muescas-mascara'],
+  '--trazo-movil': movil['--muescas-trazo'],
+};
+
+const medidas = {
+  '--alto': String(alto),
+  '--separacion': `${separacion}px`,
+  '--separacion-movil': `${separacionMovil}px`,
+  '--espacio-movil': `${espacioMovil}px`,
+};
+---
+
+<ul class="galeria contenedor" role="list" style={medidas}>
+  {
+    videos
+      ? videos.map((video, i) => (
+          <li class="galeria__marco galeria__marco--video">
+            <a
+              class="galeria__video muescas"
+              style={forma}
+              href={video.instagram}
+              target="_blank"
+              rel="noopener"
+              aria-label={`Ver el video ${i + 1} en Instagram`}
+            >
+              <video
+                src={`${video.src}.mp4`}
+                muted
+                loop
+                playsinline
+                preload="none"
+                poster={`${video.src}.webp`}
+                width="540"
+                height="960"
+              />
+              <span class="galeria__velo display" aria-hidden="true">
+                <span class="galeria__ig" />
+                Ver en Instagram
+              </span>
+              <span class="muescas__trazo" aria-hidden="true" />
+            </a>
+            <button class="galeria__sonido" type="button" aria-pressed="false" aria-label={`Sonido del video ${i + 1}`}>
+              <svg class="galeria__sin-sonido" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M11 5 6 9H2v6h4l5 4V5Z" />
+                <path d="m23 9-6 6M17 9l6 6" />
+              </svg>
+              <svg class="galeria__con-sonido" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M11 5 6 9H2v6h4l5 4V5Z" />
+                <path d="M15.54 8.46a5 5 0 0 1 0 7.07M19.07 4.93a10 10 0 0 1 0 14.14" />
+              </svg>
+            </button>
+          </li>
+        ))
+      : fotos.map((foto) => (
+          <li class="galeria__marco">
+            <img src={foto.src} alt={foto.alt} width="389" height={alto + 2} loading="lazy" />
+          </li>
+        ))
+  }
+</ul>
+
+<script>
+  /* Como el video del hero: arrancan solos sin sonido (lo único que dejan los
+     navegadores) salvo que la persona haya pedido menos movimiento, y fuera
+     de la pantalla se pausan. Al darle sonido a uno vuelve al principio, para
+     que se escuche entero, y los demás se callan. Con menos movimiento sólo
+     se reproduce el que tiene sonido. */
+  const menosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const marcos = [...document.querySelectorAll<HTMLElement>('.galeria__marco')].flatMap((marco) => {
+    const video = marco.querySelector('video');
+    const boton = marco.querySelector<HTMLButtonElement>('.galeria__sonido');
+    return video && boton ? [{ video, boton, visible: false }] : [];
+  });
+
+  const actualizar = (marco: (typeof marcos)[number]) => {
+    const { video, visible } = marco;
+    if (visible && (!video.muted || !menosMovimiento.matches)) video.play().catch(() => {});
+    else video.pause();
+  };
+
+  const silenciar = (marco: (typeof marcos)[number]) => {
+    marco.video.muted = true;
+    marco.boton.setAttribute('aria-pressed', 'false');
+    actualizar(marco);
+  };
+
+  const observador = new IntersectionObserver((entradas) => {
+    for (const entrada of entradas) {
+      const marco = marcos.find((m) => m.video === entrada.target);
+      if (!marco) continue;
+      marco.visible = entrada.isIntersecting;
+      actualizar(marco);
+    }
+  });
+
+  for (const marco of marcos) {
+    observador.observe(marco.video);
+
+    marco.boton.addEventListener('click', () => {
+      if (!marco.video.muted) {
+        silenciar(marco);
+        return;
+      }
+      for (const otro of marcos) if (otro !== marco && !otro.video.muted) silenciar(otro);
+      marco.video.muted = false;
+      marco.video.currentTime = 0;
+      marco.boton.setAttribute('aria-pressed', 'true');
+      actualizar(marco);
+    });
+  }
+
+  menosMovimiento.addEventListener('change', () => marcos.forEach(actualizar));
+</script>
+
+<style>
+  .galeria {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 48px;
+  }
+
+  .galeria__marco {
+    position: relative;
+    flex: 0 1 387px;
+    aspect-ratio: 387 / var(--alto);
+  }
+
+  /* El PNG trae 1 px de margen por el trazo: 389 × (alto + 2). */
+  .galeria__marco img {
+    position: absolute;
+    top: calc(-100% / var(--alto));
+    left: -0.26%;
+    width: 100.52%;
+    max-width: none;
+    height: calc(100% * (var(--alto) + 2) / var(--alto));
+  }
+
+  .galeria__video {
+    --muescas-mascara: var(--mascara-escritorio);
+    --muescas-trazo: var(--trazo-escritorio);
+    display: block;
+    position: absolute;
+    inset: 0;
+    background: var(--neutral-200);
+  }
+
+  /* El scale tapa el borde que el blur deja transparente. */
+  .galeria__video video {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition:
+      filter 0.3s ease,
+      transform 0.3s ease;
+  }
+
+  /* brand/300 al 55 %. También aparece con el foco del teclado: el outline
+     de :focus-visible lo recortaría la máscara. */
+  .galeria__velo {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-md);
+    background: rgba(95, 36, 159, 0.55);
+    color: var(--neutral-100);
+    font-size: 20px;
+    line-height: 24px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  .galeria__ig {
+    width: 40px;
+    height: 40px;
+    background: currentColor;
+    mask: url('/img/iconos/instagram.svg') center / contain no-repeat;
+  }
+
+  .galeria__video:hover .galeria__velo,
+  .galeria__video:focus-visible .galeria__velo {
+    opacity: 1;
+  }
+
+  .galeria__video:hover video,
+  .galeria__video:focus-visible video {
+    filter: blur(4px);
+    transform: scale(1.05);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .galeria__video video {
+      transition: none;
+    }
+  }
+
+  /* En la muesca de abajo, pegado a la esquina: quedan 16 hasta el video de
+     costado, el mismo radio de las esquinas. */
+  .galeria__sonido {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: var(--brand-300);
+    color: var(--neutral-100);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  .galeria__sonido:hover {
+    background: var(--brand-300-hover);
+  }
+
+  .galeria__sonido svg {
+    width: 22px;
+    height: 22px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .galeria__sonido svg path:first-child {
+    fill: currentColor;
+  }
+
+  .galeria__sonido[aria-pressed='true'] .galeria__sin-sonido,
+  .galeria__sonido[aria-pressed='false'] .galeria__con-sonido {
+    display: none;
+  }
+
+  /* El encabezado termina en y = 476 y el primer marco arranca en 516 (en
+     «Cómo hacer parte», 137 debajo de la banda de Luis). El botón de sonido
+     baja a 44 (el mínimo cómodo para el dedo) para que la muesca, más chica,
+     lo siga conteniendo. */
+  @media (max-width: 767px) {
+    .galeria {
+      gap: var(--espacio-movil);
+      margin-top: var(--separacion-movil);
+    }
+
+    .galeria__marco--video {
+      aspect-ratio: 387 / 486;
+    }
+
+    .galeria__video {
+      --muescas-mascara: var(--mascara-movil);
+      --muescas-trazo: var(--trazo-movil);
+    }
+
+    .galeria__sonido {
+      width: 44px;
+      height: 44px;
+    }
+
+    .galeria__sonido svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .galeria {
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      margin-top: var(--separacion);
+    }
+  }
+</style>

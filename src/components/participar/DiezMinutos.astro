@@ -1,0 +1,205 @@
+---
+/* «10 minutos con Luis» — banda de brand/300 de lado a lado («Rectangle 20»,
+   279:826, 1440 × 360) con el símbolo de Elexa gigante en multiply detrás
+   (279:841, 1320 × 1448 desde x = −161, del que sólo asoman las puntas).
+   El texto («Frame 92», 279:828, 724 de ancho) va centrado en el alto, y a la
+   derecha Luis recortado («Luisfe 1», 279:827, 586 × 643, desde x = 844),
+   apoyado en el borde de abajo de la banda y asomando 283 por arriba.
+
+   Entre 768 y 1240 la foto pasa debajo del texto, más chica y apoyada igual
+   en el borde de abajo.
+
+   En el teléfono («Group 14», 303:5258) el orden se da vuelta: arriba Luis
+   con otro recorte («Luisfe 1», 303:5272, 298 × 408, centrado) asomando
+   204 por encima de la banda, y debajo, centrados, el botón a lo ancho, el
+   título y la bajada en Body bold (16/20). La banda («Frame 93») arranca
+   en la mitad de la foto y el símbolo («simbolo», 581 × 637) va a −96 del
+   borde izquierdo y 306 por debajo del de arriba. */
+import { AGENDA_URL, esExterno } from '../../data/site';
+
+const externo = esExterno(AGENDA_URL) ? { target: '_blank', rel: 'noopener' } : {};
+---
+
+<section class="luis" aria-labelledby="luis-titulo">
+  <div class="luis__fondo" aria-hidden="true">
+    <picture>
+      <source
+        media="(max-width: 767px)"
+        srcset="/img/participar/simbolo-banda-movil.svg"
+        width="581.001"
+        height="637.273"
+      />
+      <img src="/img/participar/simbolo-banda.svg" alt="" width="1320" height="1447.85" loading="lazy" />
+    </picture>
+  </div>
+
+  <div class="luis__texto contenedor">
+    <h2 class="display t-h1" id="luis-titulo">10 minutos con Luis</h2>
+    <p class="display t-h4">
+      Reserva un espacio para aclarar tus dudas sobre el proyecto de tu interés y empieza a construir tu libertad
+      financiera.
+    </p>
+    <a class="btn luis__boton" href={AGENDA_URL ?? undefined} {...externo}>Agenda tu cita</a>
+  </div>
+
+  <picture class="luis__marco">
+    <source media="(max-width: 767px)" srcset="/img/participar/luis-movil.webp" width="298" height="408" />
+    <img
+      class="luis__foto"
+      src="/img/participar/luis.webp"
+      alt="Luis Felipe Puerto Tobón, fundador de Elexa, sonriendo con camisa azul clara."
+      width="586"
+      height="643"
+      loading="lazy"
+    />
+  </picture>
+</section>
+
+<style>
+  .luis {
+    position: relative;
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    margin-top: 96px;
+    background: var(--brand-300);
+    color: var(--neutral-100);
+  }
+
+  .luis__fondo {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+  }
+
+  /* x = −161 en el frame de 1440 centrado; 3 por debajo del borde de arriba. */
+  .luis__fondo img {
+    position: absolute;
+    top: 3px;
+    left: calc(50% - 881px);
+    width: 1320px;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+  }
+
+  .luis__texto {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+    padding-top: 48px;
+  }
+
+  /* Botón «Button» en su variante de borde, en palette/neutral/200. */
+  .luis__boton {
+    border-color: var(--neutral-200);
+    color: var(--neutral-200);
+  }
+  .luis__boton:hover {
+    background: rgba(240, 240, 239, 0.12);
+  }
+
+  /* El <picture> no cuenta en el layout: la foto sigue siendo hija directa
+     de la sección. El <source> se oculta para que no quede como un hijo
+     vacío más. */
+  .luis__marco {
+    display: contents;
+  }
+  .luis__marco > source {
+    display: none;
+  }
+
+  .luis__foto {
+    align-self: flex-end;
+    width: min(75%, 360px);
+    height: auto;
+    margin: 24px var(--margen) 0 0;
+  }
+
+  /* Los pasos terminan en y = 985, la foto arranca en 1010, la banda en
+     1214 (204 más abajo, la mitad de la foto) y el botón en 1418, donde
+     termina la foto. La bajada termina 43 antes que la banda. */
+  @media (max-width: 767px) {
+    .luis {
+      margin-top: 25px;
+      background: linear-gradient(transparent 204px, var(--brand-300) 0);
+    }
+
+    /* Sin el z-index −1 el fondo no arma su propio contexto de apilamiento y
+       el multiply del símbolo se mezcla con el morado de la sección, como en
+       Figma (con él quedaba en normal y las columnas salían más claras). El
+       texto y la foto, posicionados, se pintan encima por orden. */
+    .luis__fondo {
+      top: 204px;
+      z-index: auto;
+    }
+
+    .luis__texto,
+    .luis__foto {
+      position: relative;
+    }
+
+    .luis__fondo img {
+      top: 306px;
+      left: calc(50% - 291px);
+      width: 581px;
+    }
+
+    .luis__foto {
+      order: -1;
+      align-self: center;
+      width: 298px;
+      margin: 0;
+    }
+
+    .luis__texto {
+      align-items: stretch;
+      gap: var(--space-md);
+      padding: 0 0 43px;
+      text-align: center;
+    }
+
+    .luis__boton {
+      order: -1;
+    }
+
+    /* Mobile/Content/Body bold en lugar del Header 4. */
+    .luis__texto p {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-variation-settings: normal;
+      letter-spacing: normal;
+      font-size: 16px;
+      line-height: 20px;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    /* Los pasos terminan en y = 1229, la foto arranca en 1317 y la banda en
+       1600. */
+    .luis {
+      justify-content: center;
+      height: 360px;
+      margin-top: 371px;
+    }
+
+    .luis__texto {
+      padding-top: 0;
+    }
+
+    .luis__texto > * {
+      max-width: 724px;
+    }
+
+    .luis__foto {
+      position: absolute;
+      bottom: 0;
+      left: calc(50% + 124px);
+      width: 586px;
+      height: 643px;
+      margin: 0;
+    }
+  }
+</style>

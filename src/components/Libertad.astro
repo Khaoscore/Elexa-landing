@@ -1,0 +1,192 @@
+---
+/* «¿Qué tan lejos estás de tu libertad financiera?» — «Frame 89» (138:619),
+   1200 × 364. La invitación a la radiografía financiera a la izquierda (692,
+   repartida en alto) y lo que hay que saber antes a la derecha (387), cada
+   punto cerrado por una línea morada.
+
+   La línea es el vector del archivo («Vector 6»: 1 × 387, vertical) girado
+   90°, como en Figma; su largo sigue al ancho de la columna con unidades de
+   contenedor.
+
+   Móvil — «Frame 89» (303:4544): todo en una columna con 24 entre bloques,
+   el título en Mobile/Header 2 (30/34) y el botón al final, a todo el ancho. */
+import { RADIOGRAFIA_URL } from '../data/site';
+
+interface Props {
+  /** Separación con la sección de arriba en escritorio. */
+  separacion?: number;
+}
+
+const { separacion = 199 } = Astro.props;
+
+const puntos = [
+  {
+    titulo: 'Arranco pidiéndote tus datos',
+    texto: 'Nombre, edad, correo y WhatsApp, para enviarte tu radiografía y mantenerte al tanto sobre los proyectos.',
+  },
+  {
+    titulo: 'No es una proyección de rentabilidad',
+    texto: 'os elegís la tasa con la que querés calcular. Nadie puede garantizarte una.',
+  },
+  {
+    titulo: 'Necesitas tener a mano',
+    texto: 'Tus ingresos y gastos de un mes normal, y una idea de cuánto valen tus bienes y cuánto debes.',
+  },
+];
+---
+
+<section class="libertad contenedor" aria-labelledby="libertad-titulo" style={`--separacion:${separacion}px`}>
+  <div class="libertad__invitacion">
+    <p class="libertad__antetitulo display t-h4">Ya sabes...</p>
+    <h2 class="display t-h1" id="libertad-titulo">
+      ¿Qué tan lejos estás de tu <span class="acento">libertad financiera?</span>
+    </h2>
+    <p class="libertad__bajada display t-h4">
+      Cuatro pantallas, unos cinco minutos, y una cifra que probablemente no te va a gustar. <span class="acento"
+        >Pero es la tuya.</span
+      >
+    </p>
+    <a class="btn btn--primario libertad__cta" href={RADIOGRAFIA_URL} target="_blank" rel="noopener">
+      Empezar mi radiografía financiera
+    </a>
+  </div>
+
+  <ul class="libertad__puntos" role="list">
+    {
+      puntos.map((punto) => (
+        <li class="punto">
+          <h3 class="punto__titulo display t-h4">{punto.titulo}</h3>
+          <p class="punto__texto">{punto.texto}</p>
+          <span class="punto__linea" aria-hidden="true">
+            <img src="/img/libertad/divisor.svg" alt="" width="1" height="387" />
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<style>
+  .libertad {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+    margin-top: 96px;
+  }
+
+  .libertad__invitacion {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-lg);
+  }
+
+  .libertad__antetitulo {
+    color: var(--brand-300);
+  }
+
+  h2 {
+    color: var(--brand-500);
+  }
+
+  .libertad__bajada {
+    color: var(--ink-300);
+  }
+
+  .libertad__cta {
+    white-space: normal;
+    text-align: center;
+  }
+
+  .libertad__puntos {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .punto {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .punto__titulo {
+    color: var(--brand-300);
+  }
+
+  .punto__texto {
+    color: var(--brand-500);
+  }
+
+  /* El trazo vertical de 1 × 387, acostado. La caja mide 0 de alto y el
+     ancho de la columna; el SVG (preserveAspectRatio="none") se estira a ese
+     largo con `100cqw` y gira 90° sobre su centro. */
+  .punto__linea {
+    position: relative;
+    display: block;
+    height: 0;
+    margin-top: 8px;
+    container-type: inline-size;
+  }
+
+  .punto__linea img {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 1px;
+    max-width: none;
+    height: 100cqw;
+    transform: translate(-50%, -50%) rotate(90deg);
+  }
+
+  /* La invitación se deshace (display: contents) para que el botón, que en
+     escritorio cierra la columna de la izquierda, baje después de los puntos.
+     Los puntos no tienen nada enfocable, así que el orden del tabulador no
+     cambia. */
+  @media (max-width: 767px) {
+    .libertad {
+      gap: var(--space-lg);
+      margin-top: 80px;
+    }
+
+    .libertad__invitacion {
+      display: contents;
+    }
+
+    h2 {
+      font-size: 30px;
+      line-height: 34px;
+    }
+
+    /* El texto del botón mide unos 300: con el relleno de 24 no entra en una
+       línea en 342, con 12 sí. */
+    .libertad__cta {
+      order: 1;
+      align-self: stretch;
+      padding-inline: 11px;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .libertad {
+      flex-direction: row;
+      align-items: stretch;
+      gap: 121px;
+      margin-top: var(--separacion);
+    }
+
+    .libertad__invitacion {
+      flex: 0 0 692px;
+      justify-content: space-between;
+      gap: 0;
+    }
+
+    .libertad__cta {
+      white-space: nowrap;
+    }
+
+    .libertad__puntos {
+      flex: 0 0 387px;
+    }
+  }
+</style>

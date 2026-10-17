@@ -1,0 +1,162 @@
+/* Estilos del acordeón de preguntas frecuentes (FaqAcordeon.tsx). Medidas
+   del frame 40:1138; ver el comentario del componente. */
+
+.faq__lista {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.faq__item {
+  position: relative;
+}
+
+/* La forma del marco abierto llega en dos juegos (ver FaqAcordeon.tsx); acá
+   se elige cuál lee .muescas. */
+.faq__marco {
+  --muescas-mascara: var(--marco-mascara);
+  --muescas-trazo: var(--marco-trazo);
+  position: absolute;
+  inset: 0;
+}
+
+.faq__h {
+  position: relative;
+  font: inherit;
+}
+
+.faq__fila {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 27px;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* La caja de la pregunta: 74 de alto con el texto (24/30) a 19 del borde de
+   arriba y a 23 del izquierdo. Abierta pierde el borde: el marco lo pone
+   .faq__marco. */
+.faq__pregunta {
+  flex: 1;
+  min-height: 74px;
+  padding: 18px 22px 24px;
+  border: 1px solid var(--neutral-300);
+  border-radius: var(--radius-card);
+  color: var(--ink-500);
+  font-size: 20px;
+  line-height: 26px;
+  transition: border-color 0.2s ease;
+}
+
+.faq__item--abierta .faq__pregunta {
+  border-color: transparent;
+}
+
+.faq__fila:hover .faq__pregunta {
+  border-color: var(--brand-300);
+}
+.faq__item--abierta .faq__fila:hover .faq__pregunta {
+  border-color: transparent;
+}
+
+.faq__icono {
+  flex: 0 0 74px;
+  display: grid;
+  place-items: center;
+  height: 74px;
+  border-radius: var(--radius-full);
+  background: var(--brand-300);
+  transition: background-color 0.2s ease;
+}
+.faq__fila:hover .faq__icono {
+  background: var(--brand-300-hover);
+}
+
+/* La respuesta arranca a 126 del borde de arriba del marco (52 debajo de la
+   fila de 74), a 30 de la izquierda y con 538 de ancho; el marco termina 20
+   debajo. */
+.faq__panel {
+  position: relative;
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s ease;
+}
+.faq__item--abierta .faq__panel {
+  grid-template-rows: 1fr;
+}
+
+.faq__panel-interior {
+  overflow: hidden;
+}
+
+.faq__respuesta {
+  padding: 52px 21px 20px 30px;
+  color: var(--ink-500);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .faq__panel {
+    transition: none;
+  }
+}
+
+@media (min-width: 1240px) {
+  .faq__pregunta {
+    font-size: 24px;
+    line-height: 30px;
+  }
+}
+
+/* ---------- Móvil — «Frame 45» (303:4573) ----------
+   Cerrada: caja de 283 × 70 (borde 1, relleno 10, Mobile/Header 4 20/24) y el
+   círculo de 43 centrado a su lado, a 16. Abierta: la pregunta y el círculo
+   bajan a 19 del borde y la respuesta (16/22) arranca a 94, a 17 de la
+   izquierda, con 15 hasta el final del marco. */
+@media (max-width: 767px) {
+  .faq__marco {
+    --muescas-mascara: var(--marco-mascara-movil);
+    --muescas-trazo: var(--marco-trazo-movil);
+  }
+
+  .faq__fila {
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .faq__pregunta {
+    display: flex;
+    align-items: center;
+    min-height: 70px;
+    padding: 10px 12px;
+    font-size: 20px;
+    line-height: 24px;
+  }
+
+  .faq__item--abierta .faq__pregunta {
+    padding-top: 18px;
+  }
+
+  .faq__icono {
+    flex-basis: 43px;
+    height: 43px;
+  }
+
+  .faq__item--abierta .faq__icono {
+    align-self: flex-start;
+    margin-top: 19px;
+  }
+
+  .faq__respuesta {
+    padding: 16px 12px 15px 17px;
+    line-height: 22px;
+  }
+}

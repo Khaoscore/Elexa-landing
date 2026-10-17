@@ -1,0 +1,183 @@
+---
+/* «Sobre elexa» — «Frame 63» (48:1267): la etiqueta con el símbolo a la
+   izquierda; a la derecha (997) el párrafo en Header 4 y, 73 más abajo, las
+   cuatro cifras, cada una con su línea morada vertical (1 × 127) a la
+   izquierda.
+
+   En el teléfono («Frame 63», 303:4726) va todo en columna: la etiqueta, a 32
+   el párrafo y, a 40, las cifras de a dos (163 de ancho, 16 entre columnas y
+   20 entre filas), con la línea de 96 de alto.
+
+   El diseño del teléfono dice «+8» años de experiencia; el de escritorio
+   (48:1231) sigue en «+7», así que se deja «+7». */
+const cifras = [
+  { numero: '+7', texto: 'Años de experiencia' },
+  { numero: '12', texto: 'Integrantes del equipo' },
+  { numero: '+30', texto: 'Proyectos gestionados' },
+  { numero: '25', texto: 'Empresas aliadas' },
+];
+---
+
+<section class="sobre contenedor" aria-labelledby="sobre-etiqueta">
+  <p class="sobre__etiqueta" id="sobre-etiqueta">
+    <img src="/img/marca/simbolo-morado.svg" alt="" width="22" height="24.23" />
+    Sobre elexa
+  </p>
+
+  <div class="sobre__cuerpo">
+    <p class="sobre__texto display t-h4">
+      Así nació Elexa. Hoy somos un equipo que origina, estructura, desarrolla y opera cada proyecto. No somos
+      intermediarios: ponemos nuestro nombre y nuestro capital en lo mismo que le ofrecemos a usted. Y lo hacemos en
+      Cali, porque es la ciudad que conocemos y la que queremos ver transformada.
+    </p>
+
+    <ul class="sobre__cifras" role="list">
+      {
+        cifras.map((cifra) => (
+          <li class="cifra">
+            <picture class="cifra__marco">
+              <source media="(max-width: 767px)" srcset="/img/nosotros/divisor-cifra-movil.svg" width="1" height="96" />
+              <img class="cifra__linea" src="/img/nosotros/divisor-cifra.svg" alt="" width="1" height="127" />
+            </picture>
+            <div>
+              <p class="cifra__numero display t-banner">{cifra.numero}</p>
+              <p class="cifra__texto">{cifra.texto}</p>
+            </div>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</section>
+
+<style>
+  .sobre {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    margin-top: 96px;
+    color: var(--brand-500);
+  }
+
+  .sobre__etiqueta {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    flex-shrink: 0;
+    font-family: var(--font-note);
+    font-size: 16px;
+    line-height: normal;
+    color: var(--brand-300);
+  }
+
+  .sobre__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+  }
+
+  .sobre__cifras {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-xl) var(--space-lg);
+  }
+
+  .cifra {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+
+  /* El <picture> no cuenta en el layout: la línea sigue siendo hija directa
+     de la cifra. El <source> se oculta para que no quede como un hijo vacío
+     más (y sume un gap). */
+  .cifra__marco {
+    display: contents;
+  }
+  .cifra__marco > source {
+    display: none;
+  }
+
+  .cifra__linea {
+    align-self: stretch;
+    width: 1px;
+    height: auto;
+    min-height: 100px;
+    object-fit: fill;
+  }
+
+  .cifra__numero {
+    color: var(--brand-300);
+  }
+
+  .cifra__texto {
+    margin-top: 19px;
+  }
+
+  /* La historia del fundador termina (su texto) en y ≈ 3173 y la etiqueta
+     arranca en 3226. Body regular sm (14/18) debajo de cada número, a 16. */
+  @media (max-width: 767px) {
+    .sobre {
+      gap: var(--space-xl);
+      margin-top: 53px;
+    }
+
+    .sobre__cuerpo {
+      gap: 40px;
+    }
+
+    .sobre__cifras {
+      gap: 20px 16px;
+    }
+
+    .cifra {
+      align-items: flex-start;
+    }
+
+    /* La línea no ocupa ancho (el trazo de 1 va centrado en el borde) y la
+       columna del número mide los 143 restantes. */
+    .cifra__linea {
+      min-height: 0;
+      margin-inline: -0.5px;
+    }
+
+    .cifra > div {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .cifra__texto {
+      margin-top: 16px;
+      font-size: 14px;
+      line-height: 18px;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .sobre {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 109px;
+      margin-top: 178px;
+    }
+
+    .sobre__cuerpo {
+      flex: 0 1 997px;
+      gap: 73px;
+    }
+
+    .sobre__cifras {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .cifra > div {
+      width: 184px;
+    }
+
+    .cifra__linea {
+      align-self: auto;
+      height: 127px;
+    }
+  }
+</style>

@@ -1,0 +1,32 @@
+---
+/* Nosotros — frame "Desktop - 2" (40:821). Contenido fijo: se genera en el
+   build. El equipo se edita en src/data/equipo.ts. */
+import Base from '../layouts/Base.astro';
+import EncabezadoPagina from '../components/EncabezadoPagina.astro';
+import Galeria from '../components/Galeria.astro';
+import Fundador from '../components/nosotros/Fundador.astro';
+import SobreElexa from '../components/nosotros/SobreElexa.astro';
+import Equipo from '../components/nosotros/Equipo.astro';
+
+/* Reels de @luis_inversionista, descargados de Instagram y pasados a MP4 de
+   540 × 960 (el embed de Instagram no deja que arranquen solos). */
+const reels = [
+  { src: '/img/nosotros/reels/reel-1', instagram: 'https://www.instagram.com/p/DUhHezYjJz_/' },
+  { src: '/img/nosotros/reels/reel-2', instagram: 'https://www.instagram.com/p/DXe2taNAfer/' },
+  { src: '/img/nosotros/reels/reel-3', instagram: 'https://www.instagram.com/p/DXP-aVNDzuH/' },
+];
+---
+
+<Base
+  title="Nuestra historia — Elexa"
+  description="Elexa estructura negocios con bienes raíces comerciales generadores de renta y los pone al alcance de todos a través de estructuras colectivas. Conozca al equipo."
+  path="/nosotros"
+  separacionPie={231}
+  separacionPieMovil={81}
+>
+  <EncabezadoPagina>Nuestra <span class="acento">historia</span></EncabezadoPagina>
+  <Galeria videos={reels} />
+  <Fundador />
+  <SobreElexa />
+  <Equipo />
+</Base>

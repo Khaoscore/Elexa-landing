@@ -1,0 +1,81 @@
+---
+/* Espacios disponibles para alquilar — frame "Desktop - 4" (48:1683).
+
+   La grilla sale de la tabla `espacios` de Supabase (ver src/lib/espacios.ts)
+   y se arma en el servidor en cada pedido; el CDN guarda la página 60 s.
+   Dos columnas de 590 con 20 entre columnas y 73 entre filas. En el teléfono
+   («iPhone 13 & 14 - 4», 303:4961) una columna con 32 entre tarjetas,
+   arrancando 72 debajo del encabezado. */
+export const prerender = false;
+
+import Base from '../../layouts/Base.astro';
+import EncabezadoEspacios from '../../components/espacios/EncabezadoEspacios.astro';
+import TarjetaEspacio from '../../components/espacios/TarjetaEspacio.astro';
+import BandaLogos from '../../components/BandaLogos.astro';
+import { getEspacios } from '../../lib/espacios';
+
+const espacios = await getEspacios();
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
+---
+
+<Base
+  title="Espacios disponibles para alquilar — Elexa"
+  description="Locales, rooftops y terrazas comerciales disponibles para alquilar en Cali y Palmira, en proyectos de Elexa."
+  path="/espacios"
+  separacionPie={144}
+  separacionPieMovil={0}
+>
+  <EncabezadoEspacios />
+
+  {
+    espacios.length > 0 ? (
+      <ul class="espacios contenedor" role="list">
+        {espacios.map((espacio) => (
+          <li>
+            <TarjetaEspacio espacio={espacio} />
+          </li>
+        ))}
+      </ul>
+    ) : (
+      <p class="espacios-vacio contenedor">
+        En este momento no tenemos espacios disponibles. Escríbanos y le avisamos cuando se abra uno.
+      </p>
+    )
+  }
+
+  <BandaLogos titulo="Marcas que trabajan con nosotros" simbolo="/img/deco/simbolo-marcas.svg" margen={145} />
+</Base>
+
+<style>
+  .espacios {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px 20px;
+    margin-top: 48px;
+  }
+
+  .espacios-vacio {
+    margin-top: 48px;
+    text-align: center;
+  }
+
+  @media (max-width: 767px) {
+    .espacios {
+      margin-top: 72px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .espacios {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .espacios {
+      row-gap: 73px;
+      margin-top: 93px;
+    }
+  }
+</style>

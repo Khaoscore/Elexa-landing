@@ -1,0 +1,98 @@
+---
+/* Esqueleto de cada página: <head> con metadatos y tipografías, la barra
+   clara de las páginas internas, el contenido y el pie. La hoja global y las
+   fuentes se importan acá y Astro las empaqueta una sola vez.
+
+   La portada no usa la barra de acá (`barra={false}`): la suya va dentro del
+   hero, en la variante oscura.
+
+   Fuentes (por @fontsource, servidas desde el propio sitio):
+   · DM Sans en su versión variable con eje óptico (`opsz.css`): el diseño
+     fija opsz 14 en todos los títulos, y la versión sin ese eje no lo
+     respetaría.
+   · Roboto 400 y 700 para el cuerpo y los botones.
+   · Roboto Condensed 400 sólo para la línea legal del pie. */
+import '@fontsource-variable/dm-sans/opsz.css';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/700.css';
+import '@fontsource/roboto-condensed/400.css';
+import '../styles/global.css';
+import Footer from '../components/Footer.astro';
+import Navbar from '../components/Navbar.astro';
+import { SITE_NAME, SITE_URL } from '../data/site';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Ruta canónica, sin dominio: `/`, `/nosotros`. También marca el enlace
+      activo de la barra. */
+  path: string;
+  /** false en la portada, que trae su propia barra en el hero. */
+  barra?: boolean;
+  /** Separación con el pie en escritorio y en el teléfono (ver Footer.astro). */
+  separacionPie?: number;
+  separacionPieMovil?: number;
+}
+
+const { title, description, path, barra = true, separacionPie, separacionPieMovil } = Astro.props;
+const canonical = new URL(path, SITE_URL).toString();
+---
+
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#5f249f" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_CO" />
+    <meta property="og:site_name" content={SITE_NAME} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+  </head>
+  <body>
+    {
+      barra && (
+        <div class="barra-pagina">
+          <Navbar variante="clara" actual={path} />
+        </div>
+      )
+    }
+    <main>
+      <slot />
+    </main>
+    <Footer separacion={separacionPie} separacionMovil={separacionPieMovil} />
+  </body>
+</html>
+
+<style>
+  /* «Navbar» 119:1005: 1200 de ancho, a 21 del borde de arriba. Sticky a esa
+     misma altura: no se mueve al bajar (ver Navbar.astro). */
+  .barra-pagina {
+    position: sticky;
+    top: var(--margen-panel);
+    z-index: 50;
+    width: min(var(--contenido), 100% - 2 * var(--margen-panel));
+    margin: var(--margen-panel) auto 0;
+  }
+
+  /* «Navbar mobile» (303:6265): 342 de ancho en el frame de 390, a 12 del
+     borde de arriba. */
+  @media (max-width: 767px) {
+    .barra-pagina {
+      width: calc(100% - 2 * var(--margen));
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .barra-pagina {
+      top: 21px;
+      margin-top: 21px;
+    }
+  }
+</style>

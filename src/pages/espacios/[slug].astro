@@ -1,0 +1,323 @@
+---
+/* Ficha de un espacio — frame "Desktop - 5" (48:1862).
+
+   La URL es /espacios/{slug}; el espacio sale de la tabla `espacios`. Si no
+   existe (o está despublicado) la página responde 404.
+
+   · Cabecera (48:2233 + 48:2227): ruta «En alquiler / nombre» (Text button
+     morado), el nombre en Header 2 y «Ver más espacios» (306) a la derecha.
+   · Foto (48:1870): 793 × 669.5 con una sola muesca, arriba a la izquierda
+     (384.5 × 99.87), donde va el precio en accent/300: 48/46 la cifra y 24/30
+     la nota («+ IVA»). Sin precio, la foto va sin muesca.
+   · Características (48:2186): columna de 305 a 102 de la foto; cada una es
+     un círculo magenta de 66.66 con su ícono (31) y el texto en Header 4.
+
+   En el teléfono («iPhone 13 & 14 - 5», 303:5064), todo en una columna:
+   · ruta y nombre en Mobile/Header 1 (48/52) — «Frame 75» (303:5129);
+   · la foto pegada debajo, alta (341.5 × 622.5), con la muesca arriba a la
+     izquierda de 229 × 83 — «Vector 2» (303:5134). El frame no trae precio,
+     pero la muesca es la de escritorio achicada: el precio va ahí, en
+     Mobile/Header 2 (30/34) y la nota en Body (16/20);
+   · a 40 la lista — «Frame 73» (303:5135): el círculo a la izquierda y el
+     texto a su derecha, a 16, en Mobile/Header 3 (24/28), 20 entre filas;
+   · y a 40, «Ver más espacios» a todo el ancho — «Frame 74» (303:5132). */
+export const prerender = false;
+
+import Base from '../../layouts/Base.astro';
+import EncabezadoEspacios from '../../components/espacios/EncabezadoEspacios.astro';
+import { getEspacio } from '../../lib/espacios';
+import { estiloMuescas } from '../../lib/formas';
+import { ESPACIOS_URL } from '../../data/site';
+
+const { slug = '' } = Astro.params;
+const espacio = await getEspacio(slug);
+
+if (!espacio) Astro.response.status = 404;
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
+
+/* Sin precio, la foto va sin muesca. Las dos formas van en variables propias
+   y el <style> elige cuál pasa a `.muescas` (con `--muescas-mascara` en el
+   style ninguna media query podría pisarla). */
+const escritorio = estiloMuescas(espacio?.precio ? [{ esquina: 'tl', ancho: 384.5, alto: 99.87 }] : []);
+const movil = estiloMuescas(espacio?.precio ? [{ esquina: 'tl', ancho: 229, alto: 83 }] : []);
+const forma = [
+  `--mascara-escritorio:${escritorio['--muescas-mascara']}`,
+  `--trazo-escritorio:${escritorio['--muescas-trazo']}`,
+  `--mascara-movil:${movil['--muescas-mascara']}`,
+  `--trazo-movil:${movil['--muescas-trazo']}`,
+].join(';');
+---
+
+<Base
+  title={espacio ? `${espacio.titulo} — Espacios en alquiler — Elexa` : 'Espacio no encontrado — Elexa'}
+  description={espacio
+    ? `${espacio.titulo}${espacio.direccion ? `, ${espacio.direccion}` : ''}${espacio.zona ? ` (${espacio.zona})` : ''}. Espacio comercial en alquiler en un proyecto de Elexa.`
+    : 'El espacio que busca ya no está disponible.'}
+  path={`/espacios/${slug}`}
+  separacionPie={184}
+  separacionPieMovil={61}
+>
+  <EncabezadoEspacios nivel="p" />
+
+  {
+    espacio ? (
+      <article class="ficha contenedor">
+        <header class="ficha__cabecera">
+          <div>
+            <nav class="ficha__ruta" aria-label="Ruta">
+              <a href={ESPACIOS_URL}>En alquiler</a>
+              <span aria-hidden="true">/</span>
+              <span aria-current="page">{espacio.titulo}</span>
+            </nav>
+            <h1 class="display t-h2">{espacio.titulo}</h1>
+          </div>
+          <a class="btn btn--primario ficha__volver" href={ESPACIOS_URL}>
+            Ver más espacios
+          </a>
+        </header>
+
+        <div class="ficha__cuerpo">
+          <div class="ficha__imagen">
+            <div class="ficha__marco muescas" style={forma}>
+              <img src={espacio.imagen} alt={espacio.imagenAlt} />
+              <span class="muescas__trazo" aria-hidden="true" />
+            </div>
+            {espacio.precio && (
+              <p class="ficha__precio display">
+                {espacio.precio}
+                {espacio.precioNota && <span> {espacio.precioNota}</span>}
+              </p>
+            )}
+          </div>
+
+          {espacio.caracteristicas.length > 0 && (
+            <ul class="ficha__datos" role="list">
+              {espacio.caracteristicas.map((c) => (
+                <li>
+                  <span class="ficha__icono" aria-hidden="true">
+                    <img src={`/img/iconos/${c.icono}.svg`} alt="" width="31.08" height="31.08" />
+                  </span>
+                  <span class="display t-h4">{c.texto}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </article>
+    ) : (
+      <section class="no-encontrado contenedor">
+        <h1 class="display t-h2">Este espacio ya no está disponible</h1>
+        <p>Puede que ya se haya alquilado. Mire los que tenemos abiertos ahora.</p>
+        <a class="btn btn--primario" href={ESPACIOS_URL}>
+          Ver espacios disponibles
+        </a>
+      </section>
+    )
+  }
+</Base>
+
+<style>
+  .ficha {
+    margin-top: 48px;
+    color: var(--brand-500);
+  }
+
+  .ficha__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--space-lg);
+  }
+
+  .ficha__cabecera > div {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .ficha__ruta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 12px;
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 24px;
+    color: var(--brand-300);
+  }
+  .ficha__ruta a {
+    text-decoration: none;
+  }
+  .ficha__ruta a:hover {
+    text-decoration: underline;
+  }
+
+  .ficha__volver {
+    width: 306px;
+    max-width: 100%;
+  }
+
+  .ficha__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+    margin-top: 48px;
+  }
+
+  .ficha__imagen {
+    position: relative;
+    aspect-ratio: 793 / 669.5;
+  }
+
+  .ficha__marco {
+    --muescas-mascara: var(--mascara-escritorio);
+    --muescas-trazo: var(--trazo-escritorio);
+    position: absolute;
+    inset: 0;
+    background: var(--neutral-200);
+  }
+
+  .ficha__marco img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* El precio vive en la muesca, a 23 del borde de arriba de la foto. */
+  .ficha__precio {
+    position: absolute;
+    top: 23px;
+    left: 0;
+    margin: 0;
+    color: var(--accent-300);
+    font-size: 48px;
+    line-height: 46px;
+  }
+  .ficha__precio span {
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  .ficha__datos {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .ficha__datos li {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .ficha__icono {
+    display: grid;
+    place-items: center;
+    width: 66.66px;
+    height: 66.66px;
+    border-radius: var(--radius-full);
+    background: var(--accent-300);
+  }
+
+  @media (max-width: 767px) {
+    /* El botón de la cabecera pasa al final: la cabecera no arma caja y el
+       botón se ordena después del cuerpo. */
+    .ficha {
+      display: flex;
+      flex-direction: column;
+      margin-top: 61px;
+    }
+
+    .ficha__cabecera {
+      display: contents;
+    }
+
+    .ficha__cabecera h1 {
+      font-size: min(48px, 12.3vw);
+      line-height: 1.0834;
+    }
+
+    .ficha__volver {
+      order: 1;
+      width: 100%;
+      margin-top: 40px;
+    }
+
+    .ficha__cuerpo {
+      gap: 40px;
+      margin-top: 0;
+    }
+
+    .ficha__imagen {
+      aspect-ratio: 341.5 / 622.5;
+    }
+
+    .ficha__marco {
+      --muescas-mascara: var(--mascara-movil);
+      --muescas-trazo: var(--trazo-movil);
+    }
+
+    /* En la muesca: 213 de ancho (229 menos los 16 que la separan de la
+       foto), centrado en el alto. */
+    .ficha__precio {
+      top: 17px;
+      max-width: 213px;
+      font-size: 30px;
+      line-height: 34px;
+    }
+    .ficha__precio span {
+      font-size: 16px;
+      line-height: 20px;
+    }
+
+    .ficha__datos li {
+      flex-direction: row;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .ficha__icono {
+      flex: none;
+    }
+
+    .ficha__datos .t-h4 {
+      font-size: 24px;
+      line-height: 28px;
+    }
+  }
+
+  .no-encontrado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    margin-top: 64px;
+    color: var(--brand-500);
+    text-align: center;
+  }
+
+  @media (min-width: 1240px) {
+    .ficha {
+      margin-top: 93px;
+    }
+
+    .ficha__cuerpo {
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 102px;
+      margin-top: 93px;
+    }
+
+    .ficha__imagen {
+      flex: 0 0 793px;
+      height: 670px;
+      aspect-ratio: auto;
+    }
+
+    .ficha__datos {
+      flex: 0 0 305px;
+      margin-top: 18px;
+    }
+  }
+</style>

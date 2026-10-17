@@ -1,0 +1,113 @@
+---
+/* «¿Su marca está buscando dónde crecer?» — «Frame 17» (119:1301), 1440 × 302
+   de lado a lado sobre palette/brand/300, con el símbolo gigante en multiply.
+   Lleva a /espacios con el botón de borde claro (palette/neutral/200).
+
+   En el teléfono es «Frame 17» (303:4950), 390 × 420: el texto en Body bold
+   (Roboto 16/20), el botón a todo el ancho y otro símbolo, más chico
+   (537 × 524), asomado detrás del botón. */
+import { ESPACIOS_URL } from '../../data/site';
+---
+
+<section class="banda" aria-labelledby="banda-espacios">
+  <img class="banda__simbolo" src="/img/deco/simbolo-marca.svg" alt="" width="1671" height="1833" loading="lazy" />
+  <img class="banda__simbolo-movil" src="/img/espacios/simbolo-banda.svg" alt="" width="537" height="524.28" loading="lazy" />
+  <h2 class="banda__titulo display t-h1" id="banda-espacios">¿Su marca está buscando dónde crecer?</h2>
+  <p class="banda__texto display t-h4">
+    Encuentra espacios comerciales disponibles para llevar tu marca al siguiente nivel.{' '}<br />
+    Conoce nuestros proyectos y descubre el espacio ideal para tu negocio.
+  </p>
+  <a class="btn banda__boton" href={ESPACIOS_URL}>Ver espacios disponibles</a>
+</section>
+
+<style>
+  .banda {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-top: 96px;
+    padding: var(--space-2xl) var(--margen);
+    background: var(--brand-300);
+    color: var(--neutral-100);
+    text-align: center;
+  }
+
+  /* En el frame de 1440 arranca en x = −116, o sea centrado: se centra para
+     que siga así en pantallas de cualquier ancho. */
+  .banda__simbolo {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    translate: -50%;
+    width: 1671px;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  .banda__simbolo-movil {
+    display: none;
+  }
+
+  .banda__titulo,
+  .banda__texto,
+  .banda__boton {
+    position: relative;
+  }
+
+  .banda__boton {
+    border-color: var(--neutral-200);
+    color: var(--neutral-200);
+    white-space: normal;
+  }
+  .banda__boton:hover {
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  @media (max-width: 767px) {
+    .banda {
+      margin-top: 69px;
+    }
+
+    /* En el frame arranca en x = −74 (centrado) y a 116 del borde de abajo,
+       detrás del botón. */
+    .banda__simbolo {
+      display: none;
+    }
+    .banda__simbolo-movil {
+      display: block;
+      position: absolute;
+      top: calc(100% - 116px);
+      left: 50%;
+      translate: -50%;
+      width: 537px;
+      max-width: none;
+      height: auto;
+      mix-blend-mode: multiply;
+      pointer-events: none;
+    }
+
+    .banda__texto {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 20px;
+      font-variation-settings: normal;
+      letter-spacing: 0;
+    }
+
+    .banda__boton {
+      width: 100%;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .banda {
+      margin-top: 120px;
+    }
+  }
+</style>

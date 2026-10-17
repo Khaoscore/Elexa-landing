@@ -1,0 +1,287 @@
+---
+/* Banda de logos sobre palette/accent/300, de lado a lado, con el símbolo de
+   Elexa gigante en multiply detrás. Dos usos en el archivo, cada uno con su
+   exportación del símbolo:
+   · «Respaldo institucional» en la portada — «Frame 17» (18:711);
+   · «Marcas que trabajan con nosotros» en /espacios — «Frame 17» (58:2601).
+
+   En el diseño los logos eran siete cajas grises de 250 × 78. Aquí corren
+   solos hacia la izquierda en un carril infinito: la lista va dos veces y la
+   pista se corre la mitad de su ancho, así la segunda copia cae justo donde
+   arrancó la primera. Al pasar el puntero el carril se detiene, el logo de
+   encima crece un poco y los demás se apagan.
+
+   Los archivos salen de public/img/logos/ recortados a su contenido, a 160 px
+   de alto y en WebP (public/img/logos/banda/); a Grupo Ínsula se le quitó el
+   fondo marino. `ancho` y `alto` son los del archivo recortado.
+
+   En móvil las dos bandas no son iguales:
+   · portada — «Frame 17» (303:4527): título en 36/38 y 32 arriba y abajo;
+   · /espacios — «Frame 17» (303:5047): título en Mobile/Header 2 (30/34) y
+     64 abajo (la fila de cajas mide 64 y las cajas de 78 se le salen 14).
+   Cada una trae su símbolo exportado a la medida del teléfono. Las cajas
+   grises del diseño (250 × 78, de lado a lado) son las de escritorio, así
+   que los logos van al mismo tamaño que allí. */
+type Logo = { nombre: string; src: string; ancho: number; alto: number };
+type Variante = 'respaldo' | 'marcas';
+
+interface Props {
+  titulo?: string;
+  simbolo?: string;
+  logos?: Logo[];
+  /** Separación con la sección de arriba en escritorio. */
+  margen?: number;
+  /** Cuál de las dos bandas del diseño móvil. Si no se pasa, se deduce del
+      símbolo de escritorio (/espacios pasa el de «marcas»). */
+  variante?: Variante;
+}
+
+const SIMBOLO_MARCAS = '/img/deco/simbolo-marcas.svg';
+
+/* El símbolo de cada banda en el frame de 390 (303:4528 y 303:5050). */
+const SIMBOLO_MOVIL: Record<Variante, { src: string; ancho: number; alto: number }> = {
+  respaldo: { src: '/img/respaldo/simbolo-movil.svg', ancho: 591, alto: 648.241 },
+  marcas: { src: '/img/marcas/simbolo-movil.svg', ancho: 545.179, alto: 532.062 },
+};
+
+const LOGOS: Logo[] = [
+  { nombre: 'Ternario', src: '/img/logos/banda/casa-ternario.webp', ancho: 889, alto: 160 },
+  { nombre: 'Alta Ventura Constructora', src: '/img/logos/banda/alta-ventura.webp', ancho: 201, alto: 160 },
+  { nombre: 'Khaoscore', src: '/img/logos/banda/khaoscore.webp', ancho: 432, alto: 160 },
+  { nombre: 'op14 arquitectos', src: '/img/logos/banda/op14.webp', ancho: 368, alto: 160 },
+  { nombre: 'Ávila Toro Boutique Legal', src: '/img/logos/banda/avila-toro.webp', ancho: 683, alto: 160 },
+  { nombre: 'WeFilm', src: '/img/logos/banda/wefilm.webp', ancho: 253, alto: 160 },
+  { nombre: 'Javier Bolívar Arquitectos', src: '/img/logos/banda/javier-bolivar.webp', ancho: 687, alto: 160 },
+  { nombre: 'Grupo Ínsula', src: '/img/logos/banda/grupo-insula.webp', ancho: 86, alto: 160 },
+  { nombre: 'Terranovuss', src: '/img/logos/banda/terranovuss.webp', ancho: 1025, alto: 160 },
+  { nombre: 'ALH Taller', src: '/img/logos/banda/alh.webp', ancho: 276, alto: 84 },
+  { nombre: 'Constructora Normandía', src: '/img/logos/banda/constructora-normandia.webp', ancho: 892, alto: 160 },
+];
+
+const {
+  titulo = 'Respaldo institucional',
+  simbolo = '/img/deco/simbolo-respaldo.svg',
+  logos = LOGOS,
+  margen = 136,
+  variante = simbolo === SIMBOLO_MARCAS ? 'marcas' : 'respaldo',
+} = Astro.props;
+const simboloMovil = SIMBOLO_MOVIL[variante];
+const id = `banda-${titulo.toLowerCase().replace(/[^a-z]+/g, '-')}`;
+
+/* A igual alto, los logos anchos pesan mucho más que los compactos. El alto
+   baja con la proporción (ancho / alto) ^ 0,4 para que todos se lean parecido,
+   con tope de 72 px — la caja del diseño mide 78. */
+const altoVisual = ({ ancho, alto }: Logo) => Math.min(72, Math.round(80 * (ancho / alto) ** -0.4));
+---
+
+<section class={`respaldo respaldo--${variante}`} aria-labelledby={id} style={`--margen-banda:${margen}px`}>
+  <picture class="respaldo__fondo">
+    <source
+      media="(max-width: 767px)"
+      srcset={simboloMovil.src}
+      width={simboloMovil.ancho}
+      height={simboloMovil.alto}
+    />
+    <img class="respaldo__simbolo" src={simbolo} alt="" width="1671" height="1833" loading="lazy" />
+  </picture>
+  <h2 class="display t-h1" id={id}>{titulo}</h2>
+  <div class="respaldo__carril">
+    <div class="respaldo__pista">
+      {
+        [false, true].map((copia) => (
+          <ul class="respaldo__logos" role="list" aria-hidden={copia ? 'true' : undefined}>
+            {logos.map((logo) => (
+              <li class="respaldo__logo">
+                <img
+                  src={logo.src}
+                  alt={copia ? '' : logo.nombre}
+                  width={logo.ancho}
+                  height={logo.alto}
+                  style={`--alto:${altoVisual(logo)}px`}
+                  decoding="async"
+                />
+              </li>
+            ))}
+          </ul>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<style>
+  .respaldo {
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    margin-top: 96px;
+    padding-block: var(--space-2xl);
+    background: var(--accent-300);
+    color: var(--neutral-100);
+  }
+
+  /* El <picture> va fuera de la columna: como elemento de la flexbox sumaría
+     un hueco de 20. Cubre la banda, así el símbolo se ubica igual que si
+     colgara de ella. */
+  .respaldo__fondo {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* En el frame de 1440 arranca en x = −116, o sea centrado: se centra para
+     que siga así en pantallas de cualquier ancho. */
+  .respaldo__simbolo {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    translate: -50%;
+    width: 1671px;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  h2 {
+    position: relative;
+    padding-inline: var(--margen);
+    text-align: center;
+  }
+
+  /* El padding deja sitio al zoom: la máscara recorta lo que se salga de la
+     caja. */
+  .respaldo__carril {
+    --escala: 1;
+    --separacion: 80px;
+    position: relative;
+    width: 100%;
+    padding-block: 8px;
+    mask-image: linear-gradient(to right, transparent, #000 5%, #000 95%, transparent);
+  }
+
+  .respaldo__pista {
+    display: flex;
+    width: max-content;
+    animation: desplazar 50s linear infinite;
+  }
+
+  .respaldo__carril:hover .respaldo__pista {
+    animation-play-state: paused;
+  }
+
+  @keyframes desplazar {
+    to {
+      transform: translateX(-50%);
+    }
+  }
+
+  /* El padding final hace que el corte entre copias tenga la misma
+     separación que entre logos. */
+  .respaldo__logos {
+    display: flex;
+    align-items: center;
+    gap: var(--separacion);
+    padding-inline-end: var(--separacion);
+    height: calc(78px * var(--escala));
+  }
+
+  .respaldo__logo {
+    flex: none;
+    transition:
+      opacity 0.3s ease,
+      transform 0.3s ease;
+  }
+
+  .respaldo__logo img {
+    max-width: none;
+    width: auto;
+    height: calc(var(--alto) * var(--escala));
+  }
+
+  @media (hover: hover) {
+    .respaldo__pista:has(.respaldo__logo:hover) .respaldo__logo:not(:hover) {
+      opacity: 0.35;
+    }
+
+    .respaldo__logo:hover {
+      transform: scale(1.15);
+    }
+  }
+
+  /* ---------- Móvil ----------
+     Portada: 32 + título (2 × 38) + 20 + logos (78) + 32 = 238.
+     /espacios: 32 + título (2 × 34) + 20 + logos (78) + 50 = 248.
+     El margen negativo del carril descuenta el relleno que deja para el zoom,
+     así la fila de logos cae donde las cajas del diseño. Los símbolos siguen
+     centrados, como en escritorio; sólo cambia dónde arrancan en alto. */
+  @media (max-width: 767px) {
+    .respaldo {
+      margin-top: 64px;
+      padding-block: 32px;
+    }
+
+    .respaldo__carril {
+      margin-block: -8px;
+    }
+
+    .respaldo--respaldo h2 {
+      padding-inline: 22px;
+      font-size: 36px;
+      line-height: 38px;
+    }
+
+    .respaldo--respaldo .respaldo__simbolo {
+      top: 62px;
+      width: 591px;
+    }
+
+    .respaldo--marcas {
+      margin-top: 72px;
+      padding-bottom: 50px;
+    }
+
+    .respaldo--marcas h2 {
+      font-size: 30px;
+      line-height: 34px;
+    }
+
+    .respaldo--marcas .respaldo__simbolo {
+      top: 48px;
+      width: 545.179px;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .respaldo {
+      margin-top: var(--margen-banda);
+    }
+  }
+
+  /* Sin movimiento: una sola copia, en filas centradas. */
+  @media (prefers-reduced-motion: reduce) {
+    .respaldo__carril {
+      mask-image: none;
+    }
+
+    .respaldo__pista {
+      display: block;
+      width: auto;
+      animation: none;
+    }
+
+    .respaldo__logos {
+      flex-wrap: wrap;
+      justify-content: center;
+      row-gap: var(--space-lg);
+      height: auto;
+      padding-inline: var(--margen);
+    }
+
+    .respaldo__logos[aria-hidden] {
+      display: none;
+    }
+  }
+</style>

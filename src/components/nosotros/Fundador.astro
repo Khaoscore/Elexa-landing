@@ -1,0 +1,253 @@
+---
+/* El fundador — «Frame 48» (48:1210), 1200 × 430: la foto de Luis Felipe con
+   su forma (488 × 425), la columna con nombre, cargo y formación (312) y su
+   historia en primera persona (320), repartidas con space-between.
+
+   En el teléfono («Frame 62», 303:4714) va primero el perfil, después la foto
+   con otro recorte (342 × 415, «Vector 5») y al final la historia, con 32
+   entre uno y otro; todo a lo ancho. */
+import { INSTAGRAM_URL } from '../../data/site';
+---
+
+<section class="fundador contenedor" aria-labelledby="fundador-nombre">
+  <picture class="fundador__marco">
+    <source
+      media="(max-width: 767px)"
+      srcset="/img/nosotros/luis-felipe-historia-movil.webp"
+      width="344"
+      height="417"
+    />
+    <img
+      class="fundador__foto"
+      src="/img/nosotros/luis-felipe-historia.webp"
+      alt="Luis Felipe Puerto Tobón, de brazos cruzados frente al logo de Elexa en la oficina."
+      width="490"
+      height="427"
+      loading="lazy"
+    />
+  </picture>
+
+  <div class="fundador__perfil">
+    <div class="fundador__cabecera">
+      <a class="fundador__ig display" href={INSTAGRAM_URL} target="_blank" rel="noopener">
+        <picture>
+          <source
+            media="(max-width: 767px)"
+            srcset="/img/nosotros/instagram-movil.svg"
+            width="24"
+            height="24"
+          />
+          <img src="/img/iconos/instagram.svg" alt="" width="30" height="30" />
+        </picture>
+        @luis_inversionista
+      </a>
+      <h2 class="fundador__nombre display" id="fundador-nombre">
+        <span class="acento">Luis</span> Felipe Puerto Tobón
+      </h2>
+      <picture class="fundador__marco">
+        <source media="(max-width: 767px)" srcset="/img/nosotros/divisor-nombre-movil.svg" width="344" height="2" />
+        <img class="fundador__linea" src="/img/nosotros/divisor-nombre.svg" alt="" width="274" height="2" />
+      </picture>
+      <p class="fundador__cargo display t-h4">Fundador y Director General</p>
+    </div>
+
+    <ul class="fundador__formacion">
+      <li><strong>MBA</strong> con honores, Universidad de Columbia (Nueva York).</li>
+      <li><strong>Máster</strong> en Administración, École Supérieure de Commerce de Montpellier.</li>
+      <li><strong>Economista</strong> Cum Laude, Universidad ICESI de Cali.</li>
+      <li>17 años en Tecnoquímicas. Último cargo: <strong>Vicepresidente</strong> de Negocios de absorbentes desechables.</li>
+    </ul>
+  </div>
+
+  <div class="fundador__historia">
+    <p>
+      Llevaba quince años construyendo mi libertad financiera con bienes raíces cuando me topé con el techo: los
+      inmuebles que de verdad rentan —bodegas, locales, oficinas— <strong
+        >cuestan lo que una persona sola no puede pagar.</strong
+      >
+    </p>
+    <p>
+      La respuesta la encontré cursando mi MBA en la Universidad de Columbia, en Nueva York. Allá el modelo de
+      syndication lleva décadas funcionando: <strong>varios inversionistas se unen para acceder a activos</strong> que
+      ninguno alcanzaría por separado. Volví a Cali con la idea de adaptarlo.
+    </p>
+    <p>
+      Alcancé mi libertad financiera a los 39 años, y sé que no fue suerte: fue método. Por eso estoy convencido de
+      que <strong>es una posibilidad real para cualquiera que se lo proponga.</strong>
+    </p>
+  </div>
+</section>
+
+<style>
+  .fundador {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    margin-top: 96px;
+    color: var(--brand-500);
+  }
+
+  /* El <picture> no cuenta en el layout: la foto y la línea siguen siendo
+     hijos directos de su flex o grid. El <source> se oculta para que no
+     quede como un hijo vacío más (y sume un gap). */
+  .fundador__marco {
+    display: contents;
+  }
+  .fundador__marco > source {
+    display: none;
+  }
+
+  .fundador__foto {
+    width: 100%;
+    max-width: 490px;
+    height: auto;
+  }
+
+  .fundador__perfil {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 312px;
+  }
+
+  .fundador__cabecera {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .fundador__ig {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-md);
+    align-self: flex-start;
+    font-size: 24px;
+    line-height: 30px;
+    color: var(--brand-300);
+    text-decoration: none;
+  }
+  .fundador__ig:hover {
+    text-decoration: underline;
+  }
+
+  /* 36/38 el nombre; Header 4 el cargo. */
+  .fundador__nombre {
+    max-width: 285px;
+    font-size: 36px;
+    line-height: 38px;
+  }
+
+  .fundador__linea {
+    width: 274px;
+    margin: 0 -1px;
+  }
+
+  .fundador__cargo {
+    max-width: 285px;
+  }
+
+  .fundador__formacion {
+    margin: 0;
+    padding-left: 24px;
+  }
+
+  .fundador__historia {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    max-width: 320px;
+  }
+
+  /* La galería termina en y = 1845 y el bloque arranca en 1926. Los textos
+     de la lista y de la historia van en 16/22, no en el 16/20 del cuerpo en
+     el teléfono. La foto y la línea traen 1 px de margen por el trazo
+     (344 × 417 y 344 × 2 para 342 de ancho). */
+  @media (max-width: 767px) {
+    .fundador {
+      margin-top: 81px;
+    }
+
+    .fundador__perfil {
+      order: -1;
+      max-width: none;
+    }
+
+    .fundador__foto {
+      width: calc(100% + 2px);
+      max-width: none;
+      margin: -1px;
+    }
+
+    .fundador__ig {
+      font-size: 20px;
+      line-height: 24px;
+    }
+
+    /* Mobile/Header 1. */
+    .fundador__nombre {
+      max-width: none;
+      font-size: 48px;
+      line-height: 52px;
+    }
+
+    /* En Figma la línea no ocupa alto (el trazo de 2 va centrado en y = 144
+       y el cargo arranca 8 más abajo). */
+    .fundador__linea {
+      width: calc(100% + 2px);
+      max-width: none;
+      height: 2px;
+      margin: -1px;
+    }
+
+    .fundador__cargo {
+      max-width: none;
+    }
+
+    .fundador__formacion,
+    .fundador__historia {
+      line-height: 22px;
+    }
+
+    .fundador__historia {
+      max-width: none;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .fundador {
+      display: grid;
+      grid-template-columns: minmax(0, 488px) 312px;
+      column-gap: 40px;
+      row-gap: var(--space-2xl);
+      align-items: start;
+    }
+    .fundador__historia {
+      grid-column: 1 / -1;
+      max-width: 640px;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .fundador {
+      display: flex;
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-top: 154px;
+    }
+
+    .fundador__foto {
+      flex: 0 0 488px;
+      width: 490px;
+      margin: -1px;
+    }
+
+    .fundador__perfil {
+      flex: 0 0 312px;
+    }
+
+    .fundador__historia {
+      flex: 0 0 320px;
+    }
+  }
+</style>

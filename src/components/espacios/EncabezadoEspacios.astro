@@ -1,0 +1,39 @@
+---
+/* El encabezado que comparten /espacios y la ficha de cada espacio
+   («Frame 61», 48:1685, y su copia en Desktop - 5).
+
+   En el teléfono (303:5023 y 303:5126) el título de estas dos páginas no va
+   en Banner como el de las demás sino en Mobile/Header 1 (48/52), en tres
+   renglones: «Espacios / disponibles / para alquilar». */
+import EncabezadoPagina from '../EncabezadoPagina.astro';
+
+interface Props {
+  nivel?: 'h1' | 'p';
+}
+
+const { nivel } = Astro.props;
+---
+
+<EncabezadoPagina nivel={nivel}>
+  <span class="titulo-espacios">
+    Espacios <span class="acento--magenta">disponibles</span><br />para alquilar
+  </span>
+  <Fragment slot="texto">
+    Espacios comerciales en proyectos desarrollados por Elexa Real Estate, disponibles para arrendar. <strong
+      >Ubicaciones estratégicas en Cali, diseñadas para comercio, oficinas y operación.</strong
+    > Si buscas un espacio para su negocio, explora las opciones disponibles.
+  </Fragment>
+</EncabezadoPagina>
+
+<style>
+  /* En bloque, para que el renglón tome su propio alto (52) y no el del
+     título que lo envuelve (62). Como el Header 1 global, baja en proporción
+     en teléfonos de menos de 390 para que «disponibles» no se salga. */
+  @media (max-width: 767px) {
+    .titulo-espacios {
+      display: block;
+      font-size: min(48px, 12.3vw);
+      line-height: 1.0834;
+    }
+  }
+</style>

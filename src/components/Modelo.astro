@@ -1,0 +1,169 @@
+---
+/* «El modelo, en tres pasos» — «Frame 19» (20:752), 1201 × 629.
+   Tres tarjetas de 387 × 510.6 con 20 de separación. Cada una es una foto ya
+   recortada con su muesca arriba a la izquierda (vectores 18:664 / 18:684 /
+   18:693, exportados con 1 px de margen por el trazo), el número en un
+   círculo morado de 60 en la muesca y el texto encima de la foto, a 316 del
+   borde de arriba.
+
+   Las fotos son estáticas y escalan con la tarjeta; la tarjeta no baja de
+   387 salvo en teléfonos, donde ocupa el ancho disponible.
+
+   Móvil — «Frame 19» (303:4503): las mismas tarjetas a 342 × 451 (la foto
+   exportada de 303:4507 es esta misma reducida, con la muesca en proporción)
+   y el texto abajo, en Mobile/Header 3 (24/28) y Body regular (16/20). En
+   Figma cada bloque de texto tiene su propio margen y ancho (`movil`: x,
+   ancho y distancia al borde de abajo, del frame 12 de cada tarjeta); con
+   ellos los renglones parten igual que en el diseño. */
+const pasos = [
+  {
+    foto: '/img/modelo/paso-1.webp',
+    movil: { x: 24, ancho: 300, abajo: 28 },
+    titulo: 'Estructuramos el proyecto',
+    texto:
+      'Identificamos el activo, hacemos la evaluación financiera y armamos la estructura jurídica. En el 95% de los casos, contratos de cuentas en participación monoactivo: un proyecto, un vehículo, sin mezclar patrimonios.',
+  },
+  {
+    foto: '/img/modelo/paso-2-3.webp',
+    movil: { x: 14, ancho: 313, abajo: 34 },
+    titulo: 'Usted entra como socio',
+    texto:
+      'Las rondas de inversión se abren por hitos —licencias, etapas de construcción— y cada ronda tiene condiciones propias. Su inversión es pasiva: no gestiona y no opera.',
+  },
+  {
+    foto: '/img/modelo/paso-2-3.webp',
+    movil: { x: 16, ancho: 309, abajo: 34 },
+    titulo: 'Nosotros desarrollamos y operamos',
+    texto:
+      'Construimos, arrendamos y administramos el activo. Usted recibe reportes periódicos y la distribución de excedentes.',
+  },
+];
+---
+
+<section class="modelo contenedor" id="modelo" aria-labelledby="modelo-titulo">
+  <h2 class="display t-h1" id="modelo-titulo">El modelo, en <span class="acento">tres</span> pasos</h2>
+
+  <ol class="modelo__pasos" role="list">
+    {
+      pasos.map((paso, i) => (
+        <li class="paso" style={`--x:${paso.movil.x}px;--ancho:${paso.movil.ancho}px;--abajo:${paso.movil.abajo}px`}>
+          <img class="paso__foto" src={paso.foto} alt="" width="389" height="512.6" loading="lazy" />
+          <span class="paso__numero display" aria-hidden="true">
+            {i + 1}.
+          </span>
+          <div class="paso__texto">
+            <h3 class="display t-h4">{paso.titulo}</h3>
+            <p>{paso.texto}</p>
+          </div>
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<style>
+  .modelo {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 40px;
+    margin-top: 96px;
+  }
+
+  h2 {
+    color: var(--brand-500);
+    text-align: center;
+  }
+
+  .modelo__pasos {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+  }
+
+  .paso {
+    position: relative;
+    flex: 0 1 387px;
+    aspect-ratio: 387 / 510.6;
+    color: var(--neutral-100);
+  }
+
+  .paso__foto {
+    position: absolute;
+    top: -0.2%;
+    left: -0.26%;
+    width: 100.52%;
+    max-width: none;
+    height: 100.4%;
+  }
+
+  .paso__numero {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 60px;
+    height: 60px;
+    border-radius: var(--radius-full);
+    background: var(--brand-300);
+    font-size: 36px;
+    line-height: 38px;
+  }
+
+  /* 316 / 510.6 = 61.9 % del alto. */
+  .paso__texto {
+    position: absolute;
+    top: 61.9%;
+    right: 24px;
+    left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    filter: drop-shadow(0 0 6px rgba(31, 38, 43, 0.6));
+  }
+
+  /* En Figma cada tarjeta trae el texto a una altura distinta (236, 297,
+     289) pero todos terminan a 28–34 del borde de abajo: se ancla abajo
+     para que no dependa de cuántas líneas ocupe. */
+  @media (max-width: 767px) {
+    .modelo {
+      gap: 60px;
+      margin-top: 64px;
+    }
+
+    .paso__texto {
+      top: auto;
+      right: auto;
+      bottom: var(--abajo);
+      left: var(--x);
+      width: min(var(--ancho), 100% - var(--x) - 12px);
+    }
+
+    .paso__texto h3 {
+      font-size: 24px;
+      line-height: 28px;
+    }
+  }
+
+  /* Justo debajo de la banda de cifras: termina en y = 3781 y el título
+     arranca en 3873. */
+  @media (min-width: 1240px) {
+    .modelo {
+      gap: 60px;
+      margin-top: 92px;
+    }
+
+    .modelo__pasos {
+      flex-wrap: nowrap;
+      justify-content: space-between;
+    }
+
+    /* 3 × 387 + 2 × 20 = 1201: uno de 1 px de más sobre los 1200. */
+    .paso {
+      flex: 0 1 387px;
+    }
+  }
+</style>

@@ -1,0 +1,25 @@
+---
+/* Página para rutas que no existen. No está en el diseño: usa la barra, el
+   encabezado y el pie de las páginas internas. */
+import Base from '../layouts/Base.astro';
+---
+
+<Base title="Página no encontrada — Elexa" description="La página que busca no existe." path="/404">
+  <section class="perdida contenedor">
+    <h1 class="display t-banner">Esta página <span class="acento">no existe</span></h1>
+    <p>Puede que el enlace esté mal escrito o que la página se haya movido.</p>
+    <a class="btn btn--primario" href="/">Volver al inicio</a>
+  </section>
+</Base>
+
+<style>
+  .perdida {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xl);
+    margin-top: 88px;
+    color: var(--brand-500);
+    text-align: center;
+  }
+</style>

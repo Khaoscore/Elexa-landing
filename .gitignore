@@ -1,0 +1,17 @@
+# build
+dist/
+.vercel/
+.astro/
+
+# dependencias
+node_modules/
+
+# variables de entorno (las credenciales de Supabase van acá, no en git)
+.env
+.env.*
+!.env.example
+
+# sistema
+.DS_Store
+Thumbs.db
+npm-debug.log*

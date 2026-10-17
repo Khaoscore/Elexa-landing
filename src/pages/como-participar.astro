@@ -1,0 +1,43 @@
+---
+/* Cómo hacer parte — frame "Desktop - 6" (48:2234): el encabezado, los siete
+   pasos, «10 minutos con Luis», la galería y la invitación a la radiografía
+   financiera.
+
+   Entre 180 y 181 px separan cada bloque del siguiente en Figma. Sigue
+   pendiente en el archivo «Formulario precalificación, datos y CTA.
+   Testimonios y desarrollados» (48:2443). */
+import Base from '../layouts/Base.astro';
+import EncabezadoPagina from '../components/EncabezadoPagina.astro';
+import Pasos from '../components/participar/Pasos.astro';
+import DiezMinutos from '../components/participar/DiezMinutos.astro';
+import Galeria from '../components/Galeria.astro';
+import Libertad from '../components/Libertad.astro';
+
+/* Reels de @luis_inversionista, descargados de Instagram y pasados a MP4 de
+   540 × 960 (el embed de Instagram no deja que arranquen solos). */
+const reels = [
+  { src: '/img/participar/reels/reel-1', instagram: 'https://www.instagram.com/p/DdXwuc0M06H/' },
+  { src: '/img/participar/reels/reel-2', instagram: 'https://www.instagram.com/p/DXVb4KtDC_k/' },
+  { src: '/img/participar/reels/reel-3', instagram: 'https://www.instagram.com/p/DZvOUxTxaGl/' },
+];
+---
+
+<Base
+  title="Cómo hacer parte — Elexa"
+  description="Cómo invertir con Elexa: conoces el proyecto, resuelves dudas, defines el monto, separas el cupo y empiezas a aportar."
+  path="/como-participar"
+  separacionPie={181}
+>
+  <EncabezadoPagina>
+    Cómo hacer <span class="acento">parte</span>
+    <Fragment slot="texto">
+      Ser socio de Elexa es <strong>acceder a los activos más rentables en bienes raíces</strong>, como bodegas, locales,
+      oficinas y rentas cortas a través de estructuras colectivas que hacen mucho más fácil participar en ellos.<br />
+      Conoce nuestros proyectos, agenda una reunión con nuestro equipo y decide si quieres hacer parte.
+    </Fragment>
+  </EncabezadoPagina>
+  <Pasos />
+  <DiezMinutos />
+  <Galeria videos={reels} alto={615} altoMuesca={81.5} separacion={181} separacionMovil={137} espacioMovil={32} />
+  <Libertad separacion={181} />
+</Base>

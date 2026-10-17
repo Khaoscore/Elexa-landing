@@ -1,0 +1,344 @@
+/* =========================================================================
+   Elexa — landing
+   Traducción del archivo de Figma «Web Elexa»
+   file: qVq48vnuCBrticCTv3pmdi · página «Pantallas» (1:3)
+   · Desktop → frame "Desktop - 1" (node 3:78, 1440 × 7168)
+   · «Proyectos abiertos» → componente 130:692 con tres variantes
+     (Projects=1 / 2 / 3+), instanciado sobre la landing en 130:693.
+   · Móvil → página «Mobile» (303:4413): un frame de 390 por página
+     («iPhone 13 & 14 - 1» a «- 6», 303:4414…303:5156), la barra móvil
+     («Navbar mobile», 303:6266) y los estilos de texto Elexa/Mobile/….
+     Los frames traen arriba la barra de estado del teléfono (63 de alto);
+     en el sitio la barra de Elexa queda a 12 del borde de la pantalla.
+
+   Se importa una sola vez en src/layouts/Base.astro. Cada sección guarda sus
+   estilos en su propio componente; acá viven sólo los tokens y las piezas
+   que se repiten (tipografías, botones, contenedor).
+   ========================================================================= */
+
+/* ============================== TOKENS ==============================
+   Valores 1:1 de las variables del archivo (get_variable_defs sobre 3:78).
+   ==================================================================== */
+:root {
+  /* Paleta */
+  --neutral-100: #ffffff; /* palette/neutral/100 */
+  --neutral-200: #f0f0ef; /* palette/neutral/200: fondo de los paneles grises */
+  --neutral-300: #d9d9d6; /* palette/neutral/300: bordes */
+  --brand-300: #5f249f; /* palette/brand/300 = color/primary */
+  --brand-500: #1d0b30; /* palette/brand/500: títulos */
+  --ink-300: #333f48; /* palette/ink/300: párrafos */
+  --ink-400: #1f262b; /* palette/ink/400: banda de cifras y pie */
+  --ink-500: #0f1316; /* palette/ink/500 */
+  --accent-300: #981e97; /* palette/accent/300 = color/accent */
+  --accent-400: #5b125b; /* palette/accent/400 */
+  --texto-tenue: #83837e; /* color/text-muted: enlaces de la barra clara */
+  --negro-azul: #0c1727; /* «Black blue»: datos de las tarjetas del mapa */
+
+  /* No vienen de Figma: el diseño no dibuja estados de hover. */
+  --brand-300-hover: #4c1c80;
+  --brand-300-tint: rgba(95, 36, 159, 0.08);
+
+  /* Espaciado (space/*, spacing/*) */
+  --space-2xs: 4px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-section: 96px;
+
+  --radius-full: 9999px;
+  --radius-card: 16px;
+  --radius-panel: 24px;
+
+  /* Tipografías. DM Sans fija el eje óptico en 14 en todo el archivo
+     (fontVariationSettings "opsz" 14): sin eso el navegador elige el corte
+     óptico por tamaño y los títulos grandes salen más finos que en Figma. */
+  --font-display: 'DM Sans Variable', 'DM Sans', system-ui, sans-serif;
+  --font-body: 'Roboto', system-ui, sans-serif;
+  --font-note: 'Roboto Condensed', 'Roboto', system-ui, sans-serif;
+
+  /* Layout. El contenido mide 1200 (x = 120 → 1320 en el frame de 1440) y los
+     paneles redondeados (hero, proyectos, preguntas) 1396, a 22 px del borde.
+     En pantallas más anchas que el frame los paneles no pasan de 1396 y se
+     centran, igual que el contenido; las bandas oscuras sí van de lado a lado. */
+  --contenido: 1200px;
+  --margen: 24px;
+  --margen-panel: 12px;
+  --ancho-panel: min(1396px, 100% - 2 * var(--margen-panel));
+}
+
+@media (min-width: 768px) {
+  :root {
+    --margen: 40px;
+    --margen-panel: 22px;
+  }
+}
+
+/* Desde 1240 entran las composiciones de escritorio, que necesitan los 1200
+   de contenido completos. */
+@media (min-width: 1240px) {
+  :root {
+    --margen: 20px;
+  }
+}
+
+/* ============================== BASE ============================== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  scroll-behavior: smooth;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--neutral-100);
+  color: var(--ink-300);
+  font-family: var(--font-body);
+  font-size: 16px;
+  line-height: 22px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Elexa/Mobile/Content/Body regular — 16/20. */
+@media (max-width: 767px) {
+  body {
+    line-height: 20px;
+  }
+}
+
+h1,
+h2,
+h3,
+h4,
+p,
+ul,
+ol,
+figure {
+  margin: 0;
+}
+
+/* Con :where() la regla no pesa nada y cualquier clase la pisa (la pista del
+   carrusel, por ejemplo, necesita su propio relleno). */
+:where(ul[role='list'], ol[role='list']) {
+  list-style: none;
+  padding: 0;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+a {
+  color: inherit;
+}
+
+button {
+  font: inherit;
+}
+
+:focus-visible {
+  outline: 3px solid var(--accent-300);
+  outline-offset: 3px;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Las secciones con ancla quedan por debajo de la barra, que está siempre
+   arriba (21 + 80 de alto) al saltar. */
+[id] {
+  scroll-margin-top: 124px;
+}
+
+/* ============================== CONTENEDOR ============================== */
+.contenedor {
+  width: min(var(--contenido), 100% - 2 * var(--margen));
+  margin-inline: auto;
+}
+
+/* ============================== TIPOGRAFÍA ==============================
+   Estilos de texto del archivo (Elexa/Desktop/… y Elexa/Mobile/…). El -2 % de
+   letter-spacing de Figma es -0.02em. Bajo 768 px van los de Mobile; entre
+   768 y 1240, un paso intermedio. */
+.display {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-variation-settings: 'opsz' 14;
+  letter-spacing: -0.02em;
+}
+
+/* Elexa/Desktop/Titles/Banner — 96/82; Mobile/Titles/Banner — 60/62. Como
+   el Header 1, baja en proporción en teléfonos de menos de 390 para que
+   «disponibles» o «proyectos» no se salgan. */
+.t-banner {
+  font-size: min(60px, 15.4vw);
+  line-height: 1.0334;
+}
+/* Header 1 — 60/58; Mobile/Header 1 — 48/52. El diseño lo usa en 342 de
+   ancho: en teléfonos más angostos baja en proporción para que una palabra
+   larga («diferenciamos») no se salga. */
+.t-h1 {
+  font-size: min(48px, 12.3vw);
+  line-height: 1.0834;
+}
+/* Header 2 — 48/46; Mobile/Header 2 — 30/34 */
+.t-h2 {
+  font-size: 30px;
+  line-height: 34px;
+}
+/* Header 3 — 36/38 */
+.t-h3 {
+  font-size: 28px;
+  line-height: 32px;
+}
+/* Header 4 — 24/30; Mobile/Header 4 — 20/24 */
+.t-h4 {
+  font-size: 20px;
+  line-height: 24px;
+}
+
+@media (min-width: 768px) {
+  .t-banner {
+    font-size: 72px;
+    line-height: 64px;
+  }
+  .t-h1 {
+    font-size: 48px;
+    line-height: 48px;
+  }
+  .t-h2 {
+    font-size: 40px;
+    line-height: 40px;
+  }
+}
+
+@media (min-width: 1240px) {
+  .t-banner {
+    font-size: 96px;
+    line-height: 82px;
+  }
+  .t-h1 {
+    font-size: 60px;
+    line-height: 58px;
+  }
+  .t-h2 {
+    font-size: 48px;
+    line-height: 46px;
+  }
+  .t-h3 {
+    font-size: 36px;
+    line-height: 38px;
+  }
+  .t-h4 {
+    font-size: 24px;
+    line-height: 30px;
+  }
+}
+
+/* La palabra en morado de los títulos («hacemos», «juntos.», «tres»…). */
+.acento {
+  color: var(--brand-300);
+}
+
+/* ============================== BOTONES ==============================
+   Componente «Button» del archivo: Roboto Bold 20/24, 12 × 24 de relleno,
+   píldora, 48 de alto. El borde de 1 px va en los dos tipos (transparente en
+   el relleno) para que midan lo mismo: en Figma el trazo es interior y no
+   suma alto. */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  min-height: 48px;
+  padding: 11px 23px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 20px;
+  line-height: 24px;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+}
+
+.btn--primario {
+  background: var(--brand-300);
+  color: var(--neutral-100);
+}
+.btn--primario:hover {
+  background: var(--brand-300-hover);
+}
+
+.btn--borde {
+  background: transparent;
+  border-color: var(--brand-300);
+  color: var(--brand-300);
+}
+.btn--borde:hover {
+  background: var(--brand-300-tint);
+}
+
+/* Un enlace sin destino todavía (ver src/data/site.ts) se ve igual pero no
+   reacciona. */
+a.btn:not([href]) {
+  pointer-events: none;
+}
+
+/* ============================== MUESCAS ==============================
+   Tarjeta con esquinas mordidas (ver src/lib/formas.ts). El elemento lleva
+   `estiloMuescas()` en su style; acá se aplica.
+
+   · .muescas         el recorte: rectángulo redondeado menos cada muesca.
+   · .muescas__trazo  capa encima del contenido con el borde gris de 2 px:
+                      un box-shadow interior para los lados rectos y, de
+                      fondo, los tramos que bordean cada muesca. La máscara
+                      del padre la recorta junto con todo lo demás. */
+/* Sin border-radius: las cuatro esquinas las redondea la máscara (ver el
+   porqué en src/lib/formas.ts). */
+.muescas {
+  position: relative;
+  overflow: hidden;
+  -webkit-mask: var(--muescas-mascara);
+  -webkit-mask-composite: source-out, source-over, source-over, source-over, source-over;
+  mask: var(--muescas-mascara);
+  mask-composite: subtract, add, add, add, add;
+}
+
+.muescas__trazo {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  box-shadow: inset 0 0 0 2px var(--neutral-300);
+  background: var(--muescas-trazo);
+}

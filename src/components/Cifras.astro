@@ -1,0 +1,137 @@
+---
+/* Banda de cifras — «Frame 7» (6:525), 1440 × 154, de lado a lado sobre
+   palette/ink/400. Detrás, el símbolo de Elexa gigante («simbolo», 12:529:
+   1671 × 1833, en multiply) del que sólo asoman las puntas; el frame recorta
+   el resto.
+
+   Los cuatro bloques tienen el ancho fijo del diseño para que los números
+   queden donde están en Figma; bajo 1240 pasan a una rejilla.
+
+   Móvil — «Frame 7» (303:4483), 390 × 324: los cuatro bloques en columna con
+   el mismo ancho fijo (así los textos parten en dos líneas como en Figma) y
+   su propia exportación del símbolo (303:4484, 537 × 524). El diseño móvil
+   pone primero «+8 Años construyendo en Cali»; el escritorio sigue con «+7»
+   al final, así que se deja el orden y la cifra del sitio. */
+const cifras = [
+  { numero: '+30', texto: ['Proyectos colectivos'], ancho: 227 },
+  { numero: '+300', texto: ['Socios vinculados'], ancho: 256 },
+  { numero: '+$100', texto: ['Mil millones en', 'portafolio de proyectos'], ancho: 366 },
+  { numero: '+7', texto: ['Años construyendo', 'en Cali'], ancho: 229 },
+];
+---
+
+<section class="cifras" aria-label="Elexa en cifras">
+  <picture>
+    <source media="(max-width: 767px)" srcset="/img/cifras/simbolo-movil.svg" width="537" height="524.284" />
+    <img class="cifras__simbolo" src="/img/deco/simbolo-cifras.svg" alt="" width="1671" height="1833" loading="lazy" />
+  </picture>
+  <ul class="cifras__lista contenedor" role="list">
+    {
+      cifras.map((cifra) => (
+        <li class="cifras__item" style={`--ancho:${cifra.ancho}px`}>
+          <span class="cifras__numero display t-h1">{cifra.numero}</span>
+          <span class="cifras__texto">
+            {cifra.texto.map((linea, i) => (
+              <>
+                {i > 0 && <br />}
+                {linea}
+              </>
+            ))}
+          </span>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<style>
+  .cifras {
+    position: relative;
+    overflow: hidden;
+    margin-top: 22px;
+    padding-block: var(--space-2xl);
+    background: var(--ink-400);
+    color: var(--neutral-100);
+  }
+
+  /* En el frame de 1440 arranca en x = −116, o sea centrado: se centra para
+     que siga así en pantallas de cualquier ancho. */
+  .cifras__simbolo {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    translate: -50%;
+    width: 1671px;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  .cifras__lista {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+
+  @media (min-width: 640px) {
+    .cifras__lista {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  .cifras__item {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .cifras__numero {
+    flex-shrink: 0;
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  /* La banda mide 324 con los bloques centrados: 28 arriba y abajo, 20 entre
+     filas, el número (Mobile/Header 1, 48/52) y el texto centrados en alto.
+     El de «+$100» mide 366, más que la columna: se queda en el ancho de ella. */
+  @media (max-width: 767px) {
+    .cifras {
+      margin-top: 64px;
+      padding-block: 28px;
+    }
+
+    .cifras__simbolo {
+      top: 28px;
+      width: 537px;
+    }
+
+    .cifras__lista {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 20px;
+    }
+
+    .cifras__item {
+      align-items: center;
+      width: var(--ancho);
+      max-width: 100%;
+    }
+
+    .cifras__texto {
+      flex: 1;
+      min-width: 0;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .cifras__lista {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .cifras__item {
+      width: var(--ancho);
+    }
+  }
+</style>

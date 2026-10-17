@@ -1,0 +1,456 @@
+---
+/* «Cómo nos diferenciamos» — «Frame 50» (276:578): comprar un apartamento
+   frente a ser socio de Elexa, criterio por criterio.
+
+   Es una tabla de verdad (se lee fila por fila con un lector de pantalla).
+   Cada fila es una rejilla con las mismas columnas, así que las celdas
+   quedan alineadas sin depender del layout de tabla; los `role` explícitos
+   mantienen la semántica que el navegador quita al cambiarles el display.
+
+   · Escritorio: las dos columnas son los vectores del archivo (276:580 y
+     276:616, 407 y 406 × 670, con la muesca arriba a la izquierda) puestos
+     detrás de la tabla, con su ícono de 74 en la muesca (276:606 «$» sobre
+     neutral/300 y 276:617 el símbolo sobre brand/300). Las filas miden lo
+     que separan las líneas en Figma (116 la cabecera, 132 las tres
+     primeras, 158 la última) para que el texto caiga sobre las columnas.
+   · Móvil («Frame 50», 303:4451): columnas lisas de radio 8 (303:4453 y
+     303:4454, 110 y 108 × 520) con su ícono suelto arriba, sin círculo
+     («attach_money» 303:4472, 44, y el símbolo 303:4473, 30 × 33), y el
+     texto en Roboto 14/18. Entre 768 y 1240 se usa esta misma versión, más
+     ancha.
+
+   Las líneas entre filas son «Vector 2» (accent/300, 1 px), estiradas al
+   ancho de la tabla y por encima de las columnas, como en el diseño. */
+
+/** Las celdas que el diseño parte en un lugar fijo van en tramos, con un
+    salto de línea entre cada dos: en las dos versiones (`siempre`) o sólo en
+    una (`escritorio` desde 1240, `movil` bajo 768). Donde no hay salto, el
+    texto parte solo. */
+type Salto = 'siempre' | 'escritorio' | 'movil';
+type Celda = string | { tramos: string[]; saltos: Salto[] };
+
+const filas: { criterio: string; apartamento: Celda; elexa: Celda }[] = [
+  {
+    criterio: 'Con menos capital',
+    apartamento: 'Mínimo $200 millones',
+    elexa: { tramos: ['$120', 'millones'], saltos: ['movil'] },
+  },
+  { criterio: 'Mayor diversificación', apartamento: '1 arrendatario', elexa: '10 + arrendatarios' },
+  {
+    criterio: 'Rentabilidad objetivo',
+    apartamento: { tramos: ['Valorización', '+ 3-4% anual'], saltos: ['siempre'] },
+    elexa: { tramos: ['Valorización', '+ 10%', 'anual'], saltos: ['escritorio', 'movil'] },
+  },
+  {
+    criterio: 'Gestión',
+    apartamento: 'Sí',
+    elexa: 'Nosotros nos encargamos de todo y así te evitamos dolores de cabeza.',
+  },
+];
+---
+
+<section class="diferencias contenedor" aria-labelledby="diferencias-titulo">
+  <h2 class="display t-h1" id="diferencias-titulo">Cómo nos <span class="acento">diferenciamos</span></h2>
+
+  <div class="comparativa">
+    <img
+      class="comparativa__columna comparativa__columna--apartamento"
+      src="/img/diferencias/columna-gris.svg"
+      alt=""
+      width="407"
+      height="670"
+      loading="lazy"
+    />
+    <img
+      class="comparativa__columna comparativa__columna--elexa"
+      src="/img/diferencias/columna-morada.svg"
+      alt=""
+      width="406"
+      height="670"
+      loading="lazy"
+    />
+    <span class="comparativa__icono comparativa__icono--apartamento" aria-hidden="true">
+      <img src="/img/diferencias/dinero.svg" alt="" width="44" height="44" />
+    </span>
+    <span class="comparativa__icono comparativa__icono--elexa" aria-hidden="true">
+      <picture>
+        <source media="(max-width: 1239px)" srcset="/img/diferencias/simbolo-movil.svg" width="29.97" height="33" />
+        <img src="/img/diferencias/simbolo.svg" alt="" width="38.18" height="42.05" />
+      </picture>
+    </span>
+
+    <table class="tabla" role="table">
+      <thead role="rowgroup">
+        <tr class="tabla__fila tabla__fila--cabecera" role="row">
+          <td role="cell"></td>
+          <th class="tabla__apartamento display" scope="col" role="columnheader">Comprar un apartamento</th>
+          <th class="tabla__elexa display" scope="col" role="columnheader">
+            Ser socio <br class="tabla__salto--escritorio" />de Elexa
+          </th>
+        </tr>
+      </thead>
+      <tbody role="rowgroup">
+        {
+          filas.map((fila) => (
+            <tr class="tabla__fila" role="row">
+              <th class="tabla__criterio display" scope="row" role="rowheader">
+                {fila.criterio}
+              </th>
+              {[fila.apartamento, fila.elexa].map((celda, i) => (
+                <td class:list={['display', i === 0 ? 'tabla__apartamento' : 'tabla__elexa']} role="cell">
+                  {typeof celda === 'string'
+                    ? celda
+                    : celda.tramos.map((tramo, j) => (
+                        <>
+                          {j > 0 && (
+                            <>
+                              {' '}
+                              <br
+                                class:list={{
+                                  [`tabla__salto--${celda.saltos[j - 1]}`]: celda.saltos[j - 1] !== 'siempre',
+                                }}
+                              />
+                            </>
+                          )}
+                          {tramo}
+                        </>
+                      ))}
+                </td>
+              ))}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<style>
+  .diferencias {
+    margin-top: 85px;
+  }
+
+  h2 {
+    color: var(--ink-500);
+  }
+
+  .comparativa {
+    position: relative;
+    margin-top: var(--space-lg);
+  }
+
+  /* ---------- Móvil y tablet: columnas lisas ---------- */
+  .comparativa__columna,
+  .comparativa__icono {
+    display: none;
+  }
+
+  /* Los íconos van en la misma rejilla que las filas (ver abajo), encima de
+     la cabecera de su columna: el «$» a 11 del borde de arriba y el símbolo
+     a 17, los dos centrados (en el diseño quedan a la misma altura). */
+  @media (max-width: 1239px) {
+    .comparativa {
+      display: grid;
+      grid-template-columns: minmax(0, 119fr) minmax(0, 110fr) minmax(0, 5fr) minmax(0, 108fr);
+    }
+
+    .tabla {
+      grid-area: 1 / 1 / 2 / -1;
+    }
+
+    .comparativa__icono {
+      position: relative;
+      z-index: 1;
+      display: block;
+      grid-row: 1;
+      justify-self: center;
+      align-self: start;
+    }
+    .comparativa__icono--apartamento {
+      grid-column: 2;
+      margin-top: 11px;
+    }
+    .comparativa__icono--elexa {
+      grid-column: 4;
+      margin-top: 17px;
+    }
+  }
+
+  .tabla,
+  .tabla thead,
+  .tabla tbody {
+    display: block;
+  }
+
+  .tabla {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  /* 342 de ancho: criterio 103 (+16 de aire), apartamento 110, 5 de aire y
+     Elexa 108. Las columnas no crecen con el contenido (minmax(0, …)): cada
+     fila es su propia rejilla y en un teléfono angosto una palabra larga
+     («diversificación») la correría respecto de las demás; así la palabra
+     se mete en el aire de su derecha. */
+  .tabla .tabla__fila {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 119fr) minmax(0, 110fr) minmax(0, 5fr) minmax(0, 108fr);
+  }
+
+  .tabla .tabla__fila > :nth-child(1) {
+    grid-column: 1;
+  }
+  .tabla .tabla__fila > :nth-child(2) {
+    grid-column: 2;
+  }
+  .tabla .tabla__fila > :nth-child(3) {
+    grid-column: 4;
+  }
+
+  /* Elexa/Mobile/Content/Body regular sm (14/18); la clase `display` la
+     usan sólo en escritorio. */
+  .tabla th,
+  .tabla td {
+    display: grid;
+    place-items: center;
+    padding: 0;
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-variation-settings: normal;
+    letter-spacing: 0;
+    font-size: 14px;
+    line-height: 18px;
+    text-align: center;
+  }
+
+  .tabla .tabla__apartamento {
+    background: var(--neutral-300);
+    color: var(--brand-300);
+  }
+
+  .tabla .tabla__elexa {
+    padding-inline: 7px;
+    background: var(--brand-300);
+    color: var(--neutral-100);
+  }
+
+  /* Body bold sm: los encabezados y todo lo de Elexa. */
+  .tabla th,
+  .tabla .tabla__elexa {
+    font-weight: 700;
+  }
+
+  /* Alturas del frame móvil: la cabecera mide 97 (el texto arranca a 61 del
+     borde, debajo del ícono), la primera fila 89, las dos siguientes 98 (lo
+     que separan las líneas) y la última 138: 520, el alto de las columnas. */
+  .tabla .tabla__fila--cabecera > * {
+    padding: 61px 3px 0;
+    border-radius: 8px 8px 0 0;
+  }
+
+  .tabla .tabla__fila--cabecera > :first-child {
+    background: none;
+  }
+
+  .tabla tbody .tabla__fila {
+    min-height: 98px;
+  }
+
+  .tabla tbody .tabla__fila:first-child {
+    min-height: 89px;
+  }
+
+  .tabla tbody .tabla__fila:last-child {
+    min-height: 138px;
+  }
+
+  /* El texto queda centrado en la fila, 2 px por debajo del medio, como
+     cae en promedio en el diseño. */
+  .tabla tbody .tabla__fila > * {
+    padding-block: 14px 10px;
+  }
+
+  .tabla tbody .tabla__fila:last-child > * {
+    padding-top: 22px;
+    padding-bottom: 8px;
+  }
+
+  /* El texto de Elexa llena la fila (de 22 a 8 de los bordes); «Gestión» y
+     «Sí» van un poco más arriba del centro, a la altura de su tercer renglón. */
+  @media (max-width: 1239px) {
+    .tabla tbody .tabla__fila:last-child > :not(.tabla__elexa) {
+      padding-bottom: 18px;
+    }
+  }
+
+  .tabla tbody .tabla__apartamento {
+    padding-inline: 14px;
+  }
+
+  .tabla tbody .tabla__fila:last-child > :not(:first-child) {
+    border-radius: 0 0 8px 8px;
+  }
+
+  /* Elexa/Mobile/Content/Body bold. */
+  .tabla .tabla__criterio {
+    place-items: center start;
+    padding-right: 16px;
+    font-size: 16px;
+    line-height: 20px;
+    color: var(--ink-300);
+    text-align: left;
+    hyphens: auto;
+  }
+
+  .tabla__salto--escritorio {
+    display: none;
+  }
+
+  /* La línea, por encima de las columnas. */
+  .tabla tbody .tabla__fila:not(:last-child)::after {
+    content: '';
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 1px;
+    background: url('/img/diferencias/linea-movil.svg') 0 0 / 100% 1px no-repeat;
+  }
+
+  @media (min-width: 768px) {
+    .tabla__salto--movil {
+      display: none;
+    }
+
+    .tabla th,
+    .tabla td {
+      font-size: 16px;
+      line-height: 22px;
+    }
+
+    .tabla .tabla__criterio {
+      font-size: 20px;
+      line-height: 24px;
+    }
+  }
+
+  /* ---------- Escritorio: las columnas del archivo ----------
+     Medidas desde la esquina de arriba a la izquierda del contenido
+     (x − 120 en el frame de 1440; las columnas arrancan en y = 1751). */
+  @media (min-width: 1240px) {
+    .diferencias {
+      margin-top: 179px;
+    }
+
+    .comparativa {
+      margin-top: 64px;
+    }
+
+    .comparativa__columna {
+      position: absolute;
+      top: 0;
+      display: block;
+      max-width: none;
+    }
+    .comparativa__columna--apartamento {
+      left: 305px;
+    }
+    .comparativa__columna--elexa {
+      left: 793px;
+    }
+
+    .comparativa__icono {
+      position: absolute;
+      top: 13px;
+      display: grid;
+      place-items: center;
+      width: 74px;
+      height: 74px;
+      border-radius: var(--radius-full);
+    }
+    .comparativa__icono--apartamento {
+      left: 305px;
+      background: var(--neutral-300);
+    }
+    .comparativa__icono--elexa {
+      left: 793px;
+      background: var(--brand-300);
+    }
+
+    .tabla {
+      position: relative;
+    }
+
+    .tabla .tabla__fila {
+      grid-template-columns: 305px 407px 81px 406px;
+      height: 132px;
+    }
+
+    .tabla .display {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-variation-settings: 'opsz' 14;
+      letter-spacing: -0.02em;
+    }
+
+    .tabla .tabla__apartamento,
+    .tabla .tabla__elexa {
+      background: none;
+    }
+
+    /* Header 3, a 19 del borde de arriba de la columna y corrido a la
+       derecha de la muesca. */
+    .tabla .tabla__fila--cabecera {
+      height: 116px;
+    }
+    .tabla .tabla__fila--cabecera > * {
+      align-self: start;
+      font-size: 36px;
+      line-height: 38px;
+    }
+    .tabla .tabla__fila--cabecera > .tabla__apartamento {
+      padding: 19px 56px 0 104px;
+    }
+    .tabla .tabla__fila--cabecera > .tabla__elexa {
+      padding: 19px 40px 0 103px;
+    }
+
+    /* Header 4 (24/30). */
+    .tabla tbody .tabla__fila > * {
+      padding: 0 13px;
+      font-size: 24px;
+      line-height: 30px;
+    }
+
+    .tabla tbody .tabla__fila:last-child {
+      height: 158px;
+    }
+    .tabla tbody .tabla__fila:last-child > * {
+      align-items: start;
+      padding: 38px 13px 0;
+    }
+    .tabla tbody .tabla__fila:last-child > .tabla__elexa {
+      padding-inline: 44px;
+    }
+
+    /* Los criterios: DM Sans Black 30/30, 247 de ancho. Astro marca cada
+       parte del selector con un atributo, así que éste tiene que tener tantas
+       partes como el de arriba (`.tabla__fila > *`) para ganarle. */
+    .tabla tbody .tabla__fila > .tabla__criterio {
+      padding-right: 58px;
+      padding-left: 0;
+      font-size: 30px;
+      line-height: 30px;
+      hyphens: manual;
+    }
+
+    .tabla__salto--escritorio {
+      display: inline;
+    }
+
+    .tabla tbody .tabla__fila:not(:last-child)::after {
+      background-image: url('/img/diferencias/linea.svg');
+    }
+  }
+</style>

@@ -1,0 +1,121 @@
+---
+/* «Proyectos abiertos» — componente 130:692 del archivo, instanciado sobre la
+   landing en 130:693 (1396 × 1016, panel gris a 22 px de los bordes).
+
+   El contenido de las tarjetas sale de la tabla `proyectos` de Supabase (ver
+   src/lib/proyectos.ts): esta sección consulta en el servidor, en cada pedido,
+   y le pasa la lista a la isla de React. El diseño tiene tres variantes según
+   cuántos proyectos haya abiertos, y la isla elige sola:
+   · 1  → una tarjeta ancha (1202), título de 60 y «Ver proyecto»;
+   · 2  → dos tarjetas de 590, título de 36 y «Ver más»;
+   · 3+ → las mismas tarjetas en un carrusel, con flechas a los costados.
+
+   En el teléfono es la instancia «Proyectos abiertos mobile» (303:4482, del
+   componente 296:1283): panel de 366 con 16 × 12 de relleno y 48 entre las
+   piezas, y las tarjetas una debajo de otra sea cuál sea la variante (ver
+   proyectos.css); «Ver más proyectos» ocupa todo el ancho.
+
+   Si no hay ninguno publicado (o Supabase no responde), la sección no sale. */
+import CarruselProyectos from './CarruselProyectos';
+import { getProyectosAbiertos } from '../lib/proyectos';
+import { PROYECTOS_URL } from '../data/site';
+
+const proyectos = await getProyectosAbiertos();
+---
+
+{
+  proyectos.length > 0 && (
+    <section class="proyectos" id="proyectos" aria-labelledby="proyectos-titulo">
+      <div class="proyectos__cabecera">
+        <h2 class="display t-h1" id="proyectos-titulo">
+          Proyectos
+          <br />
+          <span class="acento">abiertos</span>
+        </h2>
+        <p>
+          <strong>Construimos, arrendamos y administramos</strong> el activo. Usted recibe reportes periódicos y la
+          distribución de excedentes.
+        </p>
+      </div>
+
+      <CarruselProyectos client:visible={{ rootMargin: '400px' }} proyectos={proyectos} />
+
+      <a class="btn btn--primario proyectos__mas" href={PROYECTOS_URL}>
+        Ver más proyectos
+      </a>
+    </section>
+  )
+}
+
+<style>
+  /* Debajo de «Cómo nos diferenciamos»: en el frame móvil las columnas
+     terminan en y = 2322 y el panel arranca en 2407. */
+  .proyectos {
+    /* El relleno lateral del panel. La pista del carrusel lo usa para
+       estirarse hasta el borde del panel (ver proyectos.css). */
+    --panel-pad: 12px;
+
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-2xl);
+    width: var(--ancho-panel);
+    margin: 85px auto 0;
+    padding: var(--space-md) var(--panel-pad);
+    border-radius: var(--radius-panel);
+    background: var(--neutral-200);
+    overflow: clip;
+  }
+
+  .proyectos__cabecera {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    width: 100%;
+    color: var(--ink-500);
+  }
+
+  .proyectos__cabecera p {
+    max-width: 487px;
+  }
+
+  @media (max-width: 767px) {
+    .proyectos__mas {
+      align-self: stretch;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .proyectos {
+      --panel-pad: 40px;
+      margin-top: 64px;
+      padding-block: 43px;
+    }
+
+    .proyectos__cabecera {
+      flex-direction: row;
+      gap: 124px;
+    }
+
+    .proyectos__cabecera h2 {
+      flex: 0 0 auto;
+    }
+  }
+
+  /* Debajo de «Cómo nos diferenciamos»: las columnas terminan en y = 2421 y
+     el panel arranca en 2589. */
+  @media (min-width: 1240px) {
+    .proyectos {
+      --panel-pad: 98px;
+      margin-top: 168px;
+    }
+
+    .proyectos__cabecera h2 {
+      width: 589px;
+    }
+
+    .proyectos__cabecera p {
+      flex: 1;
+    }
+  }
+</style>

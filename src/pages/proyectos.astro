@@ -1,0 +1,75 @@
+---
+/* Nuestros proyectos — frame "Desktop - 3" (48:1398); en el teléfono,
+   «iPhone 13 & 14 - 3» (303:4780).
+
+   Se arma en el servidor en cada pedido, como la portada: las tarjetas grandes
+   salen de la tabla `proyectos` (los mismos proyectos abiertos de la portada)
+   y el mapa de `proyectos_anteriores`. El CDN guarda la página 60 s. */
+export const prerender = false;
+
+import Base from '../layouts/Base.astro';
+import EncabezadoPagina from '../components/EncabezadoPagina.astro';
+import TarjetaProyectoGrande from '../components/proyectos/TarjetaProyectoGrande.astro';
+import ProyectosAnteriores from '../components/proyectos/ProyectosAnteriores.astro';
+import BandaEspacios from '../components/proyectos/BandaEspacios.astro';
+import { getProyectosAbiertos } from '../lib/proyectos';
+
+const abiertos = await getProyectosAbiertos();
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
+---
+
+<Base
+  title="Nuestros proyectos — Elexa"
+  description="Proyectos inmobiliarios colectivos abiertos y más de 35 proyectos anteriores de Elexa en Cali."
+  path="/proyectos"
+  separacionPie={0}
+>
+  <EncabezadoPagina>
+    Nuestros <span class="acento">proyectos</span>
+    <Fragment slot="texto">
+      <strong>9 años desarrollando los proyectos que Cali necesita.</strong> Desde edificios mixtos hasta bodegas y locales
+      comerciales, cada proyecto tiene su propio modelo de inversión. Descubre en qué estamos trabajando y qué oportunidades
+      están abiertas hoy.
+    </Fragment>
+  </EncabezadoPagina>
+
+  {
+    abiertos.length > 0 && (
+      <ul class="abiertos contenedor" role="list">
+        {abiertos.map((proyecto) => (
+          <li>
+            <TarjetaProyectoGrande proyecto={proyecto} />
+          </li>
+        ))}
+      </ul>
+    )
+  }
+
+  <ProyectosAnteriores />
+  <BandaEspacios />
+</Base>
+
+<style>
+  .abiertos {
+    display: flex;
+    flex-direction: column;
+    gap: 48px;
+    margin-top: 64px;
+  }
+
+  /* «Proyectos abiertos mobile» (303:4845): la primera tarjeta arranca 77
+     debajo del párrafo del encabezado. */
+  @media (max-width: 767px) {
+    .abiertos {
+      margin-top: 77px;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .abiertos {
+      gap: 94px;
+      margin-top: 99px;
+    }
+  }
+</style>

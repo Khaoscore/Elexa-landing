@@ -1,0 +1,284 @@
+---
+/* «Nuestro equipo» — título «Frame 58» (48:1261) y la grilla de tarjetas
+   (48:1268, 48:1350, 48:1366, 48:1382): tres columnas de 387 con 20 entre
+   columnas y 56 entre filas. El nombre y el cargo van a 27 del borde
+   izquierdo y a 394 del de arriba, con sombra para leerse sobre la foto.
+
+   En el teléfono (título «Frame 58», 303:4761; tarjetas «Frame 59»,
+   303:4764) el título baja a Mobile/Header 1 y las tarjetas van de a una,
+   a 32 entre sí: es la tarjeta de escritorio achicada a 342 de ancho, con el
+   nombre y el cargo achicados igual (× 0,8837).
+
+   Al pasar el mouse por encima («Frame 66») la tarjeta se tiñe de morado
+   con la misma forma de la foto —la capa usa la foto de máscara— y en el
+   centro sale el correo y el teléfono (que abre su WhatsApp), o en los
+   aliados el logo de su empresa. En el teléfono, la de contacto sale al
+   tocarla (la tarjeta es enfocable y se muestra mientras tenga el foco); la
+   del aliado es un enlace a su sitio y el toque lo abre.
+
+   Los datos están en src/data/equipo.ts. */
+import { equipo, type Empresa } from '../../data/equipo';
+
+/* Como en la banda de logos: a igual alto los anchos pesan más, así que el
+   alto baja con la proporción ^ 0,4. Es el alto en la tarjeta de 387. */
+const altoLogo = ({ ancho, alto }: Empresa['logo']) => Math.round(110 * (ancho / alto) ** -0.4);
+---
+
+<section class="equipo contenedor" aria-labelledby="equipo-titulo">
+  <header class="equipo__cabecera">
+    <h2 class="display t-banner" id="equipo-titulo">Nuestro <span class="acento">equipo</span></h2>
+    <p>Poco a poco hemos construido un equipo de expertos que hacen estos proyectos posibles.</p>
+  </header>
+
+  <ul class="equipo__grilla" role="list">
+    {
+      equipo.map((persona) => {
+        const { empresa } = persona;
+        const contacto = !empresa && Boolean(persona.correo || persona.telefono);
+        const mascara = `--foto: url(${persona.foto})`;
+        return (
+          <li class:list={['persona', { 'persona--capa': empresa || contacto }]} tabindex={contacto ? 0 : undefined}>
+            <img class="persona__foto" src={persona.foto} alt={persona.nombre} width="389" height="488" loading="lazy" />
+            <div class="persona__texto">
+              <p class="persona__nombre display t-h4">{persona.nombre}</p>
+              {empresa && <p class="persona__empresa">{empresa.nombre}</p>}
+              <p>{persona.cargo}</p>
+            </div>
+            {empresa && (
+              <a class="persona__capa" href={empresa.sitio} target="_blank" rel="noopener" style={mascara}>
+                <img
+                  class="persona__logo"
+                  src={empresa.logo.src}
+                  alt={empresa.nombre}
+                  width={empresa.logo.ancho}
+                  height={empresa.logo.alto}
+                  loading="lazy"
+                  style={`--alto: ${altoLogo(empresa.logo)}`}
+                />
+                <span class="sr-only">(se abre en una pestaña nueva)</span>
+              </a>
+            )}
+            {contacto && (
+              <div class="persona__capa persona__capa--contacto" style={mascara}>
+                {persona.correo && (
+                  <a class="persona__correo display" href={`mailto:${persona.correo}`}>
+                    {persona.correo}
+                  </a>
+                )}
+                {persona.telefono && (
+                  <a href={`https://wa.me/${persona.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener">
+                    {persona.telefono}
+                    <span class="sr-only">(WhatsApp, se abre en una pestaña nueva)</span>
+                  </a>
+                )}
+              </div>
+            )}
+          </li>
+        );
+      })
+    }
+  </ul>
+</section>
+
+<style>
+  .equipo {
+    margin-top: 96px;
+  }
+
+  .equipo__cabecera {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    color: var(--brand-500);
+    text-align: center;
+  }
+
+  .equipo__grilla {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 32px 20px;
+    margin-top: 48px;
+  }
+
+  .persona {
+    position: relative;
+    aspect-ratio: 387 / 486;
+    container-type: inline-size;
+    color: var(--neutral-100);
+  }
+
+  /* El WebP trae 1 px de margen por el trazo: 389 × 488. La capa morada
+     ocupa lo mismo para que la máscara calce con la foto. */
+  .persona__foto,
+  .persona__capa {
+    position: absolute;
+    top: -0.21%;
+    left: -0.26%;
+    width: 100.52%;
+    max-width: none;
+    height: 100.41%;
+  }
+
+  /* 394 / 486 = 81.07 %; 27 / 387 = 6.98 %. */
+  .persona__texto {
+    position: absolute;
+    top: 81.07%;
+    left: 6.98%;
+    right: 24%;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    filter: drop-shadow(0 0 6px rgba(31, 38, 43, 0.6));
+    transition: opacity 0.25s ease;
+  }
+
+  .persona__texto p {
+    margin: 0;
+  }
+
+  /* Nombre y empresa van pegados; el cargo, 4 más abajo. */
+  .persona__texto .persona__empresa {
+    margin-top: -4px;
+    font-weight: 700;
+  }
+
+  /* «Frame 66»: brand/300 al 75 % sobre la foto. El morado va en ::before,
+     recortado con la foto misma; si la máscara fuera de la capa también se
+     comería el contorno del foco. */
+  .persona__capa {
+    isolation: isolate;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding-inline: 6.98%;
+    color: inherit;
+    text-align: center;
+    text-decoration: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+  }
+
+  .persona__capa::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    background: rgba(95, 36, 159, 0.75);
+    -webkit-mask: var(--foto) center / 100% 100% no-repeat;
+    mask: var(--foto) center / 100% 100% no-repeat;
+  }
+
+  /* La de contacto además se va con `visibility`, para que escondida no se
+     puedan tocar el correo o el teléfono sin verlos. */
+  .persona__capa--contacto {
+    visibility: hidden;
+    transition:
+      opacity 0.25s ease,
+      visibility 0s linear 0.25s;
+  }
+
+  .persona__capa--contacto a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .persona__capa--contacto a:hover {
+    text-decoration: underline;
+  }
+
+  .persona__logo {
+    width: auto;
+    height: calc(var(--alto) * 100cqw / 387);
+  }
+
+  /* Header 4 (24/30) en la tarjeta de 387; baja con ella para que
+     «contabilidad@elexa.com.co» quepa en una línea. */
+  .persona__correo {
+    font-size: calc(24 * 100cqw / 387);
+    line-height: calc(30 * 100cqw / 387);
+    overflow-wrap: anywhere;
+  }
+
+  .persona--capa:is(:hover, :focus-visible, :has(:focus-visible)) .persona__capa {
+    opacity: 1;
+    visibility: visible;
+    transition: opacity 0.25s ease;
+  }
+
+  .persona--capa:is(:hover, :focus-visible, :has(:focus-visible)) .persona__texto {
+    opacity: 0;
+  }
+
+  /* Sin mouse se abre al tocarla (la tarjeta toma el foco) y se cierra al
+     tocar afuera. */
+  @media (hover: none) {
+    .persona--capa:focus-within .persona__capa {
+      opacity: 1;
+      visibility: visible;
+      transition: opacity 0.25s ease;
+    }
+
+    .persona--capa:focus-within .persona__texto {
+      opacity: 0;
+    }
+  }
+
+  .persona--capa:focus-visible,
+  .persona__capa:focus-visible {
+    outline-offset: 6px;
+  }
+
+  /* Sobre «Sobre elexa», 64; el título a 24 del párrafo y las tarjetas a 46.
+     Los textos de la tarjeta se miden contra su ancho (cqw), así acompañan
+     a la foto en cualquier teléfono: 24/30 y 16/22 sobre 387, que en 342 dan
+     los 21,2/26,5 y 14,1/19,4 del diseño. */
+  @media (max-width: 767px) {
+    .equipo {
+      margin-top: 64px;
+    }
+
+    .equipo__cabecera {
+      gap: var(--space-lg);
+    }
+
+    /* Mobile/Header 1 (como .t-h1). */
+    .equipo__cabecera h2 {
+      font-size: min(48px, 12.3vw);
+      line-height: 1.0834;
+    }
+
+    .equipo__grilla {
+      margin-top: 46px;
+    }
+
+    .persona__texto {
+      gap: calc(4 * 100cqw / 387);
+      font-size: calc(16 * 100cqw / 387);
+      line-height: calc(22 * 100cqw / 387);
+    }
+
+    .persona__texto .persona__nombre {
+      font-size: calc(24 * 100cqw / 387);
+      line-height: calc(30 * 100cqw / 387);
+    }
+
+    .persona__texto .persona__empresa {
+      margin-top: calc(-4 * 100cqw / 387);
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .equipo {
+      margin-top: 204px;
+    }
+
+    .equipo__grilla {
+      grid-template-columns: repeat(3, 387px);
+      justify-content: space-between;
+      gap: 56px 20px;
+      margin-top: 90px;
+    }
+  }
+</style>

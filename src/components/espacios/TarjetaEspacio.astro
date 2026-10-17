@@ -1,0 +1,207 @@
+---
+/* Tarjeta de un espacio en alquiler — «Group 1» / «Group 2» de los frames
+   48:1969, 48:1990 y 48:2011: 590 × 669.5.
+
+   Medidas del trazado del vector 48:1971:
+   · muesca de arriba de 98.74 × 89.6 con el círculo magenta (accent/300) de
+     74 y el ícono «local_grocery_store»;
+   · muesca de abajo de 121.76 × 63.42 con la cajita de la flecha (96.92 ×
+     45.47, borde de 2 en neutral/300), pegada a la esquina;
+   · degradado de palette/ink/500 de transparente (22 %) a opaco (91 %), al
+     30 %, sobre la foto;
+   · texto a 37.56 del borde izquierdo: título y zona en Header 4, dirección
+     en Body regular entre los dos.
+
+   En el teléfono es «Group 1» / «Group 2» (303:5027, 303:5037), 342 × 388:
+   exactamente esta tarjeta al 58 % (342 / 590), con las esquinas de 9.28 y
+   el trazo de 1.16. Por eso la foto con sus muescas, el círculo del carrito
+   y la cajita de la flecha se dibujan a tamaño de escritorio y se achican con
+   `scale` (las muescas de formas.ts tienen el radio fijo en 16). El texto no
+   se achica: va en los estilos móviles (Header 3 24/28, Body 16/20 y
+   Header 4 20/24), a 22 del borde izquierdo y a 20 del de abajo.
+
+   Toda la tarjeta es un enlace a la ficha del espacio. */
+import type { Espacio } from '../../lib/espacios';
+import { estiloMuescas } from '../../lib/formas';
+
+interface Props {
+  espacio: Espacio;
+}
+
+const { espacio } = Astro.props;
+
+const forma = Object.entries(
+  estiloMuescas([
+    { esquina: 'tl', ancho: 98.74, alto: 89.6 },
+    { esquina: 'br', ancho: 121.76, alto: 63.42 },
+  ]),
+)
+  .map(([propiedad, valor]) => `${propiedad}:${valor}`)
+  .join(';');
+---
+
+<a class="espacio" href={`/espacios/${espacio.slug}`}>
+  <span class="espacio__marco muescas" style={forma}>
+    <img class="espacio__foto" src={espacio.imagen} alt={espacio.imagenAlt} loading="lazy" decoding="async" />
+    <span class="espacio__velo muescas__trazo" aria-hidden="true"></span>
+  </span>
+
+  <span class="espacio__texto">
+    <span class="espacio__titulo display t-h4">{espacio.titulo}</span>
+    {espacio.direccion && <span class="espacio__direccion">{espacio.direccion}</span>}
+    {espacio.zona && <span class="espacio__zona display t-h4">{espacio.zona}</span>}
+  </span>
+
+  <span class="espacio__icono" aria-hidden="true">
+    <img src="/img/iconos/carrito.svg" alt="" width="40" height="40" />
+  </span>
+
+  <span class="espacio__flecha" aria-hidden="true">
+    <img src="/img/iconos/flecha-espacio.svg" alt="" width="58.92" height="15.33" />
+  </span>
+</a>
+
+<style>
+  .espacio {
+    position: relative;
+    display: block;
+    height: 460px;
+    color: var(--neutral-100);
+    text-decoration: none;
+  }
+
+  .espacio__marco {
+    position: absolute;
+    inset: 0;
+    display: block;
+    background: var(--ink-500);
+  }
+
+  .espacio__foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+  .espacio:hover .espacio__foto {
+    transform: scale(1.03);
+  }
+
+  .espacio__velo {
+    background:
+      var(--muescas-trazo),
+      linear-gradient(180deg, rgba(15, 19, 22, 0) 22.12%, rgba(15, 19, 22, 0.3) 90.87%);
+  }
+
+  /* La línea de la zona va pegada a la dirección; entre título y dirección,
+     12. */
+  .espacio__texto {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    bottom: calc(63.42px + 12px);
+    display: flex;
+    flex-direction: column;
+    filter: drop-shadow(0 0 6px rgba(31, 38, 43, 0.6));
+  }
+
+  .espacio__direccion {
+    margin-top: 12px;
+  }
+
+  .espacio__icono {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 74px;
+    height: 74px;
+    border-radius: var(--radius-full);
+    background: var(--accent-300);
+  }
+
+  .espacio__flecha {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    width: 96.92px;
+    height: 45.47px;
+    padding: 8px 17px;
+    border: 2px solid var(--neutral-300);
+    border-radius: var(--radius-card);
+    transition: border-color 0.2s ease;
+  }
+  .espacio__flecha img {
+    width: 58.92px;
+    max-width: none;
+    height: auto;
+  }
+  .espacio:hover .espacio__flecha {
+    border-color: var(--accent-300);
+  }
+
+  /* La tarjeta de escritorio al 58 %: misma proporción (590 × 669.5). */
+  @media (max-width: 767px) {
+    .espacio {
+      --escala: 0.5797;
+      height: auto;
+      aspect-ratio: 590 / 669.5;
+    }
+
+    .espacio__marco {
+      inset: 0 auto auto 0;
+      width: calc(100% / var(--escala));
+      height: calc(100% / var(--escala));
+      transform: scale(var(--escala));
+      transform-origin: 0 0;
+    }
+
+    .espacio__texto {
+      right: 22px;
+      bottom: 20px;
+      left: 22px;
+      filter: drop-shadow(0 0 3.48px rgba(31, 38, 43, 0.6));
+    }
+
+    .espacio__titulo {
+      font-size: 24px;
+      line-height: 28px;
+    }
+
+    .espacio__direccion {
+      margin-top: 6.96px;
+    }
+
+    .espacio__icono {
+      transform: scale(var(--escala));
+      transform-origin: 0 0;
+    }
+
+    .espacio__flecha {
+      transform: scale(var(--escala));
+      transform-origin: 100% 100%;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .espacio {
+      height: 600px;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .espacio {
+      height: 670px;
+    }
+
+    .espacio__texto {
+      right: auto;
+      bottom: 46px;
+      left: 37.56px;
+      width: min(381.62px, 100% - 37.56px - 121.76px - 16px);
+    }
+  }
+</style>

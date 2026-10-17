@@ -1,0 +1,449 @@
+---
+/* Pie — instancia «Footer» (6:412), 1440 × 447, sobre palette/ink/400.
+   Marca y bajada a la izquierda (547), las columnas «Proyectos» y «Elexa»,
+   «Síguenos» con sus íconos, un divisor de 1 px en color/accent y la línea
+   legal en Roboto Condensed 12.
+
+   En el teléfono («Footer», 303:4606) todo se apila a 342 de ancho: el logo
+   vertical centrado (con «Real Estate Investments» debajo), la bajada en
+   14/18, las dos columnas lado a lado, «Síguenos», y la línea legal centrada
+   en 16 con el crédito y los enlaces uno debajo del otro.
+
+   Los destinos salen de src/data/site.ts; los que todavía no existen se
+   pintan como texto (ver el comentario de ese archivo). */
+import Logo from './Logo.astro';
+import { footerColumns, legalLinks, redes, esExterno, POWERED_BY } from '../data/site';
+
+interface Props {
+  /** Distancia en escritorio con lo de arriba: 23 en la portada, 0 donde la
+      banda de color de la página va pegada al pie. */
+  separacion?: number;
+  /** La misma distancia en el teléfono: 64 en los frames móviles, salvo donde
+      la banda de color va pegada al pie. Si no se pasa, sigue a la de
+      escritorio (0 queda en 0). */
+  separacionMovil?: number;
+}
+
+const { separacion = 23 } = Astro.props;
+const separacionMovil = Astro.props.separacionMovil ?? (separacion === 0 ? 0 : 64);
+
+const externo = (href: string | null) => (esExterno(href) ? { target: '_blank', rel: 'noopener' } : {});
+const anio = new Date().getFullYear();
+---
+
+<footer class="pie" style={`--separacion:${separacion}px;--separacion-movil:${separacionMovil}px`}>
+  <div class="pie__arriba">
+    <div class="pie__marca">
+      <span class="pie__logo-horizontal">
+        <Logo variante="footer" />
+      </span>
+      {/* «elexa_logo_ppal_blanco» (303:4609), 168 × 159: el símbolo, el
+          logotipo y el categorizador en tres piezas. */}
+      <span class="pie__logo-vertical" role="img" aria-label="Elexa Real Estate Investments">
+        <img class="pie__simbolo" src="/img/pie/logo-vertical-simbolo.svg" alt="" />
+        <img class="pie__logotipo" src="/img/pie/logo-vertical-logotipo.svg" alt="" />
+        <img class="pie__categoria-1" src="/img/pie/logo-vertical-categorizador-1.svg" alt="" />
+        <img class="pie__categoria-2" src="/img/pie/logo-vertical-categorizador-2.svg" alt="" />
+        <img class="pie__categoria-3" src="/img/pie/logo-vertical-categorizador-3.svg" alt="" />
+      </span>
+      <p>
+        En Elexa Real Estate estructuramos negocios con bienes raíces comerciales generadores de renta y los ponemos al
+        alcance de todos a través de las estructuras colectivas, que nos permiten proteger, crecer y hacer rentar nuestro
+        patrimonio, y así construir el sueño de libertad financiera.
+      </p>
+    </div>
+
+    <div class="pie__columnas">
+      {
+        footerColumns.map((columna) => (
+          <nav class="pie__columna" aria-label={columna.titulo}>
+            <p class="pie__titulo">{columna.titulo}</p>
+            <ul role="list">
+              {columna.enlaces.map((enlace) => (
+                <li>
+                  <a href={enlace.href ?? undefined} {...externo(enlace.href)}>
+                    {enlace.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </nav>
+        ))
+      }
+    </div>
+
+    <div class="pie__redes">
+      <p class="pie__redes-titulo">Síguenos</p>
+      <ul role="list">
+        {
+          redes.map((red) => (
+            <li>
+              <a href={red.href} {...externo(red.href)}>
+                <img src={`/img/pie/${red.icono}.svg`} alt="" />
+                <span>{red.label}</span>
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </div>
+
+  <hr class="pie__divisor" />
+
+  <div class="pie__legal">
+    <p class="pie__derechos">© {anio} Elexa. Todos los derechos reservados<span class="pie__punto">.</span></p>
+    <p class="pie__creditos">
+      Powered by <a href={POWERED_BY.href} {...externo(POWERED_BY.href)}>{POWERED_BY.label}</a>
+    </p>
+    <ul role="list">
+      {
+        legalLinks.map((enlace) => (
+          <li>
+            <a href={enlace.href ?? undefined}>{enlace.label}</a>
+          </li>
+        ))
+      }
+    </ul>
+  </div>
+</footer>
+
+<style>
+  /* ---------- Teléfono («Footer», 303:4606) ---------- */
+  .pie {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    margin-top: var(--separacion-movil);
+    padding: 64px var(--margen) var(--space-xl);
+    background: var(--ink-400);
+    color: var(--neutral-100);
+  }
+
+  .pie__arriba {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+  }
+
+  .pie__marca {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+  }
+
+  /* Elexa/Mobile/Content/Body regular sm — 14/18. */
+  .pie__marca p {
+    font-size: 14px;
+    line-height: 18px;
+    opacity: 0.7;
+  }
+
+  .pie__logo-horizontal {
+    display: none;
+  }
+
+  .pie__logo-vertical {
+    position: relative;
+    display: block;
+    align-self: center;
+    width: 168px;
+    height: 159px;
+  }
+
+  .pie__logo-vertical img {
+    position: absolute;
+    max-width: none;
+  }
+
+  /* Las piezas con los inset del archivo, pasados a posición y tamaño. */
+  .pie__simbolo {
+    top: 0;
+    left: 27.4%;
+    width: 46.15%;
+    height: 53.08%;
+  }
+  .pie__logotipo {
+    top: 55.74%;
+    left: 0;
+    width: 100%;
+    height: 28.11%;
+  }
+  .pie__categoria-1,
+  .pie__categoria-2,
+  .pie__categoria-3 {
+    top: 92.99%;
+    height: 7.01%;
+  }
+  .pie__categoria-1 {
+    left: 50.01%;
+    width: 47.91%;
+  }
+  .pie__categoria-2 {
+    left: 22.94%;
+    width: 23.86%;
+  }
+  .pie__categoria-3 {
+    left: 3.61%;
+    width: 16.3%;
+  }
+
+  /* Las dos columnas a los extremos; la segunda mide 163. */
+  .pie__columnas {
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .pie__columna:last-child {
+    width: 163px;
+  }
+
+  .pie__columna {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .pie__titulo {
+    padding: var(--space-2xs) 0;
+    font-weight: 700;
+    line-height: 24px;
+  }
+
+  .pie__columna ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .pie__columna a {
+    display: block;
+    padding: var(--space-2xs) 0;
+    line-height: 24px;
+    text-decoration: none;
+    opacity: 0.7;
+    white-space: nowrap;
+  }
+
+  .pie__redes {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .pie__redes-titulo {
+    font-weight: 700;
+    line-height: 20px;
+  }
+
+  .pie__redes ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  /* Fila de 24 (el ícono): flex y no inline-flex, para que la línea del
+     <li> no le sume el espacio de los descendentes. */
+  .pie__redes a {
+    display: flex;
+    width: fit-content;
+    align-items: flex-start;
+    gap: var(--space-md);
+    line-height: 20px;
+    text-decoration: none;
+  }
+
+  .pie__redes span {
+    opacity: 0.7;
+    white-space: nowrap;
+  }
+
+  .pie a[href]:hover {
+    opacity: 1;
+    text-decoration: underline;
+  }
+  .pie__redes a[href]:hover span {
+    opacity: 1;
+  }
+
+  .pie__divisor {
+    width: 100%;
+    height: 1px;
+    margin: 0;
+    border: 0;
+    background: var(--accent-300);
+  }
+
+  /* «Legal»: Roboto Condensed 16 en blanco pleno, todo centrado. La primera
+     línea junta los derechos y el crédito separados por un guion, y parte
+     antes de «Powered by» (en el frame de 390 no entran juntos). */
+  .pie__legal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    font-family: var(--font-note);
+    font-size: 16px;
+    line-height: normal;
+    text-align: center;
+  }
+
+  .pie__legal a {
+    text-decoration: none;
+  }
+
+  .pie__derechos {
+    margin-bottom: calc(-1 * var(--space-md));
+  }
+  .pie__derechos::after {
+    content: '\00a0\00a0 - ';
+    white-space: pre;
+  }
+  .pie__punto {
+    display: none;
+  }
+
+  .pie__creditos a {
+    text-decoration: underline;
+  }
+
+  .pie__legal ul {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  /* ---------- Tablet: el logo horizontal y las columnas en fila ---------- */
+  @media (min-width: 768px) {
+    .pie {
+      gap: var(--space-2xl);
+      margin-top: min(var(--separacion), 64px);
+      padding: 64px var(--margen) var(--space-2xl);
+    }
+
+    .pie__arriba {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--space-xl) var(--space-2xl);
+    }
+
+    .pie__marca {
+      flex-basis: 100%;
+      gap: var(--space-md);
+      max-width: 547px;
+    }
+
+    .pie__marca p {
+      font-size: 16px;
+      line-height: 24px;
+    }
+
+    .pie__logo-horizontal {
+      display: block;
+    }
+
+    .pie__logo-vertical {
+      display: none;
+    }
+
+    .pie__columnas {
+      display: contents;
+    }
+
+    .pie__columna:last-child {
+      width: auto;
+    }
+
+    /* Desktop/Content/Note — 12, con los derechos a la izquierda y los
+       enlaces a la derecha; el crédito de la agencia, en el medio. */
+    .pie__legal {
+      flex-direction: row;
+      flex-wrap: wrap;
+      justify-content: space-between;
+      font-size: 12px;
+      text-align: start;
+    }
+
+    .pie__legal p,
+    .pie__legal li {
+      opacity: 0.6;
+    }
+
+    .pie__derechos {
+      margin-bottom: 0;
+    }
+    .pie__derechos::after {
+      content: none;
+    }
+    .pie__punto {
+      display: inline;
+    }
+
+    /* En pantallas angostas el crédito baja a su propia línea, al final. */
+    .pie__legal .pie__creditos {
+      order: 1;
+      flex-basis: 100%;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .pie__creditos a {
+      text-decoration: none;
+    }
+
+    .pie__legal ul {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: var(--space-lg);
+    }
+  }
+
+  /* Desde 1024 los tres en una fila; con las dos puntas en 1fr el crédito
+     queda en el centro exacto aunque los lados midan distinto. */
+  @media (min-width: 1024px) {
+    .pie__legal {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+    }
+
+    .pie__legal .pie__creditos {
+      order: 0;
+    }
+
+    .pie__legal ul {
+      justify-self: end;
+    }
+  }
+
+  /* ---------- Escritorio: «Top» en una fila con space-between ---------- */
+  @media (min-width: 1240px) {
+    .pie {
+      margin-top: var(--separacion);
+      padding: var(--space-section) 120px var(--space-2xl);
+    }
+
+    .pie__arriba {
+      flex-wrap: nowrap;
+      justify-content: space-between;
+      gap: 0;
+    }
+
+    .pie__marca {
+      flex: 0 0 547px;
+    }
+
+    /* Los títulos y enlaces de las columnas llevan 24 de relleno a los lados. */
+    .pie__titulo,
+    .pie__columna a {
+      padding-inline: var(--space-lg);
+    }
+
+    .pie__arriba,
+    .pie__divisor,
+    .pie__legal {
+      width: min(var(--contenido), 100%);
+      margin-inline: auto;
+    }
+  }
+</style>

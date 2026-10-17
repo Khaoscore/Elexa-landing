@@ -1,0 +1,405 @@
+---
+/* Barra superior. Dos variantes, las dos del archivo:
+
+   · oscura — «Navbar» (6:302) de la portada, 1396 × 80, suelta sobre el hero:
+     logo y enlaces en blanco sobre la pestaña negra, y los dos botones sobre
+     el blanco del escalón que la forma del hero deja arriba a la derecha (ver
+     Hero.astro);
+   · clara — «Navbar» (119:1005) de las páginas internas, 1200 × 80 sobre
+     blanco: logo morado, enlaces en color/text-muted y el de la página
+     actual en morado. (En el archivo todas marcan «Inicio»; acá se marca la
+     página en la que se está.)
+
+   Bajo 1240 px la fila no entra: queda el logo y el ícono «menu», el
+   componente «Navbar mobile» (303:6266). Cerrado («State=Default») es la
+   pastilla blanca de 342 × 56; abierto («State=Opened») es un panel blanco
+   que tapa la pantalla con el logo y la ×, y en el centro los enlaces y los
+   botones «Log in» y «Agenda tu cita». Es un <details> para que funcione sin
+   JavaScript; el script de abajo sólo lo cierra al elegir un enlace, al tocar
+   el velo de afuera o con Escape. En la portada el ícono cae sobre el blanco
+   del escalón que deja la forma del hero, como en el frame móvil (303:4420);
+   bajo 768 el logo va a 92.7 × 23, su tamaño ahí.
+
+   La barra queda siempre a la vista al bajar por la página:
+   · clara: es sticky (.barra-pagina en Base.astro), así que no se mueve;
+     al empezar a bajar gana una sombra suave para separarse del contenido;
+   · oscura: es parte de la forma del hero, así que cuando sale de la
+     pantalla baja en su lugar la versión clara del archivo («Navbar»,
+     119:963: la pastilla blanca de 1396, la que está arriba de Desktop - 1),
+     fija arriba, y al volver arriba vuelve la del hero.
+   Las dos cosas las dispara `nav--flotante`, que pone el script: en la
+   clara apenas hay scroll; en la oscura cuando un elemento vacío pegado
+   debajo de la barra (`nav__ancla`) sale de la pantalla. */
+import Logo from './Logo.astro';
+import { AGENDA_URL, HABLEMOS_URL, LOGIN_URL, navLinks, esExterno } from '../data/site';
+
+interface Props {
+  variante?: 'oscura' | 'clara';
+  /** Ruta de la página actual («/nosotros»), para marcar su enlace. */
+  actual?: string;
+}
+
+const { variante = 'oscura', actual = '/' } = Astro.props;
+
+const externo = (href: string | null) => (esExterno(href) ? { target: '_blank', rel: 'noopener' } : {});
+const esActual = (href: string) => (href === '/' ? actual === '/' : actual === href || actual.startsWith(`${href}/`));
+---
+
+<header class:list={['nav', `nav--${variante}`]}>
+  <a class="nav__logo" href="/" aria-label="Elexa — inicio">
+    {
+      variante === 'oscura' && (
+        <span class="nav__logo-blanco">
+          <Logo variante="nav" />
+        </span>
+      )
+    }
+    <span class="nav__logo-morado">
+      <Logo variante="claro" />
+    </span>
+  </a>
+
+  <nav class="nav__links" aria-label="Principal">
+    {
+      navLinks.map((link) => (
+        <a href={link.href} aria-current={esActual(link.href) ? 'page' : undefined}>
+          {link.label}
+        </a>
+      ))
+    }
+  </nav>
+
+  <div class="nav__acciones">
+    <a class="btn btn--borde" href={LOGIN_URL ?? undefined} {...externo(LOGIN_URL)}>Log in</a>
+    <a class="btn btn--primario" href={HABLEMOS_URL} {...externo(HABLEMOS_URL)}>Hablemos</a>
+  </div>
+
+  <details class="nav__menu">
+    <summary aria-label="Abrir menú">
+      <img class="nav__icono-menu" src="/img/iconos/menu.svg" alt="" width="24" height="24" />
+      <img class="nav__icono-cerrar" src="/img/iconos/close.svg" alt="" width="24" height="24" />
+    </summary>
+    <div class="nav__velo">
+      <div class="nav__panel">
+        <a class="nav__panel-logo" href="/" aria-label="Elexa — inicio">
+          <Logo variante="claro" />
+        </a>
+        <div class="nav__panel-cuerpo">
+          <nav aria-label="Principal (móvil)">
+            {
+              navLinks.map((link) => (
+                <a href={link.href} aria-current={esActual(link.href) ? 'page' : undefined}>
+                  {link.label}
+                </a>
+              ))
+            }
+          </nav>
+          <div class="nav__panel-botones">
+            <a class="btn btn--borde" href={LOGIN_URL ?? undefined} {...externo(LOGIN_URL)}>Log in</a>
+            <a class="btn btn--primario" href={AGENDA_URL ?? undefined} {...externo(AGENDA_URL)}>Agenda tu cita</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </details>
+</header>
+{variante === 'oscura' && <span class="nav__ancla" aria-hidden="true"></span>}
+
+<script>
+  /* La clara es sticky y nunca sale de la pantalla: la sombra va apenas se
+     baja. */
+  for (const nav of document.querySelectorAll<HTMLElement>('.nav--clara')) {
+    const actualizar = () => nav.classList.toggle('nav--flotante', window.scrollY > 0);
+    window.addEventListener('scroll', actualizar, { passive: true });
+    actualizar();
+  }
+
+  /* La oscura flota cuando el ancla, justo debajo de ella, quedó por encima
+     de la pantalla. */
+  for (const ancla of document.querySelectorAll<HTMLElement>('.nav__ancla')) {
+    const nav = ancla.previousElementSibling;
+    if (!nav?.classList.contains('nav')) continue;
+    new IntersectionObserver(([entrada]) => {
+      nav.classList.toggle('nav--flotante', !entrada.isIntersecting && entrada.boundingClientRect.top < 0);
+    }).observe(ancla);
+  }
+
+  for (const menu of document.querySelectorAll<HTMLDetailsElement>('.nav__menu')) {
+    const boton = menu.querySelector('summary');
+    menu.addEventListener('toggle', () => {
+      boton?.setAttribute('aria-label', menu.open ? 'Cerrar menú' : 'Abrir menú');
+    });
+    /* El velo tapa toda la pantalla: tocarlo fuera del panel es tocar afuera. */
+    menu.addEventListener('click', (e) => {
+      const objetivo = e.target as Element;
+      if (objetivo.closest('.nav__panel a[href]') || objetivo.classList.contains('nav__velo')) menu.open = false;
+    });
+    document.addEventListener('click', (e) => {
+      if (menu.open && !menu.contains(e.target as Node)) menu.open = false;
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && menu.open) {
+        menu.open = false;
+        menu.querySelector('summary')?.focus();
+      }
+    });
+  }
+</script>
+
+<style>
+  .nav {
+    position: relative;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-md) var(--space-lg);
+  }
+
+  .nav--clara,
+  .nav--flotante {
+    border-radius: var(--radius-full);
+    background: var(--neutral-100);
+  }
+
+  .nav__ancla {
+    display: block;
+    height: 1px;
+    margin-bottom: -1px;
+  }
+
+  .nav__logo {
+    display: block;
+  }
+
+  .nav__logo-blanco,
+  .nav__logo-morado {
+    display: block;
+  }
+
+  /* La oscura trae los dos logos: el blanco sobre el hero y el morado para
+     cuando flota. */
+  .nav--oscura:not(.nav--flotante) .nav__logo-morado,
+  .nav--flotante .nav__logo-blanco {
+    display: none;
+  }
+
+  .nav--flotante {
+    box-shadow: 0 8px 32px rgba(15, 19, 22, 0.12);
+  }
+
+  /* La de la portada, fija arriba con el ancho del hero (1396). */
+  .nav--oscura.nav--flotante {
+    position: fixed;
+    top: var(--margen-panel);
+    right: 0;
+    left: 0;
+    z-index: 50;
+    width: var(--ancho-panel);
+    margin-inline: auto;
+    padding: var(--space-md) var(--space-lg);
+    animation: nav-entra 0.25s ease-out;
+  }
+
+  @keyframes nav-entra {
+    from {
+      transform: translateY(calc(-100% - var(--margen-panel)));
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav--oscura.nav--flotante {
+      animation: none;
+    }
+  }
+
+  /* Frame móvil (303:4420): el logo y el ícono a 36 de los bordes de la
+     forma y a 15 del de arriba. */
+  .nav--oscura {
+    padding: 15px 36px;
+  }
+
+  /* El logo de «Navbar mobile» es una caja de 103 × 24 con el dibujo de
+     92.7 × 23 en la esquina de arriba a la izquierda. */
+  @media (max-width: 767px) {
+    .nav__logo :global(.logo),
+    .nav__panel-logo :global(.logo) {
+      width: 92.71px;
+      height: 23px;
+    }
+
+    /* La pastilla que baja al hacer scroll en la portada mide lo mismo que
+       la de las páginas internas: 342 en el frame de 390. */
+    .nav--oscura.nav--flotante {
+      width: calc(100% - 2 * var(--margen));
+    }
+  }
+
+  .nav__links,
+  .nav__acciones {
+    display: none;
+  }
+
+  /* ---------- Menú (móvil y tablet) ---------- */
+  /* El ícono mide 24 en el diseño; el área para tocarlo es de 48 sin que la
+     barra crezca (el margen negativo devuelve los 12 de cada lado). */
+  .nav__menu summary {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    margin: -12px;
+    border-radius: var(--radius-full);
+    cursor: pointer;
+    list-style: none;
+  }
+  .nav__menu summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .nav__menu summary img {
+    grid-area: 1 / 1;
+  }
+
+  .nav__icono-cerrar,
+  .nav__menu[open] .nav__icono-menu {
+    visibility: hidden;
+  }
+  .nav__menu[open] .nav__icono-cerrar {
+    visibility: visible;
+  }
+
+  /* Abierto, el panel tapa la pantalla dejando el mismo margen que la
+     pastilla (12 arriba y abajo, 24 a los lados en el teléfono) sobre un velo
+     oscuro, como el lienzo del componente. La × es el mismo <summary>, que
+     se fija en la esquina del panel: así cierra también sin JavaScript. */
+  .nav:has(.nav__menu[open]) {
+    z-index: 60;
+  }
+
+  :global(html:has(.nav__menu[open])) {
+    overflow: hidden;
+  }
+
+  .nav__menu[open] summary {
+    position: fixed;
+    top: calc(var(--margen-panel) + var(--space-md) - 12px);
+    right: calc(var(--margen) + var(--space-lg) - 12px);
+    z-index: 2;
+    margin: 0;
+  }
+
+  .nav__velo {
+    position: fixed;
+    inset: 0;
+    z-index: 1;
+    padding: var(--margen-panel) var(--margen);
+    background: rgba(31, 38, 43, 0.8);
+  }
+
+  /* «State=Opened» (303:6264): radius/xl, 16 × 24 de relleno, el logo
+     arriba y debajo, centrados en el alto que queda, los enlaces y los
+     botones. */
+  .nav__panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    height: 100%;
+    overflow-y: auto;
+    padding: var(--space-md) var(--space-lg);
+    border-radius: var(--radius-panel);
+    background: var(--neutral-100);
+  }
+
+  .nav__panel-logo {
+    display: block;
+    align-self: flex-start;
+  }
+
+  .nav__panel-cuerpo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-xl);
+  }
+
+  .nav__panel nav {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  /* Los «Nav Item»: Roboto Bold 20/24 en color/text-muted; el de la página
+     actual, en color/primary. */
+  .nav__panel nav a {
+    padding: var(--space-xs);
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 24px;
+    color: var(--texto-tenue);
+    text-decoration: none;
+  }
+  .nav__panel nav a[aria-current='page'] {
+    color: var(--brand-300);
+  }
+
+  .nav__panel-botones {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    width: 100%;
+  }
+
+  /* ---------- Escritorio ---------- */
+  @media (min-width: 1240px) {
+    .nav {
+      height: 80px;
+      padding: var(--space-md) var(--space-2xl);
+    }
+
+    .nav__menu {
+      display: none;
+    }
+
+    .nav__links {
+      display: flex;
+      gap: var(--space-xs);
+    }
+
+    .nav__links a {
+      padding: var(--space-xs);
+      font-weight: 700;
+      font-size: 20px;
+      line-height: 24px;
+      color: var(--neutral-100);
+      text-decoration: none;
+    }
+    .nav__links a:hover {
+      text-decoration: underline;
+      text-underline-offset: 6px;
+    }
+
+    /* color/text-muted del archivo; la página actual, en color/primary. */
+    .nav--clara .nav__links a,
+    .nav--flotante .nav__links a {
+      color: var(--texto-tenue);
+    }
+    .nav--clara .nav__links a[aria-current='page'],
+    .nav--flotante .nav__links a[aria-current='page'] {
+      color: var(--brand-300);
+    }
+
+    .nav--oscura.nav--flotante {
+      top: 21px;
+      padding: var(--space-md) var(--space-2xl);
+    }
+
+    .nav__acciones {
+      display: flex;
+      gap: var(--space-xs);
+    }
+  }
+</style>

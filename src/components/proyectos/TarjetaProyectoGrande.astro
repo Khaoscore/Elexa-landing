@@ -1,0 +1,238 @@
+---
+/* Tarjeta de proyecto abierto en /proyectos — «Frame 13» / «Frame 62»
+   (48:2044, 48:2051): 1200 × 669.5, una debajo de otra.
+
+   Es la misma idea que la tarjeta ancha de la portada pero con otras medidas,
+   todas del trazado del vector 48:2046:
+   · muesca de arriba de 102 × 99.87 con un círculo de 82 (ícono de 31);
+   · muesca de abajo de 247.64 × 89.62 con «Ver proyecto» (202) adentro, a 24
+     del borde derecho y a 19.5 del de abajo;
+   · título en Header 2 (48/46) y descripción en Header 4 (DM Sans 24/30), a
+     82 del borde izquierdo y a 485 del de arriba, en 820 de ancho;
+   · degradado de palette/ink/400 de transparente (36 %) a opaco (92 %), al
+     30 %, sobre la foto.
+
+   En el teléfono es «Frame 13» / «Frame 14» (303:4846, 303:4855), 342 × 622:
+   · muesca de arriba de 60 × 59 con un círculo de 43.39 (ícono de 22.7);
+   · muesca de abajo de 180 × 62 con «Ver proyecto» (163) pegado a la esquina;
+   · título en Mobile/Header 1 (48/52) y la descripción entera, sin cortar, en
+     Body bold (Roboto 16/20), a 22 del borde izquierdo y a 387 del de arriba.
+     Si el texto no entra, la tarjeta crece hacia abajo en vez de taparlo.
+
+   Los datos vienen de la tabla `proyectos` (la misma de la portada); la foto
+   es `imagenGrande`. La descripción va toda en DM Sans Black, así que las
+   negritas que trae para la portada acá no cambian nada. */
+import type { Proyecto } from '../../lib/proyectos';
+import { estiloMuescas } from '../../lib/formas';
+import { partirNegritas } from '../../lib/negritas';
+
+interface Props {
+  proyecto: Proyecto;
+}
+
+const { proyecto } = Astro.props;
+
+const escritorio = estiloMuescas([
+  { esquina: 'tl', ancho: 102, alto: 99.87 },
+  { esquina: 'br', ancho: 247.64, alto: 89.62 },
+]);
+const movil = estiloMuescas([
+  { esquina: 'tl', ancho: 60, alto: 59 },
+  { esquina: 'br', ancho: 180, alto: 62 },
+]);
+
+/* Las dos formas van en variables propias y el <style> elige cuál pasa a
+   `.muescas` (con `--muescas-mascara` en el style ninguna media query podría
+   pisarla). */
+const forma = [
+  `--mascara-escritorio:${escritorio['--muescas-mascara']}`,
+  `--trazo-escritorio:${escritorio['--muescas-trazo']}`,
+  `--mascara-movil:${movil['--muescas-mascara']}`,
+  `--trazo-movil:${movil['--muescas-trazo']}`,
+].join(';');
+
+const externo = /^https?:\/\//.test(proyecto.enlace) ? { target: '_blank', rel: 'noopener' } : {};
+/* La descripción de la foto de la portada no sirve si acá va otra. */
+const alt = proyecto.imagenGrande === proyecto.imagen ? proyecto.imagenAlt : '';
+---
+
+<article class="grande">
+  <div class="grande__marco muescas" style={forma}>
+    <img class="grande__foto" src={proyecto.imagenGrande} alt={alt} loading="lazy" decoding="async" />
+    <span class="grande__velo muescas__trazo" aria-hidden="true"></span>
+    <div class="grande__texto">
+      <h2 class="grande__nombre display t-h2">{proyecto.nombre}</h2>
+      <p class="grande__descripcion display t-h4">
+        {partirNegritas(proyecto.descripcion).map((tramo) => (tramo.negrita ? <strong>{tramo.texto}</strong> : tramo.texto))}
+      </p>
+    </div>
+  </div>
+
+  <span class="grande__icono" aria-hidden="true">
+    <img class="grande__icono-escritorio" src="/img/iconos/corporate-fare-82.svg" alt="" width="31.08" height="31.08" />
+    <img class="grande__icono-movil" src="/img/iconos/corporate-fare-23.svg" alt="" width="22.7" height="22.7" />
+  </span>
+
+  <a class="btn btn--primario grande__boton" href={proyecto.enlace} {...externo}>
+    Ver proyecto<span class="sr-only"> {proyecto.nombre}</span>
+  </a>
+</article>
+
+<style>
+  .grande {
+    position: relative;
+    height: 480px;
+  }
+
+  .grande__marco {
+    --muescas-mascara: var(--mascara-escritorio);
+    --muescas-trazo: var(--trazo-escritorio);
+    position: absolute;
+    inset: 0;
+    background: var(--ink-400);
+  }
+
+  .grande__foto {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .grande__velo {
+    background:
+      var(--muescas-trazo),
+      linear-gradient(180deg, rgba(31, 38, 43, 0) 36.06%, rgba(31, 38, 43, 0.3) 92.31%);
+  }
+
+  .grande__texto {
+    position: absolute;
+    right: 24px;
+    bottom: calc(89.62px + 16px);
+    left: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    color: var(--neutral-100);
+    filter: drop-shadow(0 0 6px rgba(31, 38, 43, 0.6));
+  }
+
+  .grande__descripcion strong {
+    font-weight: inherit;
+  }
+
+  .grande__descripcion {
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 4;
+    line-clamp: 4;
+    overflow: hidden;
+  }
+
+  .grande__icono {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: grid;
+    place-items: center;
+    width: 82px;
+    height: 82px;
+    border-radius: var(--radius-full);
+    background: var(--brand-300);
+  }
+
+  .grande__boton {
+    position: absolute;
+    right: 24px;
+    bottom: 19.5px;
+    width: 202px;
+  }
+
+  .grande__icono-movil {
+    display: none;
+  }
+
+  @media (max-width: 767px) {
+    .grande {
+      height: auto;
+    }
+
+    /* El marco y el texto van en el flujo (y no absolutos) para que una
+       descripción larga estire la tarjeta en vez de meterse en la muesca del
+       botón: el texto arranca a 387 y termina, como mucho, 9 sobre ella. */
+    .grande__marco {
+      --muescas-mascara: var(--mascara-movil);
+      --muescas-trazo: var(--trazo-movil);
+      position: relative;
+      min-height: 622px;
+    }
+
+    .grande__foto {
+      position: absolute;
+      inset: 0;
+    }
+
+    .grande__texto {
+      position: relative;
+      inset: auto;
+      padding: 387px 25px 71px 22px;
+    }
+
+    .grande__nombre {
+      font-size: min(48px, 12.3vw);
+      line-height: 1.0834;
+    }
+
+    .grande__descripcion {
+      display: block;
+      overflow: visible;
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 16px;
+      line-height: 20px;
+      font-variation-settings: normal;
+      letter-spacing: 0;
+    }
+
+    .grande__icono {
+      width: 43.39px;
+      height: 43.39px;
+    }
+    .grande__icono-escritorio {
+      display: none;
+    }
+    .grande__icono-movil {
+      display: block;
+    }
+
+    .grande__boton {
+      right: 0;
+      bottom: 0;
+      width: auto;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .grande {
+      height: 600px;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .grande {
+      height: 670px;
+    }
+
+    .grande__texto {
+      top: 485px;
+      right: auto;
+      bottom: auto;
+      left: 82px;
+      width: min(820px, 100% - 82px - 247.64px - 16px);
+    }
+
+    .grande__descripcion {
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+    }
+  }
+</style>

@@ -1,0 +1,331 @@
+---
+/* Hero — «Frame 8» (6:527), 1397 × 998, a 22 px de los bordes.
+
+   La forma negra es el vector «Vector 1» (6:340): un rectángulo de radio 24
+   con dos recortes. Arriba a la derecha baja 82 px en diagonal y deja un
+   escalón blanco donde se apoyan los botones de la barra; abajo a la derecha
+   se abre otro, también en diagonal, donde van «Ver proyectos abiertos» y
+   «¿Cómo funciona?».
+
+   Su relleno es el video de la marca (public/img/hero/Elexa_hero_loop_v6.*),
+   en bucle, sin sonido y recortado en cover. Hay dos cortes: el completo
+   (1920 × 1080) y uno vertical del centro para teléfonos (516 × 1080, la
+   proporción de la forma móvil), los dos en WebM. Mientras carga, si la
+   persona pidió menos movimiento en su sistema o si el navegador no lee WebM
+   (iPhone/iPad con iOS anterior a 17.4), se ve el primer cuadro
+   (`-poster.jpg`). Cómo regenerarlos si cambia el video: ver el README.
+
+   La exportación del vector que da Figma sale transparente, así que la forma
+   se reconstruye acá con su trazado exacto, como un clip-path: polygon().
+   Cada punto se ancla a un borde para que la forma se estire sin deformarse:
+   · lo de la izquierda queda a px del borde izquierdo;
+   · el final de la pestaña sigue a los enlaces de la barra, que con
+     space-between terminan siempre en «50 % + 146 px»;
+   · el recorte de abajo queda a px del borde derecho, con los botones.
+   Las curvas (esquinas de 24 y empalmes de la diagonal) se muestrean en
+   tramos rectos: con 10 por curva el error es de centésimas de píxel.
+
+   Bajo 1240 px va la forma del frame móvil («Frame 8» 303:4415, «Vector 1»
+   303:4416), 366 × 767 a 12 px de los bordes: la pestaña de arriba deja a la
+   derecha el escalón del ícono de menú, y abajo el negro sigue sólo por la
+   izquierda, en diagonal, para dejarles lugar a los dos botones. Se arma
+   igual que la de escritorio; acá lo de la izquierda (hasta x = 110) queda a
+   px del borde izquierdo y todo lo demás a px del derecho. */
+import Navbar from './Navbar.astro';
+
+const ANCHO = 1397;
+const CENTRO = ANCHO / 2;
+const ANCHO_MOVIL = 366;
+
+type P = [number, number];
+/* El trazado de Figma, tramo por tramo: [inicio, control 1, control 2, fin]
+   para las curvas y [fin] para las rectas. */
+const tramos: P[][] = [
+  [[0, 24]],
+  [[0, 24], [0, 10.7452], [10.7452, 0], [24, 0]],
+  [[844.039, 0]],
+  [[844.039, 0], [849.818, 0], [855.403, 2.08536], [859.768, 5.87296]],
+  [[940.732, 76.127]],
+  [[940.732, 76.127], [945.097, 79.9146], [950.682, 82], [956.461, 82]],
+  [[1373, 82]],
+  [[1373, 82], [1386.25, 82], [1397, 92.7452], [1397, 106]],
+  [[1397, 779]],
+  [[1397, 779], [1397, 792.255], [1386.25, 803], [1373, 803]],
+  [[1006.53, 803]],
+  [[1006.53, 803], [990.747, 803], [979.261, 817.969], [983.345, 833.212]],
+  [[1019.4, 967.788]],
+  [[1019.4, 967.788], [1023.49, 983.031], [1012, 998], [996.223, 998]],
+  [[24, 998]],
+  [[24, 998], [10.7452, 998], [0, 987.255], [0, 974]],
+];
+
+const tramosMovil: P[][] = [
+  [[0, 24]],
+  [[0, 24], [0, 10.7452], [10.7452, 0], [24, 0]],
+  [[237.563, 0]],
+  [[237.563, 0], [246.181, 0], [254.137, 4.62013], [258.408, 12.1047]],
+  [[281.115, 51.8953]],
+  [[281.115, 51.8953], [285.386, 59.3799], [293.342, 64], [301.96, 64]],
+  [[342, 64]],
+  [[342, 64], [355.255, 64], [366, 74.7452], [366, 88]],
+  [[366, 607.5]],
+  [[366, 607.5], [366, 620.755], [355.255, 631.5], [342, 631.5]],
+  [[99.7225, 631.5]],
+  [[99.7225, 631.5], [83.656, 631.5], [72.1267, 646.979], [76.7277, 662.373]],
+  [[98.7723, 736.127]],
+  [[98.7723, 736.127], [103.373, 751.521], [91.844, 767], [75.7775, 767]],
+  [[24, 767]],
+  [[24, 767], [10.7452, 767], [0, 756.255], [0, 743]],
+];
+
+const PASOS = 10;
+function muestrear(inicio: P, lista: P[][]): P[] {
+  const puntos: P[] = [inicio];
+  for (const tramo of lista) {
+    if (tramo.length === 1) {
+      puntos.push(tramo[0]);
+      continue;
+    }
+    const [p0, p1, p2, p3] = tramo;
+    for (let i = 1; i <= PASOS; i++) {
+      const t = i / PASOS;
+      const u = 1 - t;
+      const a = u * u * u, b = 3 * u * u * t, c = 3 * u * t * t, d = t * t * t;
+      puntos.push([a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]]);
+    }
+  }
+  return puntos;
+}
+
+const r = (v: number) => Math.round(v * 100) / 100;
+function x([px, py]: P): string {
+  if (px <= 30) return `${r(px)}px`;
+  if (px < 970 && py <= 85) return `calc(50% + ${r(px - CENTRO)}px)`;
+  return `calc(100% - ${r(ANCHO - px)}px)`;
+}
+function xMovil([px]: P): string {
+  return px <= 110 ? `${r(px)}px` : `calc(100% - ${r(ANCHO_MOVIL - px)}px)`;
+}
+const poligono = `polygon(${muestrear([0, 974], tramos).map((p) => `${x(p)} ${r(p[1])}px`).join(', ')})`;
+const poligonoMovil = `polygon(${muestrear([0, 743], tramosMovil).map((p) => `${xMovil(p)} ${r(p[1])}px`).join(', ')})`;
+---
+
+<section class="hero" id="inicio">
+  <div class="hero__panel" style={`--forma: ${poligono}; --forma-movil: ${poligonoMovil}`}>
+    <div class="hero__fondo" aria-hidden="true">
+      <video
+        class="hero__video"
+        muted
+        loop
+        playsinline
+        preload="none"
+        poster="/img/hero/Elexa_hero_loop_v6-poster.jpg"
+        width="1920"
+        height="1080"
+      >
+        <source src="/img/hero/Elexa_hero_loop_v6-movil.webm" type="video/webm" media="(max-width: 767px)" />
+        <source src="/img/hero/Elexa_hero_loop_v6.webm" type="video/webm" />
+      </video>
+    </div>
+
+    <Navbar />
+
+    <div class="hero__texto">
+      <h1 class="hero__titulo display t-banner">Lo tradicional te da un activo. Lo colectivo, varias rentas.</h1>
+      <p class="hero__bajada display">
+        Estructuramos proyectos inmobiliarios colectivos en Cali desde el 2018.<br />
+        Usted invierte; nosotros originamos, desarrollamos y operamos.
+      </p>
+    </div>
+  </div>
+
+  <div class="hero__acciones">
+    <a class="btn btn--primario" href="#proyectos">Ver proyectos abiertos</a>
+    <a class="btn btn--borde" href="#modelo">¿Cómo funciona?</a>
+  </div>
+</section>
+
+<script>
+  /* El video arranca solo (sin sonido, como lo permiten los navegadores),
+     salvo que la persona haya pedido menos movimiento: ahí queda el primer
+     cuadro. Fuera de la pantalla se pausa para no gastar batería. */
+  const video = document.querySelector<HTMLVideoElement>('.hero__video');
+  const menosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  if (video) {
+    const reproducir = () => {
+      if (!menosMovimiento.matches) video.play().catch(() => {});
+    };
+
+    new IntersectionObserver(([entrada]) => {
+      if (entrada.isIntersecting) reproducir();
+      else video.pause();
+    }).observe(video);
+
+    menosMovimiento.addEventListener('change', () => {
+      if (menosMovimiento.matches) video.pause();
+      else reproducir();
+    });
+  }
+</script>
+
+<style>
+  /* A --margen-panel del borde de arriba, como de los lados: en el frame
+     móvil la forma arranca en y = 64, justo debajo de la barra de estado del
+     teléfono (63), es decir a 12 del borde de la pantalla. */
+  .hero {
+    position: relative;
+    width: var(--ancho-panel);
+    margin: var(--margen-panel) auto 0;
+  }
+
+  /* ---------- Móvil y tablet: la composición del frame móvil ----------
+     Posiciones medidas desde la esquina de la forma (x − 12, y − 64). */
+  /* Sin `isolation`: la barra de adentro se vuelve fija al bajar (ver
+     Navbar.astro) y tiene que quedar por encima del resto de la página, no
+     sólo del hero. El fondo, con z-index −1, igual queda detrás del texto. */
+  .hero__panel {
+    position: relative;
+    height: 767px;
+    color: var(--neutral-100);
+  }
+
+  .hero__fondo {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: #000;
+    clip-path: var(--forma-movil);
+  }
+
+  .hero__video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Velo de palette/ink/500 sobre el video: el texto y los enlaces de la
+     barra son blancos y el video tiene momentos claros (la pantalla del
+     auditorio, el cielo de la toma aérea). */
+  .hero__fondo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 19, 22, 0.4);
+  }
+
+  .hero__texto {
+    display: contents;
+  }
+
+  .hero__titulo {
+    position: absolute;
+    top: 94px;
+    right: 21px;
+    left: 20px;
+    line-height: 48px;
+    text-align: center;
+    text-shadow: 0 0 20px rgba(31, 38, 43, 0.6);
+  }
+
+  /* Elexa/Mobile/Content/Body bold, alineado a la derecha. Termina en
+     y = 595 (arranca en 515 con sus cuatro renglones): se ancla abajo para
+     que, si ocupa más, crezca hacia arriba y no se salga del negro. */
+  .hero__bajada {
+    position: absolute;
+    bottom: 172px;
+    right: 22px;
+    width: min(322px, 100% - 44px);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-variation-settings: normal;
+    letter-spacing: 0;
+    font-size: 16px;
+    line-height: 20px;
+    text-align: right;
+    text-shadow: 0 0 16px rgba(0, 0, 0, 0.25);
+  }
+
+  .hero__acciones {
+    position: absolute;
+    top: 655px;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+    width: 252px;
+  }
+
+  .hero__acciones .btn--borde {
+    width: 100%;
+  }
+
+  /* El título del frame móvil (303:4441) no usa el Banner móvil (60/62)
+     sino DM Sans Black 44/48: cuatro renglones de 325 de ancho. En
+     teléfonos de menos de 390 baja en la misma proporción que su ancho
+     (100vw − 65) para seguir en cuatro. */
+  @media (max-width: 767px) {
+    .hero__titulo {
+      font-size: min(44px, (100vw - 65px) * 44 / 325);
+    }
+  }
+
+  @media (min-width: 768px) {
+    .hero__titulo {
+      line-height: 64px;
+    }
+
+    .hero__bajada {
+      width: min(488px, 100% - 44px);
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-variation-settings: 'opsz' 14;
+      letter-spacing: -0.02em;
+      font-size: 24px;
+      line-height: 30px;
+    }
+  }
+
+  /* ---------- Escritorio: la composición del frame ---------- */
+  @media (min-width: 1240px) {
+    .hero {
+      margin-top: 21.5px;
+    }
+
+    .hero__panel {
+      height: 998px;
+    }
+
+    .hero__fondo {
+      clip-path: var(--forma);
+    }
+
+    /* Posiciones del frame de 1440, medidas desde la esquina del panel
+       (x − 22, y − 21.5). */
+    .hero__titulo {
+      top: 282.5px;
+      right: auto;
+      left: 102px;
+      max-width: min(1196px, 100% - 204px);
+      line-height: 82px;
+      text-align: left;
+    }
+
+    .hero__bajada {
+      top: 792.5px;
+      right: auto;
+      bottom: auto;
+      left: 98px;
+      width: 488px;
+      text-align: left;
+    }
+
+    .hero__acciones {
+      top: 842.5px;
+      right: 99px;
+      gap: var(--space-lg);
+    }
+  }
+</style>

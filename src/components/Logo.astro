@@ -1,0 +1,48 @@
+---
+/* El logo horizontal de Elexa (símbolo + logotipo). En Figma es el grupo
+   «elexa_logo_hrz_color» con dos vectores: el símbolo ocupa el 22.53 %
+   izquierdo y el logotipo se ubica con inset 4.45% 0 15.56% 27.47%.
+
+   Tres usos, cada uno con su propia exportación del archivo:
+   · nav    — blanco, 129 × 32, sobre el hero de la portada;
+   · claro  — morado, 129 × 32, en la barra de las páginas internas;
+   · footer — blanco, 298 × 74, en el pie. */
+interface Props {
+  variante: 'nav' | 'claro' | 'footer';
+}
+
+const { variante } = Astro.props;
+const medidas = variante === 'footer' ? { w: 298, h: 74 } : { w: 129, h: 32 };
+---
+
+<span class="logo" style={`--w:${medidas.w}px;--h:${medidas.h}px`}>
+  <img class="logo__simbolo" src={`/img/marca/simbolo-${variante}.svg`} alt="" />
+  <img class="logo__logotipo" src={`/img/marca/logotipo-${variante}.svg`} alt="" />
+</span>
+
+<style>
+  .logo {
+    position: relative;
+    display: block;
+    flex-shrink: 0;
+    width: var(--w);
+    height: var(--h);
+  }
+
+  .logo img {
+    position: absolute;
+    max-width: none;
+  }
+
+  .logo__simbolo {
+    inset: 0 77.47% 0 0;
+    width: 22.53%;
+    height: 100%;
+  }
+
+  .logo__logotipo {
+    inset: 4.45% 0 15.56% 27.47%;
+    width: 72.53%;
+    height: 79.99%;
+  }
+</style>

@@ -1,0 +1,235 @@
+---
+/* «Preguntas frecuentes» — panel gris «Vector 1» (20:754, 1397 × 1149) con
+   una pestaña elevada en el centro donde va el título (40:1078). Debajo, la
+   imagen (40:820, 488 × 839) a la izquierda y el acordeón (40:1138) con
+   «Agenda tu cita» (58:2650) a la derecha.
+
+   El panel es el SVG del archivo, estirado al tamaño de la sección (el SVG
+   trae preserveAspectRatio="none"). Entre 768 y 1240 px, donde ya se
+   deformaría, pasa a un rectángulo redondeado y el video se oculta.
+
+   En el lugar de la imagen va un Short de YouTube (vertical, 9:16).
+
+   Móvil — panel «Vector 1» (303:4568, 366 × 1588.5) con su propia pestaña
+   para el título (303:4569), el video donde el diseño pone el damero
+   (303:4572, 342 de ancho) y el acordeón (303:4573) debajo. */
+import FaqAcordeon from './FaqAcordeon';
+import { preguntas } from '../data/faq';
+import { AGENDA_URL, esExterno } from '../data/site';
+
+const externo = esExterno(AGENDA_URL) ? { target: '_blank', rel: 'noopener' } : {};
+
+const VIDEO_ID = '0lzrbcof0PU';
+---
+
+<section class="faq" id="preguntas" aria-labelledby="faq-titulo">
+  <picture>
+    <source media="(max-width: 767px)" srcset="/img/faq/fondo-faq-movil.svg" width="366" height="1588.5" />
+    <img class="faq__fondo" src="/img/faq/fondo-faq.svg" alt="" width="1397" height="1149" />
+  </picture>
+
+  <div class="faq__cabecera">
+    <h2 class="display t-h2" id="faq-titulo">Preguntas <span class="acento">frecuentes</span></h2>
+    <p>
+      Estamos convencidos de que alcanzar la libertad financiera es una posibilidad real para cualquiera que se lo
+      proponga.
+    </p>
+  </div>
+
+  <div class="faq__cuerpo">
+    <div class="faq__video">
+      <iframe
+        src={`https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0&playsinline=1`}
+        title="Video de Elexa"
+        loading="lazy"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+        referrerpolicy="strict-origin-when-cross-origin"
+        allowfullscreen></iframe>
+    </div>
+
+    <div class="faq__columna">
+      <FaqAcordeon client:visible={{ rootMargin: '400px' }} preguntas={preguntas} />
+      <a class="btn btn--primario faq__cta" href={AGENDA_URL ?? undefined} {...externo}>Agenda tu cita</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .faq {
+    position: relative;
+    isolation: isolate;
+    width: var(--ancho-panel);
+    margin: 96px auto 0;
+    padding: 40px var(--space-md) 48px;
+    border-radius: var(--radius-panel);
+    background: var(--neutral-200);
+    color: var(--brand-500);
+  }
+
+  .faq__fondo {
+    display: none;
+  }
+
+  .faq__cabecera {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+    max-width: 590px;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .faq__cuerpo {
+    display: flex;
+    justify-content: center;
+    margin-top: 40px;
+  }
+
+  .faq__video {
+    display: none;
+  }
+
+  .faq__columna {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 51px;
+    width: 100%;
+    max-width: 590px;
+  }
+
+  .faq__cta {
+    width: 306px;
+    max-width: 100%;
+  }
+
+  /* ---------- Móvil ----------
+     El panel del archivo trae la pestaña arriba y mide 1588.5 de alto, pero
+     el de la página depende del acordeón. El SVG va arriba a su proporción
+     (la pestaña no se deforma). Si la sección es más baja, el recorte con
+     las esquinas de abajo redondeadas (16, las del trazado) se come lo que
+     sobra; si es más alta, sigue el fondo gris, que arranca por debajo de las
+     esquinas de arriba del cuerpo (a 82.7 de 366 de ancho: con el SVG
+     escalado al ancho del panel, 25vw alcanza en cualquier teléfono). */
+  @media (max-width: 767px) {
+    .faq {
+      overflow: hidden;
+      margin-top: 64px;
+      padding: 17px 12px 34px;
+      border-radius: 0 0 var(--radius-card) var(--radius-card);
+      background: linear-gradient(var(--neutral-200) 0 0) 0 25vw / 100% calc(100% - 25vw) no-repeat;
+    }
+
+    .faq__fondo {
+      display: block;
+      position: absolute;
+      top: 0;
+      left: 0;
+      z-index: -1;
+      width: 100%;
+      height: auto;
+    }
+
+    .faq__cabecera {
+      gap: var(--space-md);
+    }
+
+    /* 254 de ancho como en Figma, para que parta en «Preguntas / frecuentes»
+       dentro de la pestaña. */
+    .faq__cabecera h2 {
+      max-width: 254px;
+      margin-inline: auto;
+    }
+
+    .faq__cuerpo {
+      flex-direction: column;
+      gap: var(--space-lg);
+      margin-top: var(--space-lg);
+    }
+
+    /* El damero mide 342 × 551; el Short guarda su 9:16 (342 × 608) para no
+       dejar franjas negras, como en escritorio. */
+    .faq__video {
+      display: block;
+      aspect-ratio: 9 / 16;
+      overflow: hidden;
+      border-radius: var(--radius-card);
+      background: var(--brand-500);
+    }
+
+    .faq__video iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .faq__columna {
+      gap: var(--space-2xl);
+      max-width: none;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .faq {
+      padding-inline: 40px;
+    }
+  }
+
+  /* ---------- Escritorio: la composición del frame ---------- */
+  @media (min-width: 1240px) {
+    .faq {
+      margin-top: 199px;
+      padding: 49px 98px 81px;
+      border-radius: 0;
+      background: none;
+    }
+
+    .faq__fondo {
+      display: block;
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      width: 100%;
+      max-width: none;
+      height: 100%;
+    }
+
+    .faq__cuerpo {
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 40px;
+      margin-top: 66px;
+    }
+
+    /* 488 de ancho como la imagen del frame, con el alto del Short (9:16) para
+       que no queden franjas negras; entre 1240 y 1440 el panel es más angosto
+       y el video es el que cede. */
+    .faq__video {
+      display: block;
+      flex: 0 1 488px;
+      min-width: 0;
+      aspect-ratio: 9 / 16;
+      overflow: hidden;
+      border-radius: var(--radius-panel);
+      background: var(--brand-500);
+    }
+
+    .faq__video iframe {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    .faq__columna {
+      flex: 0 0 590px;
+      align-items: flex-start;
+    }
+
+    /* En el frame el botón queda a 122 del borde izquierdo de la columna. */
+    .faq__cta {
+      margin-left: 122px;
+    }
+  }
+</style>

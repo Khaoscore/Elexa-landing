@@ -1,0 +1,164 @@
+---
+/* Los pasos para hacer parte — «Frame 47» (226:565), 1016 × 772 a 82 del
+   borde del contenido: el símbolo de Elexa en morado (279:801, 330 × 772) a
+   la izquierda y a la derecha los siete pasos («Frame 16», 588 de ancho, 42
+   entre uno y otro). Cada paso es un círculo de 74 con el número y, a 28, una
+   caja de 488 × 74 con borde neutral/300 de 2 y radio 16; los dos textos en
+   Header 3 (36/38).
+
+   El número es decoración: la lista ordenada ya dice qué paso es cuál.
+   Bajo 1240 el símbolo no entra al lado y se quita; los pasos se achican a
+   Mobile/Header 4.
+
+   En el teléfono («Frame 16», 303:5222) cada paso es el de escritorio
+   achicado (× 0,58): círculo de 43, a 16 la caja de 43 de alto con borde de
+   1 y radio 9, y 24 entre paso y paso; el texto queda en Header 4 (20/24). */
+const pasos = [
+  'Conoces el proyecto',
+  'Resuelves dudas',
+  'Defines el monto',
+  'Separas el cupo',
+  'Entregas documentación',
+  'Firmas contrato',
+  'Comienzas aportes',
+];
+---
+
+<section class="pasos contenedor" aria-label="Los pasos para hacer parte">
+  <img class="pasos__simbolo" src="/img/participar/simbolo-pasos.svg" alt="" width="330" height="772.44" />
+
+  <ol class="pasos__lista" role="list">
+    {
+      pasos.map((paso, i) => (
+        <li class="paso">
+          <span class="paso__numero display" aria-hidden="true">
+            {String(i + 1).padStart(2, '0')}
+          </span>
+          <span class="paso__texto display">{paso}</span>
+        </li>
+      ))
+    }
+  </ol>
+</section>
+
+<style>
+  .pasos {
+    display: flex;
+    justify-content: center;
+    margin-top: 64px;
+  }
+
+  .pasos__simbolo {
+    display: none;
+  }
+
+  .pasos__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: min(100%, 590px);
+  }
+
+  .paso {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .paso__numero {
+    display: grid;
+    flex: 0 0 auto;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background: var(--brand-300);
+    color: var(--neutral-100);
+    font-size: 20px;
+    line-height: 24px;
+  }
+
+  .paso__texto {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    min-height: 48px;
+    padding: 10px 14px;
+    border: 2px solid var(--neutral-300);
+    border-radius: var(--radius-card);
+    color: var(--ink-500);
+    font-size: 20px;
+    line-height: 24px;
+  }
+
+  /* El encabezado termina en y = 476 y los pasos arrancan en 537. */
+  @media (max-width: 767px) {
+    .pasos {
+      margin-top: 61px;
+    }
+
+    .pasos__lista {
+      gap: 24px;
+    }
+
+    .paso__numero {
+      width: 43px;
+      height: 43px;
+      font-size: 21px;
+      line-height: 22px;
+    }
+
+    .paso__texto {
+      min-height: 43px;
+      padding: 0 9px;
+      border-width: 1px;
+      border-radius: 9px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .pasos__lista {
+      gap: 42px;
+    }
+
+    .paso {
+      gap: 28px;
+    }
+
+    .paso__numero {
+      width: 74px;
+      height: 74px;
+      font-size: 36px;
+      line-height: 38px;
+    }
+
+    .paso__texto {
+      min-height: 74px;
+      padding: 16px;
+      font-size: 36px;
+      line-height: 38px;
+    }
+  }
+
+  /* El encabezado termina en y = 369 y el bloque arranca en 457. */
+  @media (min-width: 1240px) {
+    .pasos {
+      align-items: center;
+      justify-content: flex-start;
+      gap: 98px;
+      margin-top: 88px;
+      padding-left: 82px;
+    }
+
+    .pasos__simbolo {
+      display: block;
+      flex: 0 0 330px;
+      height: 772.44px;
+    }
+
+    /* 74 + 28 + 488 = 590: en Figma la caja se pasa 2 del frame. */
+    .pasos__lista {
+      flex: 0 0 590px;
+    }
+  }
+</style>

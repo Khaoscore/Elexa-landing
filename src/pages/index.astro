@@ -1,0 +1,41 @@
+---
+/* La landing: las secciones en el orden del frame "Desktop - 1" (3:78).
+
+   Se renderiza en el servidor en cada pedido (no en el build) porque
+   «Proyectos abiertos» lee la tabla de Supabase: así un proyecto nuevo sale
+   sin volver a desplegar. Para no consultar Supabase en cada visita, el CDN
+   de Vercel guarda la página 60 s y, pasado ese minuto, sigue sirviendo la
+   copia guardada mientras arma la nueva por detrás. Un cambio en la tabla
+   tarda como mucho ~1 minuto en verse. */
+export const prerender = false;
+
+import Base from '../layouts/Base.astro';
+import Hero from '../components/Hero.astro';
+import LoQueHacemos from '../components/LoQueHacemos.astro';
+import Diferencias from '../components/Diferencias.astro';
+import ProyectosAbiertos from '../components/ProyectosAbiertos.astro';
+import Cifras from '../components/Cifras.astro';
+import Modelo from '../components/Modelo.astro';
+import BandaLogos from '../components/BandaLogos.astro';
+import Libertad from '../components/Libertad.astro';
+import Faq from '../components/Faq.astro';
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
+---
+
+<Base
+  title="Elexa — Inversión inmobiliaria colectiva en Cali"
+  description="Estructuramos proyectos inmobiliarios colectivos en Cali desde el 2018. Usted invierte; nosotros originamos, desarrollamos y operamos."
+  path="/"
+  barra={false}
+>
+  <Hero />
+  <LoQueHacemos />
+  <Diferencias />
+  <ProyectosAbiertos />
+  <Cifras />
+  <Modelo />
+  <BandaLogos />
+  <Libertad />
+  <Faq />
+</Base>

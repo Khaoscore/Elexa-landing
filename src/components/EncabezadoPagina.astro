@@ -1,0 +1,73 @@
+---
+/* Encabezado de las páginas internas — «Frame 60» (48:1264 y sus copias en
+   cada página): título Banner (96/82) centrado y debajo, a 32, un párrafo de
+   794. En el teléfono («Frame 60» 303:4707 y copias) es el mismo bloque a
+   342 de ancho, con el Banner móvil (60/62) y el párrafo en 16/20.
+
+   El título va por slot para poder marcar la palabra de color:
+     <EncabezadoPagina>Nuestra <span class="acento">historia</span></EncabezadoPagina>
+   `acento--magenta` es el palette/accent/300 de «disponibles».
+
+   Cada página trae su párrafo en el slot `texto`; sin él sale el de
+   «Nuestra historia», que era el de todas en la primera versión del archivo:
+     <Fragment slot="texto"><strong>9 años…</strong> Desde edificios…</Fragment>
+
+   `nivel` deja el título como <p> en la ficha de un espacio, donde el <h1> es
+   el nombre del local. */
+interface Props {
+  nivel?: 'h1' | 'p';
+}
+
+const { nivel: Etiqueta = 'h1' } = Astro.props;
+---
+
+<header class="encabezado contenedor">
+  <Etiqueta class="encabezado__titulo display t-banner"><slot /></Etiqueta>
+  <p class="encabezado__texto">
+    <slot name="texto">
+      En Elexa Real Estate estructuramos negocios con bienes raíces comerciales generadores de renta y los ponemos al
+      alcance de todos a través de las estructuras colectivas, que nos permiten proteger, crecer y hacer rentar nuestro
+      patrimonio, y así <strong>construir el sueño de libertad financiera.</strong>
+    </slot>
+  </p>
+</header>
+
+<style>
+  .encabezado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-xl);
+    margin-top: 48px;
+    color: var(--brand-500);
+    text-align: center;
+  }
+
+  .encabezado__texto {
+    max-width: 794px;
+  }
+
+  /* La pastilla de la barra termina en y = 68 y el título arranca en 128.
+     En el teléfono el párrafo va de corrido: los saltos que pone alguna
+     página para el escritorio («Cómo hacer parte») no están en el frame. */
+  @media (max-width: 767px) {
+    .encabezado {
+      margin-top: 60px;
+    }
+
+    .encabezado__texto :global(br) {
+      display: none;
+    }
+  }
+
+  /* El navbar termina en y = 101 y el título arranca en 189. */
+  @media (min-width: 1240px) {
+    .encabezado {
+      margin-top: 88px;
+    }
+  }
+
+  .encabezado :global(.acento--magenta) {
+    color: var(--accent-300);
+  }
+</style>

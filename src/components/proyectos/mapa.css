@@ -1,0 +1,531 @@
+/* Estilos de la isla del mapa (MapaProyectos.tsx). Medidas de "Desktop - 3":
+   mapa 1352 × 978 a 22 de los bordes del panel, panel 461 a 22/21 del mapa,
+   tarjetas de 264 × 381 montadas 50 sobre el borde de abajo del mapa. Las del
+   teléfono, en su bloque (bajo 768). */
+
+.mapa-zona {
+  position: relative;
+}
+
+/* ============================== MAPA ============================== */
+.mapa {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+/* z-index 0 encierra las capas de Leaflet (que llegan a 1000) para que el
+   panel quede siempre encima. */
+.mapa__lienzo {
+  position: relative;
+  z-index: 0;
+  height: 420px;
+  border-radius: var(--radius-panel);
+  overflow: hidden;
+  background: #e8e6e1;
+  font-family: var(--font-body);
+}
+
+.mapa__panel {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+  padding: var(--space-lg);
+  border-radius: var(--radius-panel);
+  background: var(--neutral-100);
+}
+
+/* ---------- Buscador ---------- */
+.mapa__buscador {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-md) var(--space-lg);
+  border-radius: var(--radius-full);
+  background: var(--neutral-200);
+}
+
+.mapa__buscador input {
+  flex: 1;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ink-300);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 22px;
+}
+.mapa__buscador input::placeholder {
+  color: var(--ink-300);
+  opacity: 1;
+}
+.mapa__buscador input:focus {
+  outline: none;
+}
+.mapa__buscador:focus-within {
+  outline: 3px solid var(--accent-300);
+  outline-offset: 2px;
+}
+
+/* ---------- Ficha del proyecto elegido ---------- */
+.mapa__ficha {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xl);
+}
+
+.mapa__foto {
+  width: 100%;
+  aspect-ratio: 413 / 411;
+  object-fit: cover;
+  border-radius: var(--radius-panel);
+}
+
+.mapa__nombre {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: center;
+}
+
+.mapa__nombre h3 {
+  color: var(--brand-300);
+  font-size: 28px;
+  line-height: 32px;
+}
+
+.mapa__nombre p {
+  font-weight: 700;
+  color: var(--ink-300);
+}
+
+.mapa__etiquetas {
+  display: flex;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.mapa__etiquetas li {
+  flex: 1;
+  font-weight: 700;
+  color: var(--brand-500);
+  text-align: center;
+}
+
+.mapa__datos {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  margin: 0;
+}
+.mapa__datos div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-width: 0;
+}
+.mapa__datos dt {
+  color: var(--brand-500);
+  font-size: 24px;
+  line-height: 30px;
+}
+.mapa__datos dd {
+  margin: 0;
+  color: var(--ink-300);
+}
+
+.mapa__vacio {
+  color: var(--ink-300);
+  text-align: center;
+}
+
+/* ============================== PINES ==============================
+   «Group 13» (chico, 64 × 83) y «Group 12» (elegido, 85 × 110 con sombra),
+   armados con sus piezas en las posiciones del archivo. */
+.pin-mapa {
+  background: none;
+  border: 0;
+}
+
+.pin {
+  position: relative;
+  display: block;
+  cursor: pointer;
+}
+.pin img {
+  position: absolute;
+  max-width: none;
+}
+
+.pin--chico {
+  width: 64px;
+  height: 84px;
+}
+.pin__circulo {
+  top: 0;
+  left: 0;
+  width: 64px;
+  height: 64px;
+}
+.pin__punta {
+  top: 57.14px;
+  left: 12.19px;
+  width: 39.62px;
+  height: 26.1px;
+}
+.pin__relleno {
+  top: 3.05px;
+  left: 3.05px;
+  width: 57.9px;
+  height: 57.9px;
+}
+.pin__simbolo {
+  top: 20.2px;
+  left: 15.2px;
+  width: 32.81px;
+  height: 24.69px;
+}
+
+.pin--elegido {
+  width: 86px;
+  height: 148px;
+}
+/* El SVG trae 16 px de margen por la sombra. */
+.pin__cuerpo {
+  top: -16px;
+  left: -16px;
+  width: 117.06px;
+  height: 142.63px;
+}
+.pin__logo {
+  top: 27px;
+  left: 21px;
+  width: 43.6px;
+  height: 32.82px;
+}
+.pin__punto {
+  top: 97px;
+  left: 23px;
+  width: 40px;
+  height: 40px;
+}
+.pin__etiqueta {
+  position: absolute;
+  top: 126px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--brand-500);
+  font-family: var(--font-body);
+  font-weight: 700;
+  font-size: 16px;
+  line-height: 22px;
+  text-shadow: 0 0 12px rgba(0, 0, 0, 0.25);
+  white-space: nowrap;
+}
+
+/* ============================== TARJETAS ============================== */
+.mapa__tarjetas {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 19.25px;
+  margin: var(--space-lg) 0 0;
+  padding: 0 0 4px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: thin;
+  list-style: none;
+}
+
+.anterior {
+  flex: 0 0 264px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px;
+  border-radius: var(--radius-card);
+  background: var(--neutral-100);
+  scroll-snap-align: start;
+}
+
+.anterior--elegido {
+  box-shadow: inset 0 0 0 2px var(--brand-300);
+}
+
+.anterior__foto {
+  width: 100%;
+  height: 177px;
+  object-fit: cover;
+  border-radius: 11px;
+}
+
+.anterior__texto p {
+  margin: 0;
+}
+
+.anterior__nombre {
+  font-weight: 700;
+  color: var(--brand-300);
+}
+
+.anterior__direccion,
+.anterior__datos {
+  font-size: 14px;
+  line-height: 22px;
+}
+.anterior__direccion {
+  color: var(--ink-300);
+}
+.anterior__datos {
+  color: var(--negro-azul);
+}
+
+.anterior__precio {
+  margin: 0;
+  color: var(--ink-400);
+  font-size: 36px;
+  line-height: 38px;
+}
+
+.anterior__boton {
+  width: 100%;
+  margin-top: auto;
+}
+
+/* La × de la ficha flotante sólo existe en el teléfono. */
+.mapa__cerrar {
+  display: none;
+}
+
+/* ============================== TELÉFONO ==============================
+   «iPhone 13 & 14 - 3» (303:4780). La sección (ProyectosAnteriores.astro) es
+   una grilla de una columna: la fila 1 es el título, la 2 el mapa (las dos
+   sobre el panel gris con pestaña) y la 3 las tarjetas, ya fuera del panel.
+   .mapa-zona ocupa las filas 2 y 3 y las comparte con sus hijos (subgrid).
+   No sirve `display: contents`: client:visible mira la caja de .mapa-zona
+   para saber cuándo hidratar, y sin caja el mapa no se armaba nunca. */
+@media (max-width: 767px) {
+  .mapa-zona {
+    grid-row: 2 / 4;
+    grid-column: 1;
+    display: grid;
+    grid-template-rows: subgrid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* «Rectangle 16» (342 × 809) a 31 del párrafo, y el panel termina 47 más
+     abajo (la ficha se sale 17 y deja 30 hasta el borde). La barra fija tapa
+     los primeros 68 px de la pantalla: «Ver proyecto» deja el mapa debajo. */
+  .mapa {
+    grid-row: 1;
+    position: relative;
+    display: block;
+    margin: 31px 12px 47px;
+    scroll-margin-top: 80px;
+  }
+
+  .mapa__lienzo {
+    height: 809px;
+    border-radius: var(--radius-card);
+  }
+
+  /* ---------- Ficha flotante — «Frame 87» (342 × 336) ---------- */
+  .mapa__panel {
+    position: absolute;
+    right: 0;
+    bottom: -17px;
+    left: 0;
+    padding: var(--space-md) var(--space-sm);
+    border-radius: var(--radius-card);
+  }
+  .mapa__panel--cerrado {
+    display: none;
+  }
+
+  .mapa__buscador {
+    display: none;
+  }
+
+  /* Nombre y × arriba; los tres datos, la foto y las etiquetas debajo. */
+  .mapa__ficha {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 38px;
+    grid-template-areas:
+      'nombre cerrar'
+      'datos datos'
+      'foto foto'
+      'etiquetas etiquetas';
+    gap: var(--space-md) var(--space-lg);
+    align-items: center;
+  }
+
+  .mapa__nombre {
+    grid-area: nombre;
+    gap: 0;
+  }
+  .mapa__nombre h3 {
+    font-size: 20px;
+    line-height: 24px;
+  }
+  .mapa__nombre p {
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  .mapa__cerrar {
+    grid-area: cerrar;
+    display: block;
+    width: 38px;
+    height: 38px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: none;
+    cursor: pointer;
+  }
+
+  .mapa__datos {
+    grid-area: datos;
+    gap: 0;
+    margin-top: var(--space-xs);
+  }
+  .mapa__datos div {
+    flex: 0 1 91px;
+    gap: 0;
+    text-align: center;
+  }
+  .mapa__datos dt {
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 20px;
+    font-variation-settings: normal;
+    letter-spacing: 0;
+  }
+  .mapa__datos dd {
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  .mapa__foto {
+    grid-area: foto;
+    height: 150px;
+    aspect-ratio: auto;
+    border-radius: var(--radius-card);
+  }
+
+  .mapa__etiquetas {
+    grid-area: etiquetas;
+  }
+  .mapa__etiquetas li {
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  /* ---------- Tarjetas — «Cards» (303:4904) ----------
+     Las de escritorio al 84 % (221.67 × 283.71), a 39 del panel. La fila va de
+     borde a borde de la pantalla y arranca alineada con el panel. */
+  .mapa__tarjetas {
+    grid-row: 2;
+    gap: var(--space-md);
+    margin: 39px calc(-1 * var(--margen-panel)) 0;
+    padding: 0 var(--margen-panel);
+    scroll-padding-inline: var(--margen-panel);
+    scrollbar-width: none;
+  }
+
+  .anterior {
+    flex-basis: 221.67px;
+    gap: 6.72px;
+    padding: 11.75px;
+    border-radius: 13.43px;
+    background: var(--neutral-200);
+  }
+
+  .anterior__foto {
+    height: 148.62px;
+    border-radius: 9.24px;
+  }
+
+  .anterior__texto p {
+    line-height: 19px;
+  }
+  .anterior__nombre {
+    font-size: 13.43px;
+  }
+  .anterior__direccion,
+  .anterior__datos {
+    font-size: 11.75px;
+  }
+
+  .anterior__precio {
+    display: none;
+  }
+
+  .anterior__boton {
+    min-height: 41.15px;
+    padding: 9.08px 19.15px;
+    font-size: 16.79px;
+    line-height: 20.15px;
+  }
+}
+
+/* ============================== ESCRITORIO ============================== */
+@media (min-width: 1024px) {
+  .mapa {
+    position: relative;
+    display: block;
+    height: 860px;
+    margin: 0 22px;
+  }
+
+  .mapa__lienzo {
+    position: absolute;
+    inset: 0;
+    height: auto;
+  }
+
+  .mapa__panel {
+    position: absolute;
+    top: 21px;
+    left: 22px;
+    width: 400px;
+    max-height: calc(100% - 42px);
+    overflow-y: auto;
+    gap: var(--space-2xl);
+    padding: var(--space-xl) var(--space-lg);
+  }
+
+  .mapa__nombre h3 {
+    font-size: 36px;
+    line-height: 38px;
+  }
+
+  .mapa__tarjetas {
+    margin-top: -50px;
+    padding: 0 22px 4px;
+  }
+
+  .anterior {
+    background: var(--neutral-200);
+  }
+}
+
+@media (min-width: 1240px) {
+  .mapa {
+    height: 978px;
+  }
+
+  .mapa__panel {
+    width: 461px;
+  }
+
+  /* Cinco tarjetas de 264 ocupan justo los 1397 del panel. */
+  .mapa__tarjetas {
+    padding: 0;
+  }
+}
