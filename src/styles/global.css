@@ -62,7 +62,10 @@
   /* Layout. El contenido mide 1200 (x = 120 → 1320 en el frame de 1440) y los
      paneles redondeados (hero, proyectos, preguntas) 1396, a 22 px del borde.
      En pantallas más anchas que el frame los paneles no pasan de 1396 y se
-     centran, igual que el contenido; las bandas oscuras sí van de lado a lado. */
+     centran, igual que el contenido; las bandas oscuras sí van de lado a lado,
+     y el hero, proyectos anteriores y preguntas también (siempre a
+     --margen-panel de los bordes: Hero.astro, ProyectosAnteriores.astro y
+     Faq.astro). */
   --contenido: 1200px;
   --margen: 24px;
   --margen-panel: 12px;

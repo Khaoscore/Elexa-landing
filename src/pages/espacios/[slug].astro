@@ -1,23 +1,20 @@
 ---
 /* Ficha de un espacio — frame "Desktop - 5" (48:1862).
 
-   La URL es /espacios/{slug}; el espacio sale de la tabla `espacios`. Si no
-   existe (o está despublicado) la página responde 404.
+   La URL es /espacios/{slug}; el espacio sale de la tabla `propiedades` (ver
+   src/lib/espacios.ts). Si ya no está en la hoja la página responde 404; si
+   cambió de nombre, redirige a su URL nueva.
 
    · Cabecera (48:2233 + 48:2227): ruta «En alquiler / nombre» (Text button
      morado), el nombre en Header 2 y «Ver más espacios» (306) a la derecha.
-   · Foto (48:1870): 793 × 669.5 con una sola muesca, arriba a la izquierda
-     (384.5 × 99.87), donde va el precio en accent/300: 48/46 la cifra y 24/30
-     la nota («+ IVA»). Sin precio, la foto va sin muesca.
+   · Foto con el precio en la muesca: FotosEspacio.astro.
    · Características (48:2186): columna de 305 a 102 de la foto; cada una es
      un círculo magenta de 66.66 con su ícono (31) y el texto en Header 4.
+     Salen del barrio, el área, las amenidades, el parqueadero y el ascensor.
 
    En el teléfono («iPhone 13 & 14 - 5», 303:5064), todo en una columna:
    · ruta y nombre en Mobile/Header 1 (48/52) — «Frame 75» (303:5129);
-   · la foto pegada debajo, alta (341.5 × 622.5), con la muesca arriba a la
-     izquierda de 229 × 83 — «Vector 2» (303:5134). El frame no trae precio,
-     pero la muesca es la de escritorio achicada: el precio va ahí, en
-     Mobile/Header 2 (30/34) y la nota en Body (16/20);
+   · la foto pegada debajo — «Vector 2» (303:5134);
    · a 40 la lista — «Frame 73» (303:5135): el círculo a la izquierda y el
      texto a su derecha, a 16, en Mobile/Header 3 (24/28), 20 entre filas;
    · y a 40, «Ver más espacios» a todo el ancho — «Frame 74» (303:5132). */
@@ -25,35 +22,40 @@ export const prerender = false;
 
 import Base from '../../layouts/Base.astro';
 import EncabezadoEspacios from '../../components/espacios/EncabezadoEspacios.astro';
+import FotosEspacio from '../../components/espacios/FotosEspacio.astro';
 import { getEspacio } from '../../lib/espacios';
-import { estiloMuescas } from '../../lib/formas';
 import { ESPACIOS_URL } from '../../data/site';
 
 const { slug = '' } = Astro.params;
-const espacio = await getEspacio(slug);
+const encontrado = await getEspacio(slug);
+
+if (encontrado && !encontrado.exacto) {
+  return Astro.redirect(`${ESPACIOS_URL}/${encontrado.espacio.slug}`, 301);
+}
+
+const espacio = encontrado?.espacio ?? null;
 
 if (!espacio) Astro.response.status = 404;
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
 
-/* Sin precio, la foto va sin muesca. Las dos formas van en variables propias
-   y el <style> elige cuál pasa a `.muescas` (con `--muescas-mascara` en el
-   style ninguna media query podría pisarla). */
-const escritorio = estiloMuescas(espacio?.precio ? [{ esquina: 'tl', ancho: 384.5, alto: 99.87 }] : []);
-const movil = estiloMuescas(espacio?.precio ? [{ esquina: 'tl', ancho: 229, alto: 83 }] : []);
-const forma = [
-  `--mascara-escritorio:${escritorio['--muescas-mascara']}`,
-  `--trazo-escritorio:${escritorio['--muescas-trazo']}`,
-  `--mascara-movil:${movil['--muescas-mascara']}`,
-  `--trazo-movil:${movil['--muescas-trazo']}`,
-].join(';');
+const valor = espacio ? [espacio.precio, espacio.precioNota].filter(Boolean).join(' ') : '';
+const descripcion = espacio
+  ? [
+      `${espacio.nombre}${espacio.barrio ? `, ${espacio.barrio}` : ''}.`,
+      espacio.area && `${espacio.area}.`,
+      valor && `${valor}.`,
+      'Espacio comercial en alquiler en un proyecto de Elexa.',
+    ]
+      .filter(Boolean)
+      .join(' ')
+  : 'El espacio que busca ya no está disponible.';
 ---
 
 <Base
-  title={espacio ? `${espacio.titulo} — Espacios en alquiler — Elexa` : 'Espacio no encontrado — Elexa'}
-  description={espacio
-    ? `${espacio.titulo}${espacio.direccion ? `, ${espacio.direccion}` : ''}${espacio.zona ? ` (${espacio.zona})` : ''}. Espacio comercial en alquiler en un proyecto de Elexa.`
-    : 'El espacio que busca ya no está disponible.'}
-  path={`/espacios/${slug}`}
+  title={espacio ? `${espacio.nombre} — Espacios en alquiler — Elexa` : 'Espacio no encontrado — Elexa'}
+  description={descripcion}
+  path={`${ESPACIOS_URL}/${espacio?.slug ?? slug}`}
+  imagen={espacio?.fotos[0]?.jpeg}
   separacionPie={184}
   separacionPieMovil={61}
 >
@@ -67,9 +69,9 @@ const forma = [
             <nav class="ficha__ruta" aria-label="Ruta">
               <a href={ESPACIOS_URL}>En alquiler</a>
               <span aria-hidden="true">/</span>
-              <span aria-current="page">{espacio.titulo}</span>
+              <span aria-current="page">{espacio.nombre}</span>
             </nav>
-            <h1 class="display t-h2">{espacio.titulo}</h1>
+            <h1 class:list={['display t-h2', { 'ficha__nombre-largo': espacio.nombre.length > 32 }]}>{espacio.nombre}</h1>
           </div>
           <a class="btn btn--primario ficha__volver" href={ESPACIOS_URL}>
             Ver más espacios
@@ -77,18 +79,7 @@ const forma = [
         </header>
 
         <div class="ficha__cuerpo">
-          <div class="ficha__imagen">
-            <div class="ficha__marco muescas" style={forma}>
-              <img src={espacio.imagen} alt={espacio.imagenAlt} />
-              <span class="muescas__trazo" aria-hidden="true" />
-            </div>
-            {espacio.precio && (
-              <p class="ficha__precio display">
-                {espacio.precio}
-                {espacio.precioNota && <span> {espacio.precioNota}</span>}
-              </p>
-            )}
-          </div>
+          <FotosEspacio espacio={espacio} />
 
           {espacio.caracteristicas.length > 0 && (
             <ul class="ficha__datos" role="list">
@@ -130,10 +121,14 @@ const forma = [
     gap: var(--space-lg);
   }
 
+  /* Los nombres de la hoja pueden ser largos: el título se parte en su
+     columna y el botón se queda a la derecha mientras quepan los dos. */
   .ficha__cabecera > div {
     display: flex;
+    flex: 1 1 480px;
     flex-direction: column;
     gap: var(--space-sm);
+    min-width: 0;
   }
 
   .ficha__ruta {
@@ -153,6 +148,7 @@ const forma = [
   }
 
   .ficha__volver {
+    flex: none;
     width: 306px;
     max-width: 100%;
   }
@@ -162,40 +158,6 @@ const forma = [
     flex-direction: column;
     gap: var(--space-2xl);
     margin-top: 48px;
-  }
-
-  .ficha__imagen {
-    position: relative;
-    aspect-ratio: 793 / 669.5;
-  }
-
-  .ficha__marco {
-    --muescas-mascara: var(--mascara-escritorio);
-    --muescas-trazo: var(--trazo-escritorio);
-    position: absolute;
-    inset: 0;
-    background: var(--neutral-200);
-  }
-
-  .ficha__marco img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-  }
-
-  /* El precio vive en la muesca, a 23 del borde de arriba de la foto. */
-  .ficha__precio {
-    position: absolute;
-    top: 23px;
-    left: 0;
-    margin: 0;
-    color: var(--accent-300);
-    font-size: 48px;
-    line-height: 46px;
-  }
-  .ficha__precio span {
-    font-size: 24px;
-    line-height: 30px;
   }
 
   .ficha__datos {
@@ -233,9 +195,21 @@ const forma = [
       display: contents;
     }
 
+    .ficha__cabecera > div {
+      flex: none;
+    }
+
     .ficha__cabecera h1 {
       font-size: min(48px, 12.3vw);
       line-height: 1.0834;
+    }
+
+    /* Con los nombres largos de la hoja («Mall con Ara de ancla sobre la
+       Cra 66 con 2A - Esquinero») el Header 1 ocupa cinco renglones y deja
+       la foto fuera de la pantalla: bajan a Mobile/Header 2 (30/34). */
+    .ficha__cabecera h1.ficha__nombre-largo {
+      font-size: 30px;
+      line-height: 34px;
     }
 
     .ficha__volver {
@@ -247,28 +221,6 @@ const forma = [
     .ficha__cuerpo {
       gap: 40px;
       margin-top: 0;
-    }
-
-    .ficha__imagen {
-      aspect-ratio: 341.5 / 622.5;
-    }
-
-    .ficha__marco {
-      --muescas-mascara: var(--mascara-movil);
-      --muescas-trazo: var(--trazo-movil);
-    }
-
-    /* En la muesca: 213 de ancho (229 menos los 16 que la separan de la
-       foto), centrado en el alto. */
-    .ficha__precio {
-      top: 17px;
-      max-width: 213px;
-      font-size: 30px;
-      line-height: 34px;
-    }
-    .ficha__precio span {
-      font-size: 16px;
-      line-height: 20px;
     }
 
     .ficha__datos li {
@@ -307,12 +259,6 @@ const forma = [
       align-items: flex-start;
       gap: 102px;
       margin-top: 93px;
-    }
-
-    .ficha__imagen {
-      flex: 0 0 793px;
-      height: 670px;
-      aspect-ratio: auto;
     }
 
     .ficha__datos {

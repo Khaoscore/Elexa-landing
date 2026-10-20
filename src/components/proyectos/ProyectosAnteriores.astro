@@ -3,12 +3,20 @@
    una pestaña elevada en el centro, el título «Frame 78» (59:2655) y el mapa
    con su panel y las tarjetas (isla MapaProyectos.tsx).
 
-   Los proyectos salen de la tabla `proyectos_anteriores` de Supabase (ver
-   src/lib/anteriores.ts). Sin ninguno publicado, la sección no sale.
+   Los proyectos salen de la hoja «Propiedades Elexa», sincronizada a la
+   tabla `propiedades_elexa` de Supabase (ver src/lib/anteriores.ts). Sin
+   ninguno que se pueda ubicar en el mapa, la sección no sale.
 
-   El panel es el SVG del archivo estirado a 1220 de alto; las tarjetas se
-   salen por debajo, como en el diseño. Entre 768 y 1240 px pasa a un
-   rectángulo redondeado que envuelve todo.
+   Como el hero, el panel va siempre a --margen-panel de los bordes, también
+   en pantallas más anchas que el frame, y el mapa (a 22 del panel) crece con
+   él. El panel mide 1220 de alto; las tarjetas se salen por debajo, como en
+   el diseño. Para que se estire sin deformarse, el trazado se arma en dos
+   piezas, igual que en Faq.astro: la pestaña
+   (public/img/mapa/pestana-anteriores.svg, el tramo de arriba del trazado,
+   de x = 192.9 a 1201.4) a su tamaño, en el mismo lugar respecto del
+   centro, y debajo el cuerpo, un rectángulo de radio 24 que arranca a 70.8
+   del borde de arriba. Entre 768 y 1240 px pasa a un rectángulo redondeado
+   que envuelve todo.
 
    En el teléfono es «Vector 2» (303:4864, 366 × 1048), con una pestaña más
    baja, y envuelve sólo el título y el mapa: las tarjetas van debajo, sobre
@@ -22,7 +30,7 @@ const proyectos = await getProyectosAnteriores();
 {
   proyectos.length > 0 && (
     <section class="anteriores" aria-labelledby="anteriores-titulo">
-      <img class="anteriores__fondo" src="/img/mapa/fondo-anteriores.svg" alt="" width="1397" height="1220" />
+      <img class="anteriores__fondo" src="/img/mapa/pestana-anteriores.svg" alt="" width="1008" height="72" />
       <img class="anteriores__fondo-movil" src="/img/mapa/fondo-anteriores-movil.svg" alt="" width="366" height="1048" />
 
       <header class="anteriores__cabecera">
@@ -45,7 +53,7 @@ const proyectos = await getProyectosAnteriores();
   .anteriores {
     position: relative;
     isolation: isolate;
-    width: var(--ancho-panel);
+    width: calc(100% - 2 * var(--margen-panel));
     margin: 96px auto 0;
     padding: 40px var(--space-md) var(--space-lg);
     border-radius: var(--radius-panel);
@@ -127,15 +135,29 @@ const proyectos = await getProyectosAnteriores();
       background: none;
     }
 
+    .anteriores::before {
+      content: '';
+      position: absolute;
+      top: 70.8px;
+      left: 0;
+      z-index: -1;
+      width: 100%;
+      height: calc(1220px - 70.8px);
+      border-radius: var(--radius-panel);
+      background: var(--neutral-200);
+    }
+
+    /* La pestaña empieza a 505.6 a la izquierda del centro (192.9 de 1397) y
+       baja 1.2 px dentro del cuerpo para que no quede una línea entre los dos. */
     .anteriores__fondo {
       display: block;
       position: absolute;
       top: 0;
-      left: 0;
+      left: calc(50% - 505.58px);
       z-index: -1;
-      width: 100%;
+      width: 1008.44px;
       max-width: none;
-      height: 1220px;
+      height: 72px;
     }
 
     /* El mapa arranca a 220 del borde de arriba del panel. */

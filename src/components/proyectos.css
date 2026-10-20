@@ -21,15 +21,18 @@
 /* Desde 768, la fila. La pista se estira por debajo del relleno del panel
    hasta su borde: en el carrusel la tercera tarjeta asoma cortada por el
    borde redondeado del panel, no por la columna de contenido.
-   scroll-padding la mantiene alineada con el contenido al encajar. */
+   scroll-padding la mantiene alineada con el contenido al encajar.
+   El overflow-x también recorta arriba y abajo: los 12 de relleno (que el
+   margen negativo devuelve) dejan lugar para que la tarjeta crezca al
+   pasarle el mouse. */
 @media (min-width: 768px) {
   .carrusel__pista {
     --tarjeta-w: calc((100% - 20px) / 2);
 
     flex-direction: row;
     gap: 20px;
-    margin: 0 calc(-1 * var(--panel-pad, 0px));
-    padding: 0 var(--panel-pad, 0px);
+    margin: -12px calc(-1 * var(--panel-pad, 0px));
+    padding: 12px var(--panel-pad, 0px);
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scroll-snap-type: x mandatory;
@@ -99,6 +102,7 @@
 .tarjeta {
   position: relative;
   height: 278.87px;
+  transition: transform 0.4s ease;
 }
 
 /* La forma que lee `.muescas` (global.css): la del teléfono o, desde 768, la
@@ -116,6 +120,20 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+/* La tarjeta crece un poco y la foto, adentro, un poco más (el zoom de las
+   tarjetas de espacios; la máscara del marco lo recorta). Solo con mouse: en
+   el teléfono el toque la dejaría agrandada. */
+@media (hover: hover) {
+  .tarjeta:hover {
+    transform: scale(1.02);
+  }
+
+  .tarjeta:hover .tarjeta__foto {
+    transform: scale(1.03);
+  }
 }
 
 /* Velo de palette/ink/400 al 20 % y el trazo. Desde 768 la ancha va sin

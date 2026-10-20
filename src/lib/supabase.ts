@@ -1,6 +1,7 @@
 /* Acceso de sólo lectura a Supabase, compartido por las tres tablas del sitio:
-   `proyectos` (proyectos abiertos), `proyectos_anteriores` (el mapa) y
-   `espacios` (locales en alquiler). El esquema está en supabase/esquema.sql.
+   `proyectos` (proyectos abiertos), `propiedades_elexa` (el mapa) y
+   `propiedades` (espacios en alquiler); las dos últimas las llena una hoja
+   de Google. El esquema está en supabase/esquema.sql.
 
    Se consulta la API REST (PostgREST) con un fetch: para leer filas públicas
    no hace falta cargar el cliente @supabase/supabase-js. La clave es la
@@ -15,8 +16,9 @@ import { SUPABASE_KEY, SUPABASE_URL } from 'astro:env/server';
 
 export const hayBaseDeDatos = Boolean(SUPABASE_URL && SUPABASE_KEY);
 
-/* Todas las fotos van en un solo bucket público, con una carpeta por tabla
-   (`proyectos/`, `anteriores/`, `espacios/`). */
+/* Las fotos subidas a mano van en un solo bucket público, con una carpeta por
+   tabla (`proyectos/`, `anteriores/`, `espacios/`). Las de los espacios en
+   alquiler suelen venir de Drive (ver src/lib/espacios.ts). */
 const BUCKET = 'imagenes';
 
 /* Si Supabase no contesta en este tiempo se corta, en vez de dejar la página

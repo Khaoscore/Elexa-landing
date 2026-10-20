@@ -46,33 +46,42 @@ src/
 │   ├── TarjetaProyecto.tsx
 │   ├── nosotros/                  Fundador, SobreElexa, Equipo
 │   ├── participar/                Pasos, DiezMinutos («10 minutos con Luis»)
+│   ├── radiografia/               Radiografia.tsx (isla de «Libertad»: la radiografía
+│   │                              financiera completa), CampoDinero.tsx, radiografia.css
 │   ├── proyectos/                 TarjetaProyectoGrande, ProyectosAnteriores,
 │   │                              MapaProyectos.tsx (isla del mapa), BandaEspacios
-│   └── espacios/                  TarjetaEspacio, EncabezadoEspacios
+│   └── espacios/                  TarjetaEspacio, FotosEspacio (foto, precio y
+│                                  flechas de la ficha), EncabezadoEspacios
 ├── lib/
 │   ├── supabase.ts                la consulta a la API y las URLs de imágenes
 │   ├── proyectos.ts  anteriores.ts  espacios.ts   una por tabla
 │   ├── negritas.ts                los **tramos en negrita** de las descripciones
+│   ├── faq.ts                     lee data/faq.md y arma las preguntas
+│   ├── radiografia.ts             la aritmética de la radiografía, sus textos y el envío
+│   ├── radiografia-pdf.ts         el PDF del resultado (jsPDF, se baja al llegar al final)
 │   └── formas.ts                  las tarjetas «con muesca» en CSS (ver el archivo)
 └── data/
     ├── site.ts                    enlaces de todo el sitio (un solo lugar)
+    ├── radiografia.ts             a dónde van los datos de la radiografía
     ├── equipo.ts                  «Nuestro equipo»
-    ├── faq.ts                     preguntas frecuentes
+    ├── faq.md                     preguntas frecuentes (texto plano, ver el archivo)
     └── proyectos.ts  anteriores.ts  espacios.ts   respaldo sin Supabase
 public/img/                        assets exportados de Figma
 supabase/esquema.sql               tablas, permisos, bucket y datos iniciales
+supabase/sincronizar-hoja.gs       Apps Script de la hoja «Alquiler Elexa» → `propiedades`
 ```
 
 ## Base de datos
 
-Tres tablas en Supabase, todas con las columnas `orden` (de menor a mayor) y
-`publicado` (en `false` deja de mostrarse sin borrarlo):
+Tres tablas en Supabase. `proyectos` se edita en Table Editor y tiene las
+columnas `orden` (de menor a mayor) y `publicado` (en `false` deja de
+mostrarse sin borrarlo); las otras dos las llena cada una su hoja de Google:
 
 | Tabla | Dónde se ve | Columnas propias |
 |---|---|---|
 | `proyectos` | «Proyectos abiertos» de la portada y tarjetas grandes de `/proyectos` | nombre, descripcion, imagen, imagen_grande, enlace |
-| `proyectos_anteriores` | mapa y tarjetas de `/proyectos` | nombre, etiqueta_mapa, direccion, caracteristicas, area, espacio, ventaja, precio, **latitud, longitud** |
-| `espacios` | `/espacios` y `/espacios/{slug}` | slug, titulo, direccion, zona, precio, precio_nota, caracteristicas (con ícono) |
+| `propiedades_elexa` | mapa y tarjetas de `/proyectos`; la llena la hoja «Propiedades Elexa» (no tiene `orden` ni `publicado`: sale todo, por código) | codigo, nombre_del_proyecto, direccion, categoria, **latitud, longitud**, fotos |
+| `propiedades` | `/espacios` y `/espacios/{slug}`; la llena la hoja «Alquiler Elexa» (sale todo, en el orden de la hoja) | id, nombre, barrio, valor, area, parqueadero, ascensor, amenidades, fotos, orden |
 
 Detalles de cada columna, con ejemplos, en los comentarios de
 `supabase/esquema.sql`.
@@ -101,7 +110,7 @@ en local funciona recién clonado.
 
 ### Día a día
 
-Todo desde **Table Editor**. Para las fotos, subirlas al bucket `imagenes`
+`proyectos`, desde **Table Editor**. Para las fotos, subirlas al bucket `imagenes`
 (una carpeta por tabla: `proyectos/`, `anteriores/`, `espacios/`) y escribir
 la ruta en la columna `imagen`, o pegar una URL completa. JPG o WebP de
 1200–1800 px de ancho; la forma de la tarjeta la recorta sola.
@@ -111,12 +120,47 @@ la ruta en la columna `imagen`, o pegar una URL completa. JPG o WebP de
   `Edificio mixto de **14 pisos en Normandía.** Participa desde **$120.9 millones.**`
 - **Coordenadas del mapa**: en Google Maps, clic derecho sobre el lugar → el
   primer renglón del menú son la latitud y la longitud.
-- **Ficha de un espacio**: `caracteristicas` es una lista con su ícono:
-  `[{"icono":"ubicacion","texto":"Sobre la Cra 66 con 2A"}]`. Íconos:
-  `ubicacion`, `area`, `niveles`, `entorno`, `parqueadero`.
+- **Espacios en alquiler**: se editan en la hoja «Alquiler Elexa»; cada
+  cambio llega a Supabase solo (Apps Script de `supabase/sincronizar-hoja.gs`)
+  y al sitio en un minuto. Para quitar uno, se borra su fila. Cómo se lee
+  cada columna (detalle en `src/lib/espacios.ts`):
+  - **Valor**: `$3.934.000 + IVA` → la cifra va en grande y «+ IVA» en chico.
+  - **Area**: el número solo (`67`); el sitio le agrega «m²».
+  - **Parqueadero** / **Ascensor**: `Sí` o `No` («No» no se muestra).
+  - **Amenidades**: una por renglón (Alt + Enter dentro de la celda) o
+    separadas con punto y coma; cada una sale con su ícono en la ficha.
+  - **Fotos**: el enlace de la carpeta de Drive, compartida como «Cualquier
+    persona con el enlace». La portada es la foto que se llame `Portada…`
+    o, si no hay, la primera por nombre de archivo (nombrarlas `01.jpg`,
+    `02.jpg`… para elegir el orden). Una foto nueva en
+    la carpeta no edita la hoja: aparece en la revisión de cada hora o con
+    el menú **Supabase → Sincronizar ahora**.
+  - La URL de la ficha es el nombre más el principio del ID; si el nombre
+    cambia, la dirección vieja redirige a la nueva.
 - **Si Supabase no responde**, la página sale igual pero sin esa sección (no
   muestra datos viejos que podrían anunciar algo ya cerrado); el error queda
   en los logs de la función en Vercel.
+
+## Radiografía financiera
+
+La sección «¿Qué tan lejos estás de tu libertad financiera?» (portada y
+`/como-participar`) es la radiografía de
+[florentino.elexa.com.co/radiografia](https://florentino.elexa.com.co/radiografia)
+dentro del sitio: al tocar «Empezar», la sección se convierte en la
+radiografía sin salir de la página. Misma aritmética (mismo NPER, mismos
+umbrales: da la misma cifra que la de Florentino), pero cada pantalla pregunta
+«¿qué tienes?» con fichas y solo abre la casilla de lo que se marca.
+
+- **Leads**: van al mismo Apps Script que la de Florentino y caen en la misma
+  hoja «Radiografías», con dos columnas nuevas que el script crea solo:
+  `sitio` y `pagina` (para saber que se hizo acá y desde qué página). Igual
+  que allá, la fila se crea al pasar el primer paso (etapa «inicio») y se
+  completa al ver el resultado (etapa «completo»).
+- **También se envía desde `npm run dev`**: esas filas llegan con
+  `localhost` en la columna `sitio`, para distinguirlas y borrarlas. Para que
+  en local no salga nada, `enviarEnDesarrollo: false` en
+  `src/data/radiografia.ts`.
+- Sin JavaScript, el botón lleva a la radiografía de Florentino.
 
 ## El mapa de proyectos anteriores
 
@@ -135,11 +179,13 @@ tocando los pines.
 El archivo de Figma todavía trae marcadores de posición; el sitio los
 reproduce tal cual:
 
-- **Preguntas frecuentes**: la misma pregunta cinco veces, en `src/data/faq.ts`.
-- **Proyectos anteriores**: el diseño trae un solo proyecto de ejemplo
-  repetido cinco veces; las coordenadas cargadas son aproximadas.
-- **Espacios**: sólo «Local al lado del Ara» tiene ficha completa en el
-  diseño; los demás salen con su dirección como única característica.
+- **Proyectos anteriores**: la hoja no trae los datos del panel del diseño
+  (área, espacio, ventaja) ni el precio de las tarjetas. De las fotos se usa
+  la portada; sin foto, o si no es pública en Drive, sale el símbolo de
+  Elexa. El script de la hoja está en `supabase/sincronizar-propiedades-elexa.gs`.
+- **Espacios**: el diseño muestra una sola foto por ficha; como la hoja trae
+  varias, se pasan con dos flechas en una muesca abajo a la derecha (como la
+  de las tarjetas). Los espacios sin fotos salen con el símbolo de Elexa.
 - **«Cómo hacer parte»**: sigue marcado en Figma como pendiente el
   «Formulario precalificación, datos y CTA. Testimonios y desarrollados».
 - **«Construimos valor, juntos.»**: el diseño la sacó de la portada (quedó

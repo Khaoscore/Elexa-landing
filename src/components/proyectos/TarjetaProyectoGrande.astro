@@ -82,6 +82,7 @@ const alt = proyecto.imagenGrande === proyecto.imagen ? proyecto.imagenAlt : '';
   .grande {
     position: relative;
     height: 480px;
+    transition: transform 0.4s ease;
   }
 
   .grande__marco {
@@ -96,6 +97,21 @@ const alt = proyecto.imagenGrande === proyecto.imagen ? proyecto.imagenAlt : '';
     width: 100%;
     height: 100%;
     object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  /* La tarjeta crece un poco y la foto, adentro, un poco más (el zoom de las
+     tarjetas de espacios; la máscara del marco lo recorta). Solo con mouse:
+     en el teléfono el toque la dejaría agrandada. Con 1.02 los 1200 de la
+     tarjeta crecen 12 por lado, menos que el margen de la página. */
+  @media (hover: hover) {
+    .grande:hover {
+      transform: scale(1.02);
+    }
+
+    .grande:hover .grande__foto {
+      transform: scale(1.03);
+    }
   }
 
   .grande__velo {

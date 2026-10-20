@@ -3,7 +3,8 @@
    de las tarjetas (muescas de 64 de ancho arriba a la izquierda y abajo a la
    derecha). Dos usos en el archivo:
    · «Nuestra historia» — «Frame 59» (48:1262), marcos de 486 de alto con
-     muescas de 64;
+     muescas de 64 en el diseño; los reels van en 9:16 (387 × 688, también
+     en el teléfono) para que se vean enteros;
    · «Cómo hacer parte» — «Frame 59» (279:806), marcos de 615: el mismo
      marco estirado, con muescas de 81,5 de alto.
 
@@ -34,6 +35,8 @@ interface Props {
   videos?: Video[];
   /** Alto del marco en Figma (el ancho es siempre 387). */
   alto?: number;
+  /** Alto de los marcos de video en el teléfono (< 768), sobre el mismo ancho de 387. */
+  altoMovil?: number;
   /** Alto de las muescas (el ancho es siempre 64). */
   altoMuesca?: number;
   /** Separación con la sección de arriba en escritorio. */
@@ -49,6 +52,7 @@ const {
   fotos = [marco, marco, marco],
   videos,
   alto = 486,
+  altoMovil = 486,
   altoMuesca = 64,
   separacion = 79,
   separacionMovil = 40,
@@ -79,6 +83,7 @@ const forma = {
 
 const medidas = {
   '--alto': String(alto),
+  '--alto-movil': String(altoMovil),
   '--separacion': `${separacion}px`,
   '--separacion-movil': `${separacionMovil}px`,
   '--espacio-movil': `${espacioMovil}px`,
@@ -326,7 +331,7 @@ const medidas = {
     }
 
     .galeria__marco--video {
-      aspect-ratio: 387 / 486;
+      aspect-ratio: 387 / var(--alto-movil);
     }
 
     .galeria__video {

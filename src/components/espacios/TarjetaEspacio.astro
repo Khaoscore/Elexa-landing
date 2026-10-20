@@ -20,7 +20,11 @@
    se achica: va en los estilos móviles (Header 3 24/28, Body 16/20 y
    Header 4 20/24), a 22 del borde izquierdo y a 20 del de abajo.
 
-   Toda la tarjeta es un enlace a la ficha del espacio. */
+   Toda la tarjeta es un enlace a la ficha del espacio. Con los datos de la
+   hoja: el nombre arriba, el área y el valor en la línea chica, y el barrio
+   abajo. La foto es la primera de la lista; sin fotos va el símbolo de Elexa
+   sobre el fondo oscuro. Su texto alternativo va vacío: el nombre ya es el
+   texto del enlace. */
 import type { Espacio } from '../../lib/espacios';
 import { estiloMuescas } from '../../lib/formas';
 
@@ -29,6 +33,9 @@ interface Props {
 }
 
 const { espacio } = Astro.props;
+const [portada] = espacio.fotos;
+const valor = [espacio.precio, espacio.precioNota].filter(Boolean).join(' ');
+const resumen = [espacio.area, valor].filter(Boolean).join(' · ');
 
 const forma = Object.entries(
   estiloMuescas([
@@ -40,16 +47,31 @@ const forma = Object.entries(
   .join(';');
 ---
 
-<a class="espacio" href={`/espacios/${espacio.slug}`}>
+<a class="espacio" href={`/espacios/${espacio.slug}`} data-cursor="ver">
   <span class="espacio__marco muescas" style={forma}>
-    <img class="espacio__foto" src={espacio.imagen} alt={espacio.imagenAlt} loading="lazy" decoding="async" />
+    {
+      portada ? (
+        <img
+          class="espacio__foto"
+          src={portada.src}
+          srcset={portada.srcset}
+          sizes="(min-width: 1240px) 590px, (min-width: 768px) 50vw, 100vw"
+          alt=""
+          loading="lazy"
+          decoding="async"
+          referrerpolicy="no-referrer"
+        />
+      ) : (
+        <img class="espacio__sin-foto" src="/img/marca/simbolo-claro.svg" alt="" width="29.06" height="32" />
+      )
+    }
     <span class="espacio__velo muescas__trazo" aria-hidden="true"></span>
   </span>
 
   <span class="espacio__texto">
-    <span class="espacio__titulo display t-h4">{espacio.titulo}</span>
-    {espacio.direccion && <span class="espacio__direccion">{espacio.direccion}</span>}
-    {espacio.zona && <span class="espacio__zona display t-h4">{espacio.zona}</span>}
+    <span class="espacio__titulo display t-h4">{espacio.nombre}</span>
+    {resumen && <span class="espacio__resumen">{resumen}</span>}
+    {espacio.barrio && <span class="espacio__barrio display t-h4">{espacio.barrio}</span>}
   </span>
 
   <span class="espacio__icono" aria-hidden="true">
@@ -87,14 +109,23 @@ const forma = Object.entries(
     transform: scale(1.03);
   }
 
+  .espacio__sin-foto {
+    position: absolute;
+    top: 40%;
+    left: 50%;
+    width: 96px;
+    height: auto;
+    opacity: 0.18;
+    transform: translate(-50%, -50%);
+  }
+
   .espacio__velo {
     background:
       var(--muescas-trazo),
       linear-gradient(180deg, rgba(15, 19, 22, 0) 22.12%, rgba(15, 19, 22, 0.3) 90.87%);
   }
 
-  /* La línea de la zona va pegada a la dirección; entre título y dirección,
-     12. */
+  /* La línea del barrio va pegada al resumen; entre título y resumen, 12. */
   .espacio__texto {
     position: absolute;
     left: 24px;
@@ -105,7 +136,7 @@ const forma = Object.entries(
     filter: drop-shadow(0 0 6px rgba(31, 38, 43, 0.6));
   }
 
-  .espacio__direccion {
+  .espacio__resumen {
     margin-top: 12px;
   }
 
@@ -171,7 +202,7 @@ const forma = Object.entries(
       line-height: 28px;
     }
 
-    .espacio__direccion {
+    .espacio__resumen {
       margin-top: 6.96px;
     }
 

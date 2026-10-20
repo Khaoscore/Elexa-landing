@@ -1,0 +1,456 @@
+---
+/* El cursor de Elexa: un punto que va exacto con el mouse y un anillo que lo
+   sigue con un poco de retraso. No viene de Figma; los colores y el símbolo
+   sí son los de la marca.
+
+   Cambia según lo que haya debajo:
+   · en enlaces y botones el anillo crece y se rellena;
+   · en lo que lleve data-cursor="ver" (las tarjetas de espacios) se vuelve
+     un disco morado con el símbolo de Elexa y «Ver» (o lo que diga
+     data-cursor-texto);
+   · en lo que lleve data-cursor="arrastrar" (la fila del mapa) muestra dos
+     flechas;
+   · sobre fondos oscuros (bandas moradas, hero, pie, fotos) pasa a blanco.
+     El tono se adivina por el color de fondo; data-cursor-tono="claro" u
+     "oscuro" lo fuerza donde se equivoque.
+
+   Vuelve el cursor del sistema donde el propio hace falta: campos de texto,
+   el mapa de Leaflet y lo que lleve data-cursor="nativo". Sólo se enciende
+   con un mouse (no con el dedo ni con el lápiz) y nunca en alto contraste;
+   si el script no corre, queda el cursor normal. */
+---
+
+<div class="cursor" aria-hidden="true">
+  <div class="cursor__capa cursor__capa--anillo">
+    <span class="cursor__disco">
+      <span class="cursor__marca">
+        <svg class="cursor__simbolo" viewBox="0 0 29.0605 32.001" width="22" height="24.23">
+          <path
+            d="M28.9114 18.0081L26.9771 17.0197C24.9537 15.9851 23.6965 13.9271 23.6965 11.6482V0.27513C23.6965 0.159733 23.6234 0.0553743 23.5154 0.0162398C23.4074 -0.0228947 23.2854 0.0102191 23.2114 0.0995261C22.8883 0.489868 22.5352 0.862148 22.1622 1.20533C22.1062 1.25751 22.0732 1.33076 22.0732 1.40802V14.4729C22.1282 17.7954 23.9955 20.7977 26.9461 22.3059L28.6614 23.1829C28.7454 23.226 28.8484 23.222 28.9294 23.1718C29.0105 23.1227 29.0605 23.0324 29.0605 22.937V18.2529C29.0605 18.1486 29.0034 18.0553 28.9104 18.0081H28.9114Z"
+          />
+          <path
+            d="M25.6178 22.4142L23.6354 21.4008C21.6121 20.3662 20.3548 18.3081 20.3548 16.0293V3.03763C20.3548 2.94129 20.3038 2.84998 20.2208 2.80081C20.1378 2.75164 20.0338 2.74964 19.9498 2.79579C19.6107 2.98244 19.2576 3.15302 18.9006 3.30354C18.7985 3.34669 18.7325 3.44603 18.7325 3.55741V18.855C18.7875 22.1774 20.6549 25.1797 23.6054 26.6879L25.3688 27.589C25.4528 27.6322 25.5558 27.6282 25.6368 27.578C25.7178 27.5288 25.7678 27.4385 25.7678 27.3432V22.6591C25.7678 22.5547 25.7108 22.4614 25.6178 22.4142Z"
+          />
+          <path
+            d="M22.2762 26.7963L20.2938 25.7828C18.2705 24.7483 17.0132 22.6902 17.0132 20.4113V4.24779C17.0132 4.1655 16.9772 4.08824 16.9132 4.03606C16.8502 3.98388 16.7672 3.96281 16.6862 3.97786C16.3401 4.04509 15.987 4.09727 15.637 4.13139C15.4959 4.14543 15.3899 4.26284 15.3899 4.40533V23.2361C15.4449 26.5585 17.3123 29.5608 20.2628 31.069L22.0262 31.9701C22.1102 32.0132 22.2132 32.0092 22.2942 31.959C22.3752 31.9099 22.4252 31.8196 22.4252 31.7242V27.0401C22.4252 26.9358 22.3682 26.8425 22.2752 26.7953L22.2762 26.7963Z"
+          />
+          <path
+            d="M13.4246 4.13239C13.0745 4.09827 12.7214 4.04609 12.3754 3.97886C12.3584 3.97585 12.3403 3.97384 12.3223 3.97384C12.2593 3.97384 12.1983 3.99592 12.1483 4.03706C12.0853 4.08924 12.0483 4.16651 12.0483 4.24879V20.4124C12.0483 22.6912 10.7911 24.7493 8.76768 25.7838L6.78532 26.7973C6.6933 26.8445 6.63529 26.9388 6.63529 27.0421V31.7262C6.63529 31.8216 6.6853 31.9109 6.76631 31.9611C6.84733 32.0102 6.94935 32.0142 7.03436 31.9721L8.79769 31.071C11.7492 29.5618 13.6156 26.5605 13.6696 23.2381V23.223L13.6706 4.40733C13.6706 4.26484 13.5646 4.14744 13.4236 4.13339L13.4246 4.13239Z"
+          />
+          <path
+            d="M10.329 18.854V18.8379L10.33 3.55641C10.33 3.44503 10.264 3.34568 10.1619 3.30254C9.80488 3.15202 9.45281 2.98143 9.11275 2.79479C9.07174 2.77272 9.02673 2.76168 8.98072 2.76168C8.93272 2.76168 8.88371 2.77472 8.8407 2.79981C8.75768 2.84898 8.70667 2.93929 8.70667 3.03662V16.0293C8.70667 18.3081 7.44944 20.3662 5.42606 21.4008L3.44369 22.4142C3.35168 22.4614 3.29367 22.5557 3.29367 22.6591V27.3432C3.29367 27.4385 3.34368 27.5278 3.42469 27.578C3.50571 27.6272 3.60772 27.6312 3.69274 27.589L5.45607 26.6879C8.40762 25.1787 10.274 22.1774 10.328 18.855L10.329 18.854Z"
+          />
+          <path
+            d="M6.9863 14.4731V14.458L6.9873 1.40815C6.9873 1.33088 6.95529 1.25763 6.89828 1.20545C6.52521 0.862274 6.17215 0.489994 5.84909 0.0996521C5.79708 0.0354313 5.71906 0.000310606 5.63905 0.000310606C5.60804 0.000310606 5.57704 0.00532785 5.54603 0.0163658C5.43801 0.0555003 5.365 0.159859 5.365 0.275256V11.6484C5.365 13.9272 4.10776 15.9853 2.08439 17.0198L0.150028 18.0082C0.0580108 18.0554 0 18.1497 0 18.2531V22.9372C0 23.0325 0.0500093 23.1218 0.131024 23.172C0.212039 23.2211 0.314058 23.2251 0.399074 23.183L2.11439 22.306C5.06594 20.7968 6.93229 17.7955 6.9863 14.4731Z"
+          />
+        </svg>
+        <span class="cursor__texto">Ver</span>
+      </span>
+      <svg class="cursor__flechas" viewBox="0 0 40 16" width="30" height="12">
+        <path d="M7 2 1 8l6 6M33 2l6 6-6 6" />
+      </svg>
+    </span>
+  </div>
+  <div class="cursor__capa cursor__capa--punto">
+    <span class="cursor__punto"></span>
+  </div>
+</div>
+
+<style>
+  /* Tonos: --c es el color pleno (punto, borde activo), --c-trazo el anillo en
+     reposo, --c-velo el relleno sobre un enlace y --c-halo el borde fino del
+     punto, que lo despega si el tono adivinado no es el correcto. */
+  .cursor {
+    --c: var(--brand-300);
+    --c-trazo: rgba(95, 36, 159, 0.45);
+    --c-velo: var(--brand-300-tint);
+    --c-halo: rgba(255, 255, 255, 0.85);
+    --suave: cubic-bezier(0.22, 1, 0.36, 1);
+
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 2147483647;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .cursor[data-visible] {
+    opacity: 1;
+  }
+
+  .cursor[data-tono='oscuro'] {
+    --c: var(--neutral-100);
+    --c-trazo: rgba(255, 255, 255, 0.6);
+    --c-velo: rgba(255, 255, 255, 0.16);
+    --c-halo: rgba(95, 36, 159, 0.55);
+  }
+
+  /* Las capas de 0 × 0 son las que mueve el script (transform); lo de adentro
+     cambia de tamaño y de escala sin pisar esa posición. */
+  .cursor__capa {
+    position: absolute;
+    top: 0;
+    left: 0;
+    will-change: transform;
+  }
+
+  .cursor__punto,
+  .cursor__disco {
+    position: absolute;
+    top: 0;
+    left: 0;
+    translate: -50% -50%;
+    border-radius: var(--radius-full);
+  }
+
+  .cursor__punto {
+    width: 8px;
+    height: 8px;
+    background: var(--c);
+    box-shadow: 0 0 0 1.5px var(--c-halo);
+    transition:
+      scale 0.25s var(--suave),
+      background-color 0.25s ease,
+      box-shadow 0.25s ease;
+  }
+
+  .cursor__disco {
+    display: grid;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    border: 1.5px solid var(--c-trazo);
+    color: var(--c);
+    transition:
+      width 0.4s var(--suave),
+      height 0.4s var(--suave),
+      scale 0.2s var(--suave),
+      background-color 0.25s ease,
+      border-color 0.25s ease,
+      box-shadow 0.25s ease,
+      color 0.25s ease;
+  }
+
+  .cursor__marca,
+  .cursor__flechas {
+    grid-area: 1 / 1;
+    opacity: 0;
+    scale: 0.4;
+    transition:
+      opacity 0.2s ease,
+      scale 0.35s var(--suave);
+  }
+
+  .cursor__marca {
+    display: grid;
+    justify-items: center;
+    gap: 6px;
+  }
+
+  .cursor__simbolo {
+    fill: currentColor;
+  }
+
+  .cursor__texto {
+    font-family: var(--font-display);
+    font-weight: 800;
+    font-variation-settings: 'opsz' 14;
+    font-size: 14px;
+    line-height: 1;
+    letter-spacing: -0.02em;
+    white-space: nowrap;
+  }
+
+  .cursor__flechas {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  /* Al hacer clic se encoge un poco. Va antes de los estados para que el
+     punto escondido de un enlace siga escondido. */
+  .cursor[data-presionado] .cursor__disco {
+    scale: 0.86;
+  }
+  .cursor[data-presionado] .cursor__punto {
+    scale: 0.7;
+  }
+
+  /* Enlaces y botones. */
+  .cursor[data-estado='enlace'] .cursor__disco {
+    width: 60px;
+    height: 60px;
+    border-color: var(--c);
+    background: var(--c-velo);
+  }
+
+  /* Tarjetas con foto: el disco morado con el símbolo, en cualquier tono. */
+  .cursor[data-estado='ver'] .cursor__disco {
+    width: 96px;
+    height: 96px;
+    border-color: transparent;
+    background: var(--brand-300);
+    box-shadow: 0 10px 30px rgba(29, 11, 48, 0.3);
+    color: var(--neutral-100);
+  }
+
+  /* Filas que se deslizan arrastrando. */
+  .cursor[data-estado='arrastrar'] .cursor__disco {
+    width: 72px;
+    height: 72px;
+    border-color: var(--c);
+    background: var(--c-velo);
+  }
+
+  .cursor[data-estado] .cursor__punto {
+    scale: 0;
+  }
+
+  .cursor[data-estado='ver'] .cursor__marca,
+  .cursor[data-estado='arrastrar'] .cursor__flechas {
+    opacity: 1;
+    scale: 1;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cursor__punto,
+    .cursor__disco,
+    .cursor__marca,
+    .cursor__flechas {
+      transition: none;
+    }
+  }
+
+  @media print {
+    .cursor {
+      display: none;
+    }
+  }
+</style>
+
+<style is:global>
+  /* Con el cursor de Elexa encendido se esconde el del sistema, también donde
+     los componentes piden la mano (cursor: pointer). La excepción es la misma
+     lista NATIVO del script: ahí se esconde el de Elexa y vuelve el propio. */
+  html.cursor-elexa,
+  html.cursor-elexa
+    :not(
+      :is(
+          input:not([type='checkbox'], [type='radio'], [type='button'], [type='submit'], [type='reset']),
+          textarea,
+          select,
+          [contenteditable]:not([contenteditable='false']),
+          [data-cursor='nativo'],
+          [data-cursor='nativo'] *,
+          .leaflet-container,
+          .leaflet-container *
+        )
+    ) {
+    cursor: none !important;
+  }
+
+  /* Esas excepciones heredarían el `none` del padre: se devuelven a `auto`
+     sin peso (:where), para que sigan mandando sus propias reglas, como la
+     mano de arrastre de Leaflet. */
+  :where(html.cursor-elexa) :where(input, textarea, select, [contenteditable], [data-cursor='nativo'], .leaflet-container) {
+    cursor: auto;
+  }
+</style>
+
+<script>
+  const raiz = document.querySelector<HTMLElement>('.cursor');
+
+  /* Igual que la excepción de <style is:global>: si se cambia una, se cambia
+     la otra. */
+  const NATIVO = [
+    'input:not([type="checkbox"], [type="radio"], [type="button"], [type="submit"], [type="reset"])',
+    'textarea',
+    'select',
+    '[contenteditable]:not([contenteditable="false"])',
+    '[data-cursor="nativo"]',
+    '.leaflet-container',
+  ].join(', ');
+
+  const INTERACTIVO = [
+    '[data-cursor="ver"]',
+    '[data-cursor="arrastrar"]',
+    '[data-cursor="enlace"]',
+    'a[href]',
+    'button:not(:disabled)',
+    '[role="button"]',
+    '[role="tab"]',
+    'label',
+    'summary',
+    'input',
+  ].join(', ');
+
+  const RGB = /^rgba?\(([\d.]+),\s*([\d.]+),\s*([\d.]+)(?:,\s*([\d.]+))?\)$/;
+  const SVG = /\.svg(?:[?#")]|$)/i;
+
+  /* Recorre todo lo que hay en ese punto, de arriba hacia abajo, hasta el
+     primer fondo que tape: una foto o un video cuentan como oscuros, un color
+     se mide por su brillo. No basta con subir por los padres: el fondo del
+     hero, por ejemplo, es una capa hermana del texto. El <body> y el <html>
+     van al final porque su fondo se pinta en el lienzo, detrás de todo. */
+  const tonoDe = (x: number, y: number): 'claro' | 'oscuro' => {
+    const { body, documentElement: html } = document;
+    const pila = document.elementsFromPoint(x, y).filter((nodo) => nodo !== body && nodo !== html);
+    for (const nodo of [...pila, body, html]) {
+      const forzado = nodo.getAttribute('data-cursor-tono');
+      if (forzado === 'claro' || forzado === 'oscuro') return forzado;
+      if (nodo instanceof HTMLVideoElement) return 'oscuro';
+      if (nodo instanceof HTMLImageElement && !SVG.test(nodo.currentSrc || nodo.src)) return 'oscuro';
+
+      const estilo = getComputedStyle(nodo);
+      if (estilo.backgroundImage.includes('url(') && !SVG.test(estilo.backgroundImage)) return 'oscuro';
+      const color = RGB.exec(estilo.backgroundColor);
+      if (color && Number(color[4] ?? 1) >= 0.5) {
+        const [r, g, b] = color.slice(1, 4).map(Number);
+        return 0.299 * r + 0.587 * g + 0.114 * b < 140 ? 'oscuro' : 'claro';
+      }
+    }
+    return 'claro';
+  };
+
+  if (raiz) {
+    const anillo = raiz.querySelector<HTMLElement>('.cursor__capa--anillo')!;
+    const punto = raiz.querySelector<HTMLElement>('.cursor__capa--punto')!;
+    const texto = raiz.querySelector<HTMLElement>('.cursor__texto')!;
+    const altoContraste = window.matchMedia('(forced-colors: active)');
+    const menosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+    let activo = false; // hay un mouse y el cursor de Elexa está puesto
+    let dentro = true; // el mouse está dentro de la ventana
+    let nativo = false; // está sobre algo que usa el cursor del sistema
+    let x = 0;
+    let y = 0;
+    let anilloX = 0;
+    let anilloY = 0;
+    let cuadro = 0;
+    let anterior = 0;
+    let revisando = false;
+
+    const marcar = (clave: string, valor: string | null) => {
+      if (valor === null) delete raiz.dataset[clave];
+      else if (raiz.dataset[clave] !== valor) raiz.dataset[clave] = valor;
+    };
+
+    const mostrar = () => marcar('visible', activo && dentro && !nativo ? '' : null);
+
+    const evaluar = (objetivo: EventTarget | null) => {
+      if (!(objetivo instanceof Element)) return;
+      nativo = objetivo.closest(NATIVO) !== null;
+      const zona = objetivo.closest(INTERACTIVO);
+      const tipo = zona?.getAttribute('data-cursor');
+      const estado = !zona ? null : tipo === 'ver' || tipo === 'arrastrar' ? tipo : 'enlace';
+      if (estado === 'ver') texto.textContent = zona!.getAttribute('data-cursor-texto') ?? 'Ver';
+      marcar('estado', estado);
+      marcar('tono', tonoDe(x, y));
+      mostrar();
+    };
+
+    /* El punto va donde está el mouse; el anillo recorre un 20 % de lo que le
+       falta en cada cuadro de 60 Hz (a otra frecuencia se ajusta para que el
+       retraso se sienta igual). Con menos movimiento va pegado. */
+    const pintar = (ahora: number) => {
+      const paso = anterior ? Math.min(ahora - anterior, 64) : 1000 / 60;
+      const k = menosMovimiento.matches ? 1 : 1 - Math.pow(0.8, paso / (1000 / 60));
+      anilloX += (x - anilloX) * k;
+      anilloY += (y - anilloY) * k;
+      if (Math.abs(x - anilloX) < 0.1 && Math.abs(y - anilloY) < 0.1) {
+        anilloX = x;
+        anilloY = y;
+      }
+      punto.style.transform = `translate3d(${x}px, ${y}px, 0)`;
+      anillo.style.transform = `translate3d(${anilloX}px, ${anilloY}px, 0)`;
+
+      const quieto = anilloX === x && anilloY === y;
+      cuadro = quieto ? 0 : requestAnimationFrame(pintar);
+      anterior = quieto ? 0 : ahora;
+    };
+
+    const encender = () => {
+      activo = true;
+      anilloX = x;
+      anilloY = y;
+      document.documentElement.classList.add('cursor-elexa');
+    };
+
+    const apagar = () => {
+      activo = false;
+      document.documentElement.classList.remove('cursor-elexa');
+      marcar('presionado', null);
+      mostrar();
+    };
+
+    /* Al hacer scroll o al cambiar la página con un clic (un acordeón que se
+       abre, un menú) cambia lo que está debajo sin que se mueva el mouse. */
+    const revisar = () => {
+      if (!activo || revisando) return;
+      revisando = true;
+      requestAnimationFrame(() => {
+        revisando = false;
+        evaluar(document.elementFromPoint(x, y));
+      });
+    };
+
+    document.addEventListener(
+      'pointermove',
+      (e) => {
+        if (e.pointerType !== 'mouse') {
+          if (activo) apagar();
+          return;
+        }
+        x = e.clientX;
+        y = e.clientY;
+        dentro = true;
+        if (!activo) {
+          if (altoContraste.matches) return;
+          encender();
+          evaluar(e.target);
+        }
+        if (!cuadro) cuadro = requestAnimationFrame(pintar);
+      },
+      { passive: true },
+    );
+
+    // Llega antes que el pointermove del mismo punto: se toma su posición.
+    document.addEventListener('pointerover', (e) => {
+      if (!activo || e.pointerType !== 'mouse') return;
+      x = e.clientX;
+      y = e.clientY;
+      evaluar(e.target);
+    });
+
+    // relatedTarget vacío: salió de la ventana (o entró a un iframe).
+    document.addEventListener('pointerout', (e) => {
+      if (e.relatedTarget) return;
+      dentro = false;
+      mostrar();
+    });
+
+    document.addEventListener('pointerdown', (e) => {
+      if (e.pointerType !== 'mouse') {
+        if (activo) apagar();
+        return;
+      }
+      marcar('presionado', '');
+    });
+
+    const soltar = () => marcar('presionado', null);
+    document.addEventListener('pointerup', soltar);
+    document.addEventListener('pointercancel', soltar);
+    window.addEventListener('blur', soltar);
+
+    document.addEventListener('click', revisar);
+    document.addEventListener('scroll', revisar, { capture: true, passive: true });
+
+    altoContraste.addEventListener('change', () => {
+      if (altoContraste.matches && activo) apagar();
+    });
+  }
+</script>

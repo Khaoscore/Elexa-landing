@@ -4,9 +4,14 @@
    imagen (40:820, 488 × 839) a la izquierda y el acordeón (40:1138) con
    «Agenda tu cita» (58:2650) a la derecha.
 
-   El panel es el SVG del archivo, estirado al tamaño de la sección (el SVG
-   trae preserveAspectRatio="none"). Entre 768 y 1240 px, donde ya se
-   deformaría, pasa a un rectángulo redondeado y el video se oculta.
+   Como el hero, el panel va siempre a --margen-panel de los bordes, también
+   en pantallas más anchas que el frame; el contenido sigue en los 1200 del
+   centro. Para que se estire sin deformarse, el trazado se arma en dos
+   piezas: la pestaña (public/img/faq/pestana-faq.svg, el tramo de arriba
+   del trazado, de x = 193.3 a 1201) a su tamaño, en el mismo lugar respecto
+   del centro, y debajo el cuerpo, un rectángulo de radio 24 que arranca a
+   66.7 del borde de arriba. Entre 768 y 1240 px el panel es un rectángulo
+   redondeado y el video se oculta.
 
    En el lugar de la imagen va un Short de YouTube (vertical, 9:16).
 
@@ -14,7 +19,7 @@
    para el título (303:4569), el video donde el diseño pone el damero
    (303:4572, 342 de ancho) y el acordeón (303:4573) debajo. */
 import FaqAcordeon from './FaqAcordeon';
-import { preguntas } from '../data/faq';
+import { preguntas } from '../lib/faq';
 import { AGENDA_URL, esExterno } from '../data/site';
 
 const externo = esExterno(AGENDA_URL) ? { target: '_blank', rel: 'noopener' } : {};
@@ -25,7 +30,7 @@ const VIDEO_ID = '0lzrbcof0PU';
 <section class="faq" id="preguntas" aria-labelledby="faq-titulo">
   <picture>
     <source media="(max-width: 767px)" srcset="/img/faq/fondo-faq-movil.svg" width="366" height="1588.5" />
-    <img class="faq__fondo" src="/img/faq/fondo-faq.svg" alt="" width="1397" height="1149" />
+    <img class="faq__fondo" src="/img/faq/pestana-faq.svg" alt="" width="1008" height="68" />
   </picture>
 
   <div class="faq__cabecera">
@@ -58,7 +63,7 @@ const VIDEO_ID = '0lzrbcof0PU';
   .faq {
     position: relative;
     isolation: isolate;
-    width: var(--ancho-panel);
+    width: calc(100% - 2 * var(--margen-panel));
     margin: 96px auto 0;
     padding: 40px var(--space-md) 48px;
     border-radius: var(--radius-panel);
@@ -185,21 +190,34 @@ const VIDEO_ID = '0lzrbcof0PU';
       background: none;
     }
 
+    .faq::before {
+      content: '';
+      position: absolute;
+      inset: 66.7px 0 0;
+      z-index: -1;
+      border-radius: var(--radius-panel);
+      background: var(--neutral-200);
+    }
+
+    /* La pestaña empieza a 505.2 a la izquierda del centro (193.3 de 1397) y
+       baja 1.3 px dentro del cuerpo para que no quede una línea entre los dos. */
     .faq__fondo {
       display: block;
       position: absolute;
-      inset: 0;
+      top: 0;
+      left: calc(50% - 505.21px);
       z-index: -1;
-      width: 100%;
+      width: 1007.7px;
       max-width: none;
-      height: 100%;
+      height: 68px;
     }
 
     .faq__cuerpo {
       justify-content: space-between;
       align-items: flex-start;
       gap: 40px;
-      margin-top: 66px;
+      max-width: var(--contenido);
+      margin: 66px auto 0;
     }
 
     /* 488 de ancho como la imagen del frame, con el alto del Short (9:16) para

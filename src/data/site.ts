@@ -12,6 +12,8 @@ export const SITE_NAME = 'Elexa Real Estate Investments';
 /* Los mismos destinos que usan las landings de Florentino y Proyecto e. */
 export const WHATSAPP_URL = 'https://wa.link/avoqut';
 export const INSTAGRAM_URL = 'https://www.instagram.com/luis_inversionista/';
+/* La radiografía ahora vive dentro del sitio (sección «Libertad»); esta URL
+   queda de respaldo para quien no tenga JavaScript. */
 export const RADIOGRAFIA_URL = 'https://florentino.elexa.com.co/radiografia';
 
 /* «Hablemos», el botón de la barra: la conversación por WhatsApp. */
@@ -21,7 +23,9 @@ export const HABLEMOS_URL = WHATSAPP_URL;
    /como-participar). Florentino y Proyecto e tienen cada uno su Calendly; para
    la marca general todavía no hay uno, así que por ahora abre el WhatsApp. */
 export const AGENDA_URL: string | null = WHATSAPP_URL;
-export const LOGIN_URL: string | null = null;
+
+/* «Log in», el botón de la barra: el portal de inversionistas (Agora). */
+export const LOGIN_URL: string | null = 'https://elexa.portal.agorareal.com/#/login?redirectUrl=%2F';
 
 /* «Ver más proyectos» (portada) y «Ver espacios disponibles» (/proyectos). */
 export const PROYECTOS_URL = '/proyectos';

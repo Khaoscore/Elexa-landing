@@ -1,26 +1,75 @@
 /* Proyectos anteriores de respaldo (sin Supabase; ver src/lib/anteriores.ts).
 
-   El diseño trae un solo proyecto de ejemplo, «Espectacular Rooftop», repetido
-   en las cinco tarjetas de debajo del mapa. Acá va una vez, con el copy de
-   Figma. Las coordenadas son aproximadas (Av. 9N, Granada): hay que poner
-   las reales en la tabla. */
+   Una muestra de la hoja «Propiedades Elexa», escrita como filas de la tabla
+   `propiedades_elexa` para que pasen por la misma interpretación que los
+   datos reales: siete en Cali y uno en Cota, que queda fuera de la vista
+   inicial del mapa. */
 
-import type { ProyectoAnterior } from '../lib/anteriores';
+import type { FilaAnterior } from '../lib/anteriores';
 
-export const anterioresRespaldo: ProyectoAnterior[] = [
+export const anterioresRespaldo: FilaAnterior[] = [
   {
-    id: 'espectacular-rooftop',
-    nombre: 'Espectacular Rooftop',
-    etiquetaMapa: 'Rooftop',
-    direccion: 'Sobre la AV 9N - Granada',
-    imagen: '/img/espacios/espectacular-rooftop.jpg',
-    imagenAlt: 'Edificio de fachada oscura iluminado de noche, sobre la Avenida 9N en Granada.',
-    caracteristicas: ['Esquinero', 'Con ascensor'],
-    area: '160 m²',
-    espacio: 'Piso 5 y 6',
-    ventaja: 'Vista 360',
-    precio: '$150 M',
-    latitud: 3.4609,
-    longitud: -76.5316,
+    codigo: '12002',
+    nombre_del_proyecto: 'Tequendama',
+    direccion: 'CL 5 # 42 - 35',
+    categoria: 'Propiedades',
+    latitud: '3.4218040',
+    longitud: '-76.5473936',
+  },
+  {
+    codigo: '12003',
+    nombre_del_proyecto: 'Santa Mónica',
+    direccion: 'AV 6 BIS # 27 NORTE - 52',
+    categoria: 'Propiedades',
+    latitud: '3.4696496',
+    longitud: '-76.5290640',
+  },
+  {
+    codigo: '12005',
+    nombre_del_proyecto: 'Leforet',
+    direccion: 'Av. 9 Nte. #12, Santa Monica Residential, Cali, Valle del Cauca',
+    categoria: 'Propiedades',
+    latitud: '3.4646335',
+    longitud: '-76.5340279',
+  },
+  {
+    codigo: '12009',
+    nombre_del_proyecto: 'Granada',
+    direccion: 'AV 9 A # 14 NORTE - 34',
+    categoria: 'Propiedades',
+    latitud: '3.4595281',
+    longitud: '-76.5351519',
+  },
+  {
+    codigo: '12015',
+    nombre_del_proyecto: 'Constantino',
+    direccion: 'Av. 9 Nte. #17N - 14, Santa Monica Residential, Cali, Valle del Cauca',
+    categoria: 'Propiedades',
+    latitud: '3.4611743',
+    longitud: '-76.5327887',
+  },
+  {
+    codigo: '12023',
+    nombre_del_proyecto: 'Farmatodo Cota',
+    direccion: 'BOGOTA ZONA NORTE DEPTO: CUNDINAMARCA MUNICIPIO: COTA',
+    categoria: 'Inversiones',
+    latitud: '4.8609660',
+    longitud: '-74.0473740',
+  },
+  {
+    codigo: '12027',
+    nombre_del_proyecto: 'Proyecto E',
+    direccion: 'AV 4 OESTE # 3 OESTE - 104',
+    categoria: 'Propiedades',
+    latitud: '3.4515178',
+    longitud: '-76.5438006',
+  },
+  {
+    codigo: '12030',
+    nombre_del_proyecto: 'Florentino',
+    direccion: 'KR 4 # 1 OESTE - 177',
+    categoria: 'Propiedades',
+    latitud: '3.4491236',
+    longitud: '-76.5399742',
   },
 ];

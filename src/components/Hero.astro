@@ -172,10 +172,14 @@ const poligonoMovil = `polygon(${muestrear([0, 743], tramosMovil).map((p) => `${
 <style>
   /* A --margen-panel del borde de arriba, como de los lados: en el frame
      móvil la forma arranca en y = 64, justo debajo de la barra de estado del
-     teléfono (63), es decir a 12 del borde de la pantalla. */
+     teléfono (63), es decir a 12 del borde de la pantalla.
+     A diferencia de los otros paneles, el hero no se queda en 1396 en
+     pantallas más anchas que el frame: sigue a --margen-panel de los bordes
+     y el video llena el ancho. La forma se estira sin deformarse porque cada
+     punto está anclado a un borde o al centro (ver arriba). */
   .hero {
     position: relative;
-    width: var(--ancho-panel);
+    width: calc(100% - 2 * var(--margen-panel));
     margin: var(--margen-panel) auto 0;
   }
 

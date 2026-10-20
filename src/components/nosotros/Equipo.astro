@@ -16,6 +16,9 @@
    tocarla (la tarjeta es enfocable y se muestra mientras tenga el foco); la
    del aliado es un enlace a su sitio y el toque lo abre.
 
+   Con el mouse, además, la tarjeta tiene el efecto «cromo» (ver el script):
+   se alza, se inclina hacia el puntero y una luz blanca lo sigue.
+
    Los datos están en src/data/equipo.ts. */
 import { equipo, type Empresa } from '../../data/equipo';
 
@@ -37,48 +40,163 @@ const altoLogo = ({ ancho, alto }: Empresa['logo']) => Math.round(110 * (ancho /
         const contacto = !empresa && Boolean(persona.correo || persona.telefono);
         const mascara = `--foto: url(${persona.foto})`;
         return (
-          <li class:list={['persona', { 'persona--capa': empresa || contacto }]} tabindex={contacto ? 0 : undefined}>
-            <img class="persona__foto" src={persona.foto} alt={persona.nombre} width="389" height="488" loading="lazy" />
-            <div class="persona__texto">
-              <p class="persona__nombre display t-h4">{persona.nombre}</p>
-              {empresa && <p class="persona__empresa">{empresa.nombre}</p>}
-              <p>{persona.cargo}</p>
-            </div>
-            {empresa && (
-              <a class="persona__capa" href={empresa.sitio} target="_blank" rel="noopener" style={mascara}>
-                <img
-                  class="persona__logo"
-                  src={empresa.logo.src}
-                  alt={empresa.nombre}
-                  width={empresa.logo.ancho}
-                  height={empresa.logo.alto}
-                  loading="lazy"
-                  style={`--alto: ${altoLogo(empresa.logo)}`}
-                />
-                <span class="sr-only">(se abre en una pestaña nueva)</span>
-              </a>
-            )}
-            {contacto && (
-              <div class="persona__capa persona__capa--contacto" style={mascara}>
-                {persona.correo && (
-                  <a class="persona__correo display" href={`mailto:${persona.correo}`}>
-                    {persona.correo}
-                  </a>
-                )}
-                {persona.telefono && (
-                  <a href={`https://wa.me/${persona.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener">
-                    {persona.telefono}
-                    <span class="sr-only">(WhatsApp, se abre en una pestaña nueva)</span>
-                  </a>
-                )}
+          <li
+            class:list={['persona', { 'persona--capa': empresa || contacto }]}
+            tabindex={contacto ? 0 : undefined}
+            style={mascara}
+          >
+            <div class="persona__giro">
+              <img class="persona__foto" src={persona.foto} alt={persona.nombre} width="389" height="488" loading="lazy" />
+              <div class="persona__texto">
+                <p class="persona__nombre display t-h4">{persona.nombre}</p>
+                {empresa && <p class="persona__empresa">{empresa.nombre}</p>}
+                <p>{persona.cargo}</p>
               </div>
-            )}
+              {empresa && (
+                <a class="persona__capa" href={empresa.sitio} target="_blank" rel="noopener">
+                  <img
+                    class="persona__logo"
+                    src={empresa.logo.src}
+                    alt={empresa.nombre}
+                    width={empresa.logo.ancho}
+                    height={empresa.logo.alto}
+                    loading="lazy"
+                    style={`--alto: ${altoLogo(empresa.logo)}`}
+                  />
+                  <span class="sr-only">(se abre en una pestaña nueva)</span>
+                </a>
+              )}
+              {contacto && (
+                <div class="persona__capa persona__capa--contacto">
+                  {persona.correo && (
+                    <a class="persona__correo display" href={`mailto:${persona.correo}`}>
+                      {persona.correo}
+                    </a>
+                  )}
+                  {persona.telefono && (
+                    <a href={`https://wa.me/${persona.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener">
+                      {persona.telefono}
+                      <span class="sr-only">(WhatsApp, se abre en una pestaña nueva)</span>
+                    </a>
+                  )}
+                </div>
+              )}
+              <span class="persona__brillo" aria-hidden="true" />
+            </div>
           </li>
         );
       })
     }
   </ul>
 </section>
+
+<script>
+  /* El efecto «cromo» (el del FlipCard de React Bits, sin darse vuelta): con
+     el mouse encima la tarjeta crece un poco, se inclina hacia el puntero y
+     una luz blanca lo sigue por encima de la foto y de la capa morada. Cada
+     valor lo lleva un resorte, así el movimiento tiene inercia y al salir se
+     asienta solo. No corre con el dedo ni si la persona pidió menos
+     movimiento. */
+  const INCLINACION = 12; // grados, con el puntero en el borde
+  const ALZA = 1.03;
+  const PERSPECTIVA = 1100;
+  const GIRO = { rigidez: 240, amortiguacion: 24, masa: 0.6 };
+  const SUAVE = { rigidez: 320, amortiguacion: 26, masa: 1 };
+  const PASO = 1 / 120;
+  const menosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  type Resorte = { valor: number; velocidad: number; meta: number } & typeof GIRO;
+
+  const resorte = (valor: number, ajuste: typeof GIRO): Resorte => ({ valor, velocidad: 0, meta: valor, ...ajuste });
+
+  /* Avanza `dt` segundos en pasos cortos (si un cuadro tarda, no se dispara)
+     y dice si todavía se mueve. */
+  const avanzar = (r: Resorte, dt: number) => {
+    for (let quedan = dt; quedan > 0; quedan -= PASO) {
+      const h = Math.min(quedan, PASO);
+      const fuerza = -r.rigidez * (r.valor - r.meta) - r.amortiguacion * r.velocidad;
+      r.velocidad += (fuerza / r.masa) * h;
+      r.valor += r.velocidad * h;
+    }
+    if (Math.abs(r.velocidad) > 0.01 || Math.abs(r.valor - r.meta) > 0.001) return true;
+    r.valor = r.meta;
+    r.velocidad = 0;
+    return false;
+  };
+
+  const limitar = (v: number) => Math.min(1, Math.max(0, v));
+
+  for (const tarjeta of document.querySelectorAll<HTMLElement>('.persona')) {
+    const giro = tarjeta.querySelector<HTMLElement>('.persona__giro');
+    const brillo = tarjeta.querySelector<HTMLElement>('.persona__brillo');
+    if (!giro || !brillo) continue;
+
+    const x = resorte(0, GIRO);
+    const y = resorte(0, GIRO);
+    const alza = resorte(1, SUAVE);
+    const luz = resorte(0, SUAVE);
+    let cuadro = 0;
+    let antes = 0;
+
+    /* En reposo queda sin transformación, para que el texto se vea nítido.
+       Mientras se mueve va por encima de las vecinas: inclinada hacia una
+       esquina casi las toca. */
+    const pintar = () => {
+      const quieta = alza.valor === 1 && x.valor === 0 && y.valor === 0;
+      giro.style.transform = quieta
+        ? ''
+        : `perspective(${PERSPECTIVA}px) scale(${alza.valor}) rotateX(${x.valor}deg) rotateY(${y.valor}deg)`;
+      tarjeta.style.zIndex = quieta ? '' : '1';
+      brillo.style.opacity = String(luz.valor);
+    };
+
+    const paso = (ahora: number) => {
+      const dt = Math.min(Math.max(ahora - antes, 0), 100) / 1000;
+      antes = ahora;
+      let sigue = false;
+      for (const r of [x, y, alza, luz]) sigue = avanzar(r, dt) || sigue;
+      pintar();
+      cuadro = sigue ? requestAnimationFrame(paso) : 0;
+    };
+
+    const animar = () => {
+      if (cuadro) return;
+      antes = performance.now();
+      cuadro = requestAnimationFrame(paso);
+    };
+
+    const conMouse = (e: PointerEvent) => e.pointerType !== 'touch' && !menosMovimiento.matches;
+
+    tarjeta.addEventListener('pointerenter', (e) => {
+      if (!conMouse(e)) return;
+      alza.meta = ALZA;
+      animar();
+    });
+
+    /* Se mide contra el <li>, que no se mueve: la tarjeta de adentro sí. */
+    tarjeta.addEventListener('pointermove', (e) => {
+      if (!conMouse(e)) return;
+      const caja = tarjeta.getBoundingClientRect();
+      const px = limitar((e.clientX - caja.left) / caja.width);
+      const py = limitar((e.clientY - caja.top) / caja.height);
+      x.meta = (0.5 - py) * 2 * INCLINACION;
+      y.meta = (px - 0.5) * 2 * INCLINACION;
+      alza.meta = ALZA;
+      luz.meta = 1;
+      brillo.style.setProperty('--brillo-x', `${px * 100}%`);
+      brillo.style.setProperty('--brillo-y', `${py * 100}%`);
+      animar();
+    });
+
+    tarjeta.addEventListener('pointerleave', () => {
+      x.meta = 0;
+      y.meta = 0;
+      alza.meta = 1;
+      luz.meta = 0;
+      animar();
+    });
+  }
+</script>
 
 <style>
   .equipo {
@@ -107,10 +225,18 @@ const altoLogo = ({ ancho, alto }: Empresa['logo']) => Math.round(110 * (ancho /
     color: var(--neutral-100);
   }
 
-  /* El WebP trae 1 px de margen por el trazo: 389 × 488. La capa morada
-     ocupa lo mismo para que la máscara calce con la foto. */
+  /* Lo que se inclina con el efecto «cromo»: el <li> queda quieto debajo,
+     así el mouse no se le escapa por el borde mientras la tarjeta se mueve. */
+  .persona__giro {
+    position: absolute;
+    inset: 0;
+  }
+
+  /* El WebP trae 1 px de margen por el trazo: 389 × 488. La capa morada y el
+     brillo ocupan lo mismo para que la máscara calce con la foto. */
   .persona__foto,
-  .persona__capa {
+  .persona__capa,
+  .persona__brillo {
     position: absolute;
     top: -0.21%;
     left: -0.26%;
@@ -186,6 +312,26 @@ const altoLogo = ({ ancho, alto }: Empresa['logo']) => Math.round(110 * (ancho /
 
   .persona__capa--contacto a:hover {
     text-decoration: underline;
+  }
+
+  /* La luz del efecto «cromo», también recortada con la foto. Dónde está y
+     cuánto se ve lo pone el script. Al centro 0,3 (el original usa 0,22 sobre
+     gris oscuro; sobre el morado casi no se notaba). */
+  .persona__brillo {
+    pointer-events: none;
+    background: radial-gradient(
+      circle farthest-side at var(--brillo-x, 50%) var(--brillo-y, 50%),
+      rgba(255, 255, 255, 0.3) 0%,
+      rgba(255, 255, 255, 0.228) 12%,
+      rgba(255, 255, 255, 0.15) 26%,
+      rgba(255, 255, 255, 0.084) 42%,
+      rgba(255, 255, 255, 0.036) 60%,
+      rgba(255, 255, 255, 0.012) 78%,
+      rgba(255, 255, 255, 0) 100%
+    );
+    opacity: 0;
+    -webkit-mask: var(--foto) center / 100% 100% no-repeat;
+    mask: var(--foto) center / 100% 100% no-repeat;
   }
 
   .persona__logo {

@@ -103,39 +103,27 @@
   color: var(--ink-300);
 }
 
-.mapa__etiquetas {
-  display: flex;
+.mapa__categoria {
   margin: 0;
-  padding: 0;
-  list-style: none;
-}
-.mapa__etiquetas li {
-  flex: 1;
   font-weight: 700;
   color: var(--brand-500);
   text-align: center;
 }
 
-.mapa__datos {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--space-md);
-  margin: 0;
+/* Sin foto en la hoja: el símbolo de Elexa sobre un fondo de marca, en el
+   mismo recuadro que ocuparía la foto. */
+.sin-foto {
+  display: grid;
+  place-items: center;
+  background: linear-gradient(160deg, rgba(95, 36, 159, 0.08), rgba(95, 36, 159, 0.2)), var(--neutral-100);
 }
-.mapa__datos div {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
+.sin-foto img {
+  width: 56px;
+  height: auto;
+  opacity: 0.55;
 }
-.mapa__datos dt {
-  color: var(--brand-500);
-  font-size: 24px;
-  line-height: 30px;
-}
-.mapa__datos dd {
-  margin: 0;
-  color: var(--ink-300);
+.anterior__foto.sin-foto img {
+  width: 40px;
 }
 
 .mapa__vacio {
@@ -164,6 +152,21 @@
 .pin--chico {
   width: 64px;
   height: 84px;
+  transform-origin: 50% 100%;
+  transition: transform 0.2s;
+}
+
+/* Alejado (MapaProyectos.tsx pone la clase), los chicos van al 55 %, apoyados
+   en la punta. El cuadro del ícono de Leaflet no se achica: lo atraviesan los
+   clics y los toma el pin, para no elegir uno tocando al lado. */
+.mapa__lienzo--lejos .pin-mapa {
+  pointer-events: none;
+}
+.mapa__lienzo--lejos .pin {
+  pointer-events: auto;
+}
+.mapa__lienzo--lejos .pin--chico {
+  transform: scale(0.55);
 }
 .pin__circulo {
   top: 0;
@@ -227,18 +230,88 @@
   white-space: nowrap;
 }
 
-/* ============================== TARJETAS ============================== */
-.mapa__tarjetas {
+/* ============================== TARJETAS ==============================
+   La pista se desplaza sin barra; .mapa__carrusel la envuelve para que las
+   flechas queden quietas a los costados mientras las tarjetas pasan debajo. */
+.mapa__carrusel {
   position: relative;
   z-index: 2;
+  margin-top: var(--space-lg);
+}
+
+/* Relativa para que encierre también lo absoluto de adentro (el texto
+   .sr-only de los botones); si no, desborda la página. */
+.mapa__tarjetas {
+  position: relative;
   display: flex;
   gap: 19.25px;
-  margin: var(--space-lg) 0 0;
+  margin: 0;
   padding: 0 0 4px;
   overflow-x: auto;
+  overscroll-behavior-x: contain;
   scroll-snap-type: x mandatory;
-  scrollbar-width: thin;
+  scrollbar-width: none;
   list-style: none;
+}
+.mapa__tarjetas::-webkit-scrollbar {
+  display: none;
+}
+
+/* Con mouse, la mano avisa que la fila se arrastra (MapaProyectos.tsx). */
+@media (hover: hover) and (pointer: fine) {
+  .mapa__tarjetas--desliza {
+    cursor: grab;
+  }
+}
+.mapa__tarjetas.mapa__tarjetas--arrastrando,
+.mapa__tarjetas.mapa__tarjetas--arrastrando * {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* Flechas: los botones redondos de «Proyectos abiertos», de 56 (44 en el
+   teléfono), adentro de la fila y a la altura del centro de las fotos. La
+   que no tiene a dónde ir se esconde. */
+.mapa__flecha {
+  position: absolute;
+  top: calc(14px + 177px / 2);
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 56px;
+  height: 56px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-full);
+  background: var(--brand-300);
+  box-shadow: 0 4px 16px rgba(29, 11, 48, 0.3);
+  transform: translateY(-50%);
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    opacity 0.2s ease,
+    visibility 0.2s;
+}
+.mapa__flecha img {
+  width: 30px;
+  height: 30px;
+}
+.mapa__flecha:hover:not(:disabled) {
+  background: var(--brand-300-hover);
+}
+.mapa__flecha:disabled {
+  opacity: 0;
+  visibility: hidden;
+}
+
+.mapa__flecha--atras {
+  left: 12px;
+}
+.mapa__flecha--atras img {
+  transform: rotate(180deg);
+}
+.mapa__flecha--adelante {
+  right: 12px;
 }
 
 .anterior {
@@ -277,18 +350,17 @@
   font-size: 14px;
   line-height: 22px;
 }
+/* Hay direcciones largas («Av. 9 Nte. #17N - 14, Santa Monica Residential,
+   Cali, Valle del Cauca»): dos renglones como mucho. */
 .anterior__direccion {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
   color: var(--ink-300);
 }
 .anterior__datos {
   color: var(--negro-azul);
-}
-
-.anterior__precio {
-  margin: 0;
-  color: var(--ink-400);
-  font-size: 36px;
-  line-height: 38px;
 }
 
 .anterior__boton {
@@ -350,15 +422,14 @@
     display: none;
   }
 
-  /* Nombre y × arriba; los tres datos, la foto y las etiquetas debajo. */
+  /* Nombre y × arriba; la foto y la categoría debajo. */
   .mapa__ficha {
     display: grid;
     grid-template-columns: minmax(0, 1fr) 38px;
     grid-template-areas:
       'nombre cerrar'
-      'datos datos'
       'foto foto'
-      'etiquetas etiquetas';
+      'categoria categoria';
     gap: var(--space-md) var(--space-lg);
     align-items: center;
   }
@@ -388,29 +459,6 @@
     cursor: pointer;
   }
 
-  .mapa__datos {
-    grid-area: datos;
-    gap: 0;
-    margin-top: var(--space-xs);
-  }
-  .mapa__datos div {
-    flex: 0 1 91px;
-    gap: 0;
-    text-align: center;
-  }
-  .mapa__datos dt {
-    font-family: var(--font-body);
-    font-weight: 700;
-    font-size: 16px;
-    line-height: 20px;
-    font-variation-settings: normal;
-    letter-spacing: 0;
-  }
-  .mapa__datos dd {
-    font-size: 14px;
-    line-height: 18px;
-  }
-
   .mapa__foto {
     grid-area: foto;
     height: 150px;
@@ -418,10 +466,8 @@
     border-radius: var(--radius-card);
   }
 
-  .mapa__etiquetas {
-    grid-area: etiquetas;
-  }
-  .mapa__etiquetas li {
+  .mapa__categoria {
+    grid-area: categoria;
     font-size: 14px;
     line-height: 18px;
   }
@@ -429,13 +475,31 @@
   /* ---------- Tarjetas — «Cards» (303:4904) ----------
      Las de escritorio al 84 % (221.67 × 283.71), a 39 del panel. La fila va de
      borde a borde de la pantalla y arranca alineada con el panel. */
-  .mapa__tarjetas {
+  .mapa__carrusel {
     grid-row: 2;
-    gap: var(--space-md);
     margin: 39px calc(-1 * var(--margen-panel)) 0;
+  }
+
+  .mapa__tarjetas {
+    gap: var(--space-md);
     padding: 0 var(--margen-panel);
     scroll-padding-inline: var(--margen-panel);
-    scrollbar-width: none;
+  }
+
+  .mapa__flecha {
+    top: calc(11.75px + 148.62px / 2);
+    width: 44px;
+    height: 44px;
+  }
+  .mapa__flecha img {
+    width: 24px;
+    height: 24px;
+  }
+  .mapa__flecha--atras {
+    left: 4px;
+  }
+  .mapa__flecha--adelante {
+    right: 4px;
   }
 
   .anterior {
@@ -460,10 +524,6 @@
   .anterior__direccion,
   .anterior__datos {
     font-size: 11.75px;
-  }
-
-  .anterior__precio {
-    display: none;
   }
 
   .anterior__boton {
@@ -505,9 +565,13 @@
     line-height: 38px;
   }
 
-  .mapa__tarjetas {
+  .mapa__carrusel {
     margin-top: -50px;
+  }
+
+  .mapa__tarjetas {
     padding: 0 22px 4px;
+    scroll-padding-inline: 22px;
   }
 
   .anterior {
@@ -527,5 +591,6 @@
   /* Cinco tarjetas de 264 ocupan justo los 1397 del panel. */
   .mapa__tarjetas {
     padding: 0;
+    scroll-padding-inline: 0;
   }
 }

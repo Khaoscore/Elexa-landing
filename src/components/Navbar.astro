@@ -402,4 +402,59 @@ const esActual = (href: string) => (href === '/' ? actual === '/' : actual === h
       gap: var(--space-xs);
     }
   }
+
+  /* ---------- Hover de los botones ---------- */
+  /* El diseño no lo dibuja. Un relleno entra de izquierda a derecha —morado
+     en «Log in», que pasa a texto blanco; color/accent en «Hablemos»— y el
+     botón sube 2 px con una sombra morada. El relleno es un ::before con la
+     forma del botón, 1 px más grande para tapar también el borde, que se
+     destapa con clip-path. Con el teclado pasa lo mismo que con el mouse. */
+  .nav__acciones .btn {
+    position: relative;
+    isolation: isolate;
+    transition:
+      color 0.3s ease,
+      transform 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+
+  .nav__acciones .btn::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--brand-300);
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 0.4s cubic-bezier(0.65, 0, 0.35, 1);
+  }
+  .nav__acciones .btn--primario::before {
+    background: var(--accent-300);
+  }
+
+  .nav__acciones .btn:hover,
+  .nav__acciones .btn:focus-visible {
+    color: var(--neutral-100);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(95, 36, 159, 0.3);
+  }
+  .nav__acciones .btn:hover::before,
+  .nav__acciones .btn:focus-visible::before {
+    clip-path: inset(0);
+  }
+  .nav__acciones .btn:active {
+    transform: translateY(0);
+    box-shadow: 0 4px 10px rgba(95, 36, 159, 0.25);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .nav__acciones .btn,
+    .nav__acciones .btn::before {
+      transition: none;
+    }
+    .nav__acciones .btn:hover,
+    .nav__acciones .btn:focus-visible {
+      transform: none;
+    }
+  }
 </style>

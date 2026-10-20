@@ -1,7 +1,17 @@
 /* Estilos del acordeón de preguntas frecuentes (FaqAcordeon.tsx). Medidas
-   del frame 40:1138; ver el comentario del componente. */
+   del frame 40:1138; ver el comentario del componente.
+
+   Abrir y cerrar es un solo movimiento: el alto de la respuesta, el giro del
+   «+» y, en el teléfono, el corrimiento del círculo comparten duración y
+   curva. El marco con muesca crece y se encoge con la respuesta: al abrir
+   reemplaza al borde de la pregunta con un fundido y, al cerrar
+   (.faq__item--cerrando, ver FaqAcordeon.tsx), se encoge entero y en el
+   último tramo se funde otra vez con el borde. El texto entra y sale con un
+   fundido y corriéndose unos px. */
 
 .faq__lista {
+  --faq-duracion: 0.5s;
+  --faq-curva: cubic-bezier(0.4, 0, 0.2, 1);
   display: flex;
   flex-direction: column;
   gap: var(--space-xl);
@@ -21,6 +31,28 @@
   --muescas-trazo: var(--marco-trazo);
   position: absolute;
   inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.faq__item--abierta .faq__marco {
+  opacity: 1;
+}
+
+/* Al cerrar, el marco sigue entero durante la primera mitad, cuando la
+   respuesta hace casi todo el recorrido, y en la segunda se funde con el
+   borde de la pregunta, que vuelve a la vez. Fundirlo recién al final no
+   sirve: con menos de 118 px de alto la muesca ya no cabe y la esquina de
+   abajo a la derecha queda en ángulo recto. */
+.faq__item--cerrando .faq__marco {
+  transition: opacity 0.25s ease calc(var(--faq-duracion) / 2);
+}
+
+.faq__item--cerrando .faq__pregunta {
+  transition:
+    border-color 0.25s ease calc(var(--faq-duracion) / 2),
+    padding-top var(--faq-duracion) var(--faq-curva);
 }
 
 .faq__h {
@@ -54,7 +86,9 @@
   color: var(--ink-500);
   font-size: 20px;
   line-height: 26px;
-  transition: border-color 0.2s ease;
+  transition:
+    border-color 0.3s ease,
+    padding-top var(--faq-duracion) var(--faq-curva);
 }
 
 .faq__item--abierta .faq__pregunta {
@@ -75,10 +109,46 @@
   height: 74px;
   border-radius: var(--radius-full);
   background: var(--brand-300);
-  transition: background-color 0.2s ease;
+  transition:
+    background-color 0.2s ease,
+    margin-top var(--faq-duracion) var(--faq-curva);
 }
 .faq__fila:hover .faq__icono {
   background: var(--brand-300-hover);
+}
+
+/* El «+» con dos barras, con las medidas del ícono «add» de 40 (23.33 de
+   largo, 3.33 de grueso). Al abrir gira media vuelta mientras la barra
+   vertical se encoge hasta desaparecer: queda el «−». */
+.faq__signo {
+  position: relative;
+  width: 23.33px;
+  height: 23.33px;
+  transition: transform var(--faq-duracion) var(--faq-curva);
+}
+
+.faq__signo::before,
+.faq__signo::after {
+  content: '';
+  position: absolute;
+  top: calc(50% - 1.665px);
+  left: 0;
+  width: 100%;
+  height: 3.33px;
+  background: var(--neutral-100);
+  transition: transform var(--faq-duracion) var(--faq-curva);
+}
+
+.faq__signo::after {
+  transform: rotate(90deg);
+}
+
+.faq__item--abierta .faq__signo {
+  transform: rotate(180deg);
+}
+
+.faq__item--abierta .faq__signo::after {
+  transform: rotate(90deg) scaleX(0);
 }
 
 /* La respuesta arranca a 126 del borde de arriba del marco (52 debajo de la
@@ -88,7 +158,7 @@
   position: relative;
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 0.3s ease;
+  transition: grid-template-rows var(--faq-duracion) var(--faq-curva);
 }
 .faq__item--abierta .faq__panel {
   grid-template-rows: 1fr;
@@ -98,13 +168,44 @@
   overflow: hidden;
 }
 
+/* Al abrir, el texto entra un poco después de que empieza a abrirse; al
+   cerrar sube y se apaga mientras el marco se encoge sobre él. */
 .faq__respuesta {
   padding: 52px 21px 20px 30px;
   color: var(--ink-500);
+  opacity: 0;
+  transform: translateY(-12px);
+  transition:
+    opacity 0.35s ease,
+    transform var(--faq-duracion) var(--faq-curva);
+}
+
+.faq__item--abierta .faq__respuesta {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 0.4s ease 0.12s,
+    transform var(--faq-duracion) var(--faq-curva) 0.08s;
+}
+
+.faq__respuesta p + p {
+  margin-top: var(--space-sm);
+}
+
+/* Pregunta sin respuesta en faq.md. */
+.faq__pendiente {
+  color: var(--ink-300);
+  font-style: italic;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .faq__panel {
+  .faq__lista {
+    --faq-duracion: 0s;
+  }
+
+  .faq__marco,
+  .faq__respuesta,
+  .faq__item--abierta .faq__respuesta {
     transition: none;
   }
 }
@@ -128,7 +229,6 @@
   }
 
   .faq__fila {
-    align-items: center;
     gap: var(--space-md);
   }
 
@@ -145,13 +245,16 @@
     padding-top: 18px;
   }
 
+  /* Arriba y no centrado, para que al abrir baje deslizándose: 13.5 lo
+     centra en la caja de 70 (con una pregunta de una línea queda igual que
+     centrado). */
   .faq__icono {
     flex-basis: 43px;
     height: 43px;
+    margin-top: 13.5px;
   }
 
   .faq__item--abierta .faq__icono {
-    align-self: flex-start;
     margin-top: 19px;
   }
 

@@ -40,7 +40,10 @@ const cifras = [
               <img class="cifra__linea" src="/img/nosotros/divisor-cifra.svg" alt="" width="1" height="127" />
             </picture>
             <div>
-              <p class="cifra__numero display t-banner">{cifra.numero}</p>
+              <p class="cifra__numero display t-banner">
+                <span class="sr-only">{cifra.numero}</span>
+                <span aria-hidden="true" data-contador>{cifra.numero}</span>
+              </p>
               <p class="cifra__texto">{cifra.texto}</p>
             </div>
           </li>
@@ -49,6 +52,44 @@ const cifras = [
     </ul>
   </div>
 </section>
+
+<script>
+  /* Las cifras cuentan desde 0 la primera vez que la fila entra en pantalla,
+     una tras otra. El HTML trae el valor final: es lo que queda sin
+     JavaScript o con menos movimiento, y lo que lee el lector de pantalla (en
+     el .sr-only, porque el contador va oculto para no leer cada número). */
+  const DURACION = 1600;
+  const ESCALON = 150;
+  const lista = document.querySelector('.sobre__cifras');
+
+  if (lista && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const contadores = [...lista.querySelectorAll<HTMLElement>('[data-contador]')].flatMap((el) => {
+      const partes = el.textContent?.trim().match(/^(\D*)(\d+)(.*)$/);
+      return partes ? [{ el, antes: partes[1], valor: Number(partes[2]), despues: partes[3] }] : [];
+    });
+    const mostrar = (c: (typeof contadores)[number], n: number) => (c.el.textContent = `${c.antes}${n}${c.despues}`);
+    contadores.forEach((c) => mostrar(c, 0));
+
+    new IntersectionObserver(
+      ([entrada], observador) => {
+        if (!entrada.isIntersecting) return;
+        observador.disconnect();
+        const inicio = performance.now();
+        const cuadro = (ahora: number) => {
+          let falta = false;
+          contadores.forEach((c, i) => {
+            const t = Math.min(Math.max((ahora - inicio - i * ESCALON) / DURACION, 0), 1);
+            mostrar(c, Math.round(c.valor * (1 - (1 - t) ** 3)));
+            if (t < 1) falta = true;
+          });
+          if (falta) requestAnimationFrame(cuadro);
+        };
+        requestAnimationFrame(cuadro);
+      },
+      { threshold: 0.5 },
+    ).observe(lista);
+  }
+</script>
 
 <style>
   .sobre {

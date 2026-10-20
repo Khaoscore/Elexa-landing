@@ -17,6 +17,8 @@ import '@fontsource/roboto/400.css';
 import '@fontsource/roboto/700.css';
 import '@fontsource/roboto-condensed/400.css';
 import '../styles/global.css';
+import Cursor from '../components/Cursor.astro';
+import FondoPuntos from '../components/FondoPuntos.astro'; // PRUEBA: ver el archivo para quitarlo
 import Footer from '../components/Footer.astro';
 import Navbar from '../components/Navbar.astro';
 import { SITE_NAME, SITE_URL } from '../data/site';
@@ -32,10 +34,13 @@ interface Props {
   /** Separación con el pie en escritorio y en el teléfono (ver Footer.astro). */
   separacionPie?: number;
   separacionPieMovil?: number;
+  /** La foto que muestran WhatsApp y las redes al compartir el enlace. */
+  imagen?: string;
 }
 
-const { title, description, path, barra = true, separacionPie, separacionPieMovil } = Astro.props;
+const { title, description, path, barra = true, separacionPie, separacionPieMovil, imagen } = Astro.props;
 const canonical = new URL(path, SITE_URL).toString();
+const ogImagen = imagen ? new URL(imagen, SITE_URL).toString() : null;
 ---
 
 <!doctype html>
@@ -54,8 +59,10 @@ const canonical = new URL(path, SITE_URL).toString();
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonical} />
+    {ogImagen && <meta property="og:image" content={ogImagen} />}
   </head>
   <body>
+    <FondoPuntos />
     {
       barra && (
         <div class="barra-pagina">
@@ -67,6 +74,7 @@ const canonical = new URL(path, SITE_URL).toString();
       <slot />
     </main>
     <Footer separacion={separacionPie} separacionMovil={separacionPieMovil} />
+    <Cursor />
   </body>
 </html>
 

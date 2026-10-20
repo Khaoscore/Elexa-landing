@@ -1,0 +1,238 @@
+---
+/* PRUEBA para mostrarle al cliente: un campo de puntos morados que titilan y
+   se desplazan despacio detrás de todo el sitio. Imita «Blinking Dots» de
+   React Bits Pro (pro.reactbits.dev/docs/components/blinking-dots) sin
+   instalarlo: aquel pide licencia y Tailwind, y este sitio no usa Tailwind.
+   Los ajustes del script llevan entre paréntesis el nombre de la prop
+   equivalente, por si después se cambia por el original.
+
+   Va fijo detrás del contenido: se ve donde la página es blanca y lo tapan las
+   bandas, los paneles y las fotos, que tienen fondo propio.
+
+   · Para compararlo sin tocar código: agregar ?fondo=no a la URL.
+   · Para quitarlo: borrar <FondoPuntos /> y su import en
+     src/layouts/Base.astro, y este archivo. */
+---
+
+<canvas class="fondo-puntos" aria-hidden="true"></canvas>
+
+<style>
+  /* z-index -1 lo pone debajo del contenido pero encima del blanco del
+     <body>. Va primero en el <body> para quedar también debajo de las otras
+     capas de z-index -1 (el hero, el FAQ…). La altura es la de la pantalla
+     con la barra del navegador escondida: así no cambia al hacer scroll en
+     el teléfono. */
+  .fondo-puntos {
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    width: 100%;
+    height: 100vh;
+    height: 100lvh;
+    pointer-events: none;
+  }
+
+  @media print, (forced-colors: active) {
+    .fondo-puntos {
+      display: none;
+    }
+  }
+</style>
+
+<script>
+  const AJUSTES = {
+    densidad: 14, // celdas sobre el lado corto de la pantalla (density)
+    cobertura: 0.4, // fracción de celdas con punto (coverage)
+    capas: 2, // planos de profundidad (layers)
+    escalaCapa: 1.9, // cuánto más densa es cada capa de atrás (layerScale)
+    brilloFondo: 0.5, // brillo de la capa más lejana (layerFade)
+    tamano: 1, // (dotSize)
+    variacion: 1, // diferencia entre el punto más chico y el más grande (sizeVariation)
+    dispersion: 0.6, // cuánto se corre cada punto del centro de su celda (jitter)
+    colorChico: '#d9c6ef', // (colorFrom)
+    colorGrande: '#5f249f', // --brand-300 (colorTo)
+    opacidad: 0.5, // (opacity)
+    titileo: 0.85, // cuánto se apagan: 0 nada, 1 del todo (twinkle)
+    velocidadTitileo: 1, // (twinkleSpeed)
+    deriva: 0.012, // anchos de pantalla por segundo (driftSpeed)
+    anguloDeriva: 90, // grados; 90 es hacia arriba (driftAngle)
+    paralaje: 0.06, // cuánto corre el mouse la capa de adelante (cursorParallax)
+    cuadros: 30, // por segundo: el movimiento es lento y así gasta la mitad
+  };
+
+  interface Punto {
+    x: number;
+    y: number;
+    radio: number;
+    tono: number;
+    fase: number;
+    frecuencia: number;
+  }
+
+  interface Capa {
+    puntos: Punto[];
+    celda: number;
+    ancho: number;
+    alto: number;
+    profundidad: number;
+    brillo: number;
+  }
+
+  const lienzo = document.querySelector<HTMLCanvasElement>('.fondo-puntos');
+  const ctx = lienzo?.getContext('2d');
+
+  if (lienzo && new URLSearchParams(location.search).get('fondo') === 'no') {
+    lienzo.remove();
+  } else if (lienzo && ctx) {
+    const TONOS = 12;
+    const SPRITE = 64;
+    const menosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const angulo = (AJUSTES.anguloDeriva * Math.PI) / 180;
+
+    const rgb = (hex: string) => [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16));
+    const desde = rgb(AJUSTES.colorChico);
+    const hasta = rgb(AJUSTES.colorGrande);
+    const modulo = (a: number, b: number) => ((a % b) + b) % b;
+
+    /* Un disco de borde suave por tono, del color de los chicos al de los
+       grandes; cada punto se dibuja escalando el suyo. */
+    const sprites = Array.from({ length: TONOS }, (_, i) => {
+      const sprite = document.createElement('canvas');
+      sprite.width = sprite.height = SPRITE;
+      const g = sprite.getContext('2d')!;
+      const [r, v, a] = desde.map((c, k) => Math.round(c + (hasta[k] - c) * (i / (TONOS - 1))));
+      const degradado = g.createRadialGradient(SPRITE / 2, SPRITE / 2, 0, SPRITE / 2, SPRITE / 2, SPRITE / 2);
+      for (let k = 0; k <= 8; k++) degradado.addColorStop(k / 8, `rgba(${r}, ${v}, ${a}, ${1 - (k / 8) ** 4})`);
+      g.fillStyle = degradado;
+      g.fillRect(0, 0, SPRITE, SPRITE);
+      return sprite;
+    });
+
+    let ancho = 0;
+    let alto = 0;
+    let capas: Capa[] = [];
+
+    /* Cada capa es una grilla un poco más grande que la pantalla (una celda
+       de más por lado) que se repite: lo que sale por un borde entra por el
+       otro sin que se vea. */
+    const armar = () => {
+      ancho = lienzo.clientWidth;
+      alto = lienzo.clientHeight;
+      const ppp = Math.min(window.devicePixelRatio || 1, 2);
+      lienzo.width = Math.round(ancho * ppp);
+      lienzo.height = Math.round(alto * ppp);
+      ctx.setTransform(ppp, 0, 0, ppp, 0, 0);
+
+      const celdaBase = Math.min(ancho, alto) / AJUSTES.densidad;
+      capas = Array.from({ length: AJUSTES.capas }, (_, i) => {
+        const celda = celdaBase / AJUSTES.escalaCapa ** i;
+        const columnas = Math.ceil(ancho / celda) + 2;
+        const filas = Math.ceil(alto / celda) + 2;
+        const puntos: Punto[] = [];
+        for (let f = 0; f < filas; f++) {
+          for (let c = 0; c < columnas; c++) {
+            if (Math.random() > AJUSTES.cobertura) continue;
+            const tono = Math.random();
+            puntos.push({
+              x: (c + 0.5 + (Math.random() - 0.5) * AJUSTES.dispersion) * celda,
+              y: (f + 0.5 + (Math.random() - 0.5) * AJUSTES.dispersion) * celda,
+              radio: celda * 0.08 * AJUSTES.tamano * (1 + AJUSTES.variacion * (tono * 1.3 - 0.65)),
+              tono: Math.round(tono * (TONOS - 1)),
+              fase: Math.random() * Math.PI * 2,
+              frecuencia: 0.6 + Math.random() * 0.9,
+            });
+          }
+        }
+        return {
+          puntos,
+          celda,
+          ancho: columnas * celda,
+          alto: filas * celda,
+          profundidad: 1 / AJUSTES.escalaCapa ** i,
+          brillo: AJUSTES.capas > 1 ? 1 - ((1 - AJUSTES.brilloFondo) * i) / (AJUSTES.capas - 1) : 1,
+        };
+      });
+    };
+
+    // Posición del mouse respecto del centro (-0,5 a 0,5) y la que se sigue.
+    let mouseX = 0;
+    let mouseY = 0;
+    let seguidoX = 0;
+    let seguidoY = 0;
+
+    /* Las capas de atrás se corren menos (con el mouse y con la deriva): eso
+       da la profundidad. El titileo es una onda al cuadrado, así cada punto
+       pasa más tiempo apagado y prende de a ratos. */
+    const dibujar = (segundos: number) => {
+      ctx.clearRect(0, 0, ancho, alto);
+      for (const capa of capas) {
+        const avance = segundos * AJUSTES.deriva * ancho * capa.profundidad;
+        const empuje = AJUSTES.paralaje * ancho * capa.profundidad;
+        const dx = Math.cos(angulo) * avance - seguidoX * empuje;
+        const dy = -Math.sin(angulo) * avance - seguidoY * empuje;
+        for (const p of capa.puntos) {
+          const x = modulo(p.x + dx, capa.ancho) - capa.celda;
+          const y = modulo(p.y + dy, capa.alto) - capa.celda;
+          if (x < -p.radio || y < -p.radio || x > ancho + p.radio || y > alto + p.radio) continue;
+          const onda = 0.5 + 0.5 * Math.sin(segundos * p.frecuencia * AJUSTES.velocidadTitileo * 1.6 + p.fase);
+          const alfa = AJUSTES.opacidad * capa.brillo * (1 - AJUSTES.titileo * (1 - onda * onda));
+          if (alfa < 0.01) continue;
+          ctx.globalAlpha = alfa;
+          ctx.drawImage(sprites[p.tono], x - p.radio, y - p.radio, p.radio * 2, p.radio * 2);
+        }
+      }
+    };
+
+    let cuadro = 0;
+    let anterior = 0;
+
+    const animar = (ahora: number) => {
+      cuadro = requestAnimationFrame(animar);
+      if (anterior && ahora - anterior < 1000 / AJUSTES.cuadros - 2) return;
+      const paso = anterior ? Math.min(ahora - anterior, 100) : 0;
+      anterior = ahora;
+      const k = 1 - Math.pow(0.92, paso / (1000 / 60));
+      seguidoX += (mouseX - seguidoX) * k;
+      seguidoY += (mouseY - seguidoY) * k;
+      dibujar(ahora / 1000);
+    };
+
+    // Con menos movimiento queda quieto: un solo cuadro, sin mouse.
+    const arrancar = () => {
+      if (menosMovimiento.matches) {
+        cancelAnimationFrame(cuadro);
+        cuadro = 0;
+        seguidoX = seguidoY = 0;
+        dibujar(0);
+      } else if (!cuadro) {
+        anterior = 0;
+        cuadro = requestAnimationFrame(animar);
+      }
+    };
+
+    document.addEventListener(
+      'pointermove',
+      (e) => {
+        if (e.pointerType !== 'mouse') return;
+        mouseX = e.clientX / ancho - 0.5;
+        mouseY = e.clientY / alto - 0.5;
+      },
+      { passive: true },
+    );
+
+    let espera = 0;
+    window.addEventListener('resize', () => {
+      clearTimeout(espera);
+      espera = window.setTimeout(() => {
+        if (lienzo.clientWidth === ancho && lienzo.clientHeight === alto) return;
+        armar();
+        if (!cuadro) dibujar(0);
+      }, 150);
+    });
+
+    menosMovimiento.addEventListener('change', arrancar);
+    armar();
+    arrancar();
+  }
+</script>
