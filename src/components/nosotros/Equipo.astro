@@ -5,9 +5,11 @@
    izquierdo y a 394 del de arriba, con sombra para leerse sobre la foto.
 
    En el teléfono (título «Frame 58», 303:4761; tarjetas «Frame 59»,
-   303:4764) el título baja a Mobile/Header 1 y las tarjetas van de a una,
-   a 32 entre sí: es la tarjeta de escritorio achicada a 342 de ancho, con el
-   nombre y el cargo achicados igual (× 0,8837).
+   303:4764) el título baja a Mobile/Header 1. El diseño pone las tarjetas
+   de a una, pero el cliente las pidió de a dos: a esa medida el nombre y el
+   cargo achicados con la tarjeta no se leerían, así que tienen un mínimo y
+   se apoyan desde abajo, para que un cargo de dos líneas crezca hacia
+   arriba y no se salga de la foto.
 
    Al pasar el mouse por encima («Frame 66») la tarjeta se tiñe de morado
    con la misma forma de la foto —la capa usa la foto de máscara— y en el
@@ -377,9 +379,11 @@ const altoLogo = ({ ancho, alto }: Empresa['logo']) => Math.round(110 * (ancho /
   }
 
   /* Sobre «Sobre elexa», 64; el título a 24 del párrafo y las tarjetas a 46.
-     Los textos de la tarjeta se miden contra su ancho (cqw), así acompañan
-     a la foto en cualquier teléfono: 24/30 y 16/22 sobre 387, que en 342 dan
-     los 21,2/26,5 y 14,1/19,4 del diseño. */
+     Dos columnas a 12 entre sí. Los textos de la tarjeta se miden contra su
+     ancho (cqw), con piso para la de 160 de un teléfono chico y techo en los
+     24 y 16 del escritorio. Van a 6,5 % del borde de abajo (el texto del
+     escritorio termina a 7,4 %) y hasta 16 % del derecho: la muesca de abajo
+     empieza en el 83 % del ancho. */
   @media (max-width: 767px) {
     .equipo {
       margin-top: 64px;
@@ -396,22 +400,31 @@ const altoLogo = ({ ancho, alto }: Empresa['logo']) => Math.round(110 * (ancho /
     }
 
     .equipo__grilla {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px 12px;
       margin-top: 46px;
     }
 
     .persona__texto {
-      gap: calc(4 * 100cqw / 387);
-      font-size: calc(16 * 100cqw / 387);
-      line-height: calc(22 * 100cqw / 387);
+      top: auto;
+      bottom: 6.5%;
+      right: 16%;
+      gap: 2px;
+      font-size: clamp(11px, 7.2cqw, 16px);
+      line-height: 1.3;
     }
 
     .persona__texto .persona__nombre {
-      font-size: calc(24 * 100cqw / 387);
-      line-height: calc(30 * 100cqw / 387);
+      font-size: clamp(13px, 8.8cqw, 24px);
+      line-height: 1.2;
     }
 
     .persona__texto .persona__empresa {
-      margin-top: calc(-4 * 100cqw / 387);
+      margin-top: -2px;
+    }
+
+    .persona__capa {
+      font-size: clamp(11px, 7.2cqw, 16px);
     }
   }
 
