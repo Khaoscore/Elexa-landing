@@ -1,0 +1,75 @@
+---
+/* Entrada de las secciones al bajar: la primera vez que un bloque entra en
+   pantalla, sube un poco mientras aparece. No viene de Figma.
+
+   · Los bloques son los hijos directos de <main> (las secciones de cada
+     página) y el pie. Si el hijo es una lista (los reels de la galería, las
+     tarjetas de /proyectos y de /espacios) entra cada elemento por su cuenta,
+     y los que llegan juntos, como una fila de tarjetas, van uno tras otro.
+   · Sólo se esconde lo que al cargar queda entero debajo de la pantalla: lo
+     que ya se ve (el hero, el encabezado) no se mueve. Sin JavaScript o con
+     menos movimiento no se esconde nada.
+   · Se anima `translate` y no `transform`, que pisaría el de cada bloque. Al
+     terminar no queda ningún estilo puesto: un desplazamiento fijo volvería
+     al bloque la referencia de los position: fixed de adentro. */
+---
+
+<style is:global>
+  /* Lo que todavía espera su entrada. Al imprimir sale todo. */
+  @media screen {
+    [data-entrada] {
+      opacity: 0;
+    }
+  }
+</style>
+
+<script>
+  const DISTANCIA = { escritorio: 56, movil: 32 }; // px que sube
+  const DURACION = { escritorio: 900, movil: 700 }; // ms
+  const ESCALON = 120; // ms entre los bloques que entran juntos
+  const CURVA = 'cubic-bezier(0.22, 1, 0.36, 1)';
+  const movil = window.matchMedia('(max-width: 767px)');
+  const menosMovimiento = window.matchMedia('(prefers-reduced-motion: reduce)');
+
+  if (!menosMovimiento.matches) {
+    /* Los <script> que Astro deja entre las secciones no tienen caja: su
+       top es 0 y el filtro los saca. */
+    const bloques = [...document.querySelectorAll<HTMLElement>('main > *, body > footer')]
+      .flatMap((el) => (el.matches('ul, ol') ? [...(el.children as HTMLCollectionOf<HTMLElement>)] : [el]))
+      .filter((el) => el.getBoundingClientRect().top >= window.innerHeight);
+
+    /* Entra cuando su borde de arriba pasa el 90 % de la pantalla, para que
+       el movimiento alcance a verse. */
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        entradas
+          .filter((entrada) => entrada.isIntersecting)
+          .forEach(({ target }, i) => {
+            const bloque = target as HTMLElement;
+            observador.unobserve(bloque);
+            delete bloque.dataset.entrada;
+            if (menosMovimiento.matches) return;
+            const pantalla = movil.matches ? 'movil' : 'escritorio';
+            bloque.animate(
+              [
+                { opacity: 0, translate: `0 ${DISTANCIA[pantalla]}px` },
+                { opacity: 1, translate: '0 0' },
+              ],
+              {
+                duration: DURACION[pantalla],
+                easing: CURVA,
+                delay: Math.min(i, 3) * ESCALON,
+                fill: 'backwards',
+              },
+            );
+          });
+      },
+      { rootMargin: '0px 0px -10% 0px' },
+    );
+
+    for (const bloque of bloques) {
+      bloque.dataset.entrada = '';
+      observador.observe(bloque);
+    }
+  }
+</script>

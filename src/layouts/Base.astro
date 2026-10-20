@@ -18,6 +18,7 @@ import '@fontsource/roboto/700.css';
 import '@fontsource/roboto-condensed/400.css';
 import '../styles/global.css';
 import Cursor from '../components/Cursor.astro';
+import EntradaSecciones from '../components/EntradaSecciones.astro';
 import FondoPuntos from '../components/FondoPuntos.astro'; // PRUEBA: ver el archivo para quitarlo
 import Footer from '../components/Footer.astro';
 import Navbar from '../components/Navbar.astro';
@@ -74,6 +75,7 @@ const ogImagen = imagen ? new URL(imagen, SITE_URL).toString() : null;
       <slot />
     </main>
     <Footer separacion={separacionPie} separacionMovil={separacionPieMovil} />
+    <EntradaSecciones />
     <Cursor />
   </body>
 </html>
