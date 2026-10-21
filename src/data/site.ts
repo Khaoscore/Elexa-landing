@@ -71,12 +71,6 @@ export const redes: { icono: 'whatsapp' | 'instagram' | 'youtube'; label: string
   { icono: 'youtube', label: '@luis_inversionista', href: 'https://www.youtube.com/@luis_inversionista' },
 ];
 
-export const legalLinks: Enlace[] = [
-  { label: 'Política de privacidad', href: null },
-  { label: 'Términos y condiciones', href: null },
-  { label: 'Cookies', href: null },
-];
-
 /* Crédito de la agencia, en el centro de la línea legal del pie. */
 export const POWERED_BY = { label: 'Khaos Core', href: 'https://khaoscore.com' };
 
