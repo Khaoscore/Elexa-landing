@@ -36,9 +36,22 @@ interface Props {
   separacionPieMovil?: number;
   /** La foto que muestran WhatsApp y las redes al compartir el enlace. */
   imagen?: string;
+  /** Servidores de afuera (Drive, Supabase) de los que salen las fotos de
+      arriba de la página: el navegador abre la conexión mientras lee el HTML
+      y la foto llega antes. Ver src/lib/origenes.ts. */
+  conectar?: string[];
 }
 
-const { title, description, path, barra = true, separacionPie, separacionPieMovil, imagen } = Astro.props;
+const {
+  title,
+  description,
+  path,
+  barra = true,
+  separacionPie,
+  separacionPieMovil,
+  imagen,
+  conectar = [],
+} = Astro.props;
 const canonical = new URL(path, SITE_URL).toString();
 const ogImagen = imagen ? new URL(imagen, SITE_URL).toString() : null;
 ---
@@ -55,6 +68,7 @@ const ogImagen = imagen ? new URL(imagen, SITE_URL).toString() : null;
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    {conectar.map((origen) => <link rel="preconnect" href={origen} />)}
 
     <meta property="og:type" content="website" />
     <meta property="og:locale" content="es_CO" />

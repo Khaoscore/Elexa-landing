@@ -30,9 +30,12 @@ import { estiloMuescas } from '../../lib/formas';
 
 interface Props {
   espacio: Espacio;
+  /** En la primera fila de la grilla: su foto se pide de entrada, sin
+      esperar a que el navegador calcule que está en pantalla. */
+  arriba?: boolean;
 }
 
-const { espacio } = Astro.props;
+const { espacio, arriba = false } = Astro.props;
 const [portada] = espacio.fotos;
 const valor = [espacio.precio, espacio.precioNota].filter(Boolean).join(' ');
 const resumen = [espacio.area, valor].filter(Boolean).join(' · ');
@@ -57,7 +60,8 @@ const forma = Object.entries(
           srcset={portada.srcset}
           sizes="(min-width: 1240px) 590px, (min-width: 768px) 50vw, 100vw"
           alt=""
-          loading="lazy"
+          loading={arriba ? 'eager' : 'lazy'}
+          fetchpriority={arriba ? 'high' : undefined}
           decoding="async"
           referrerpolicy="no-referrer"
         />

@@ -14,8 +14,11 @@ import EncabezadoEspacios from '../../components/espacios/EncabezadoEspacios.ast
 import TarjetaEspacio from '../../components/espacios/TarjetaEspacio.astro';
 import BandaLogos from '../../components/BandaLogos.astro';
 import { getEspacios } from '../../lib/espacios';
+import { origenesDe } from '../../lib/origenes';
 
 const espacios = await getEspacios();
+/* La primera fila: dos tarjetas en escritorio, que se ven sin bajar. */
+const PRIMERA_FILA = 2;
 
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
 ---
@@ -26,15 +29,16 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-re
   path="/espacios"
   separacionPie={144}
   separacionPieMovil={0}
+  conectar={origenesDe(espacios.slice(0, PRIMERA_FILA).map((espacio) => espacio.fotos[0]?.src))}
 >
   <EncabezadoEspacios />
 
   {
     espacios.length > 0 ? (
       <ul class="espacios contenedor" role="list">
-        {espacios.map((espacio) => (
+        {espacios.map((espacio, i) => (
           <li>
-            <TarjetaEspacio espacio={espacio} />
+            <TarjetaEspacio espacio={espacio} arriba={i < PRIMERA_FILA} />
           </li>
         ))}
       </ul>

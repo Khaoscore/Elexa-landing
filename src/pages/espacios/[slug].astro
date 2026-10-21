@@ -24,6 +24,7 @@ import Base from '../../layouts/Base.astro';
 import EncabezadoEspacios from '../../components/espacios/EncabezadoEspacios.astro';
 import FotosEspacio from '../../components/espacios/FotosEspacio.astro';
 import { getEspacio } from '../../lib/espacios';
+import { origenesDe } from '../../lib/origenes';
 import { ESPACIOS_URL } from '../../data/site';
 
 const { slug = '' } = Astro.params;
@@ -56,6 +57,7 @@ const descripcion = espacio
   description={descripcion}
   path={`${ESPACIOS_URL}/${espacio?.slug ?? slug}`}
   imagen={espacio?.fotos[0]?.jpeg}
+  conectar={origenesDe([espacio?.fotos[0]?.src])}
   separacionPie={184}
   separacionPieMovil={61}
 >
