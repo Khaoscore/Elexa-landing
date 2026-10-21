@@ -48,8 +48,8 @@ export const footerColumns: { titulo: string; enlaces: Enlace[] }[] = [
     enlaces: [
       { label: 'Florentino', href: 'https://florentino.elexa.com.co' },
       { label: 'Proyecto e', href: 'https://proyecto-e.elexa.com.co' },
-      { label: 'En alquiler', href: ESPACIOS_URL },
       { label: 'Ver todos', href: PROYECTOS_URL },
+      { label: 'En alquiler', href: ESPACIOS_URL },
     ],
   },
   {

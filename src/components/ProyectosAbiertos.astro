@@ -32,10 +32,6 @@ const proyectos = await getProyectosAbiertos();
           <br />
           <span class="acento">abiertos</span>
         </h2>
-        <p>
-          <strong>Construimos, arrendamos y administramos</strong> el activo. Usted recibe reportes periódicos y la
-          distribución de excedentes.
-        </p>
       </div>
 
       <CarruselProyectos client:visible={{ rootMargin: '400px' }} proyectos={proyectos} />
@@ -75,10 +71,6 @@ const proyectos = await getProyectosAbiertos();
     color: var(--ink-500);
   }
 
-  .proyectos__cabecera p {
-    max-width: 487px;
-  }
-
   @media (max-width: 767px) {
     .proyectos__mas {
       align-self: stretch;
@@ -112,10 +104,6 @@ const proyectos = await getProyectosAbiertos();
 
     .proyectos__cabecera h2 {
       width: 589px;
-    }
-
-    .proyectos__cabecera p {
-      flex: 1;
     }
   }
 </style>
