@@ -13,6 +13,7 @@ import TarjetaProyectoGrande from '../components/proyectos/TarjetaProyectoGrande
 import ProyectosAnteriores from '../components/proyectos/ProyectosAnteriores.astro';
 import BandaEspacios from '../components/proyectos/BandaEspacios.astro';
 import { getProyectosAbiertos } from '../lib/proyectos';
+import { origenesDe } from '../lib/origenes';
 
 const abiertos = await getProyectosAbiertos();
 
@@ -24,6 +25,7 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-re
   description="Proyectos inmobiliarios colectivos abiertos y 37 proyectos anteriores de Elexa en Cali."
   path="/proyectos"
   separacionPie={0}
+  conectar={origenesDe([abiertos[0]?.imagenGrande])}
 >
   <EncabezadoPagina>
     Nuestros <span class="acento">proyectos</span>
@@ -37,9 +39,9 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-re
   {
     abiertos.length > 0 && (
       <ul class="abiertos contenedor" role="list">
-        {abiertos.map((proyecto) => (
+        {abiertos.map((proyecto, i) => (
           <li>
-            <TarjetaProyectoGrande proyecto={proyecto} />
+            <TarjetaProyectoGrande proyecto={proyecto} primera={i === 0} />
           </li>
         ))}
       </ul>

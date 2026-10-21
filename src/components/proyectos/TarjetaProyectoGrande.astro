@@ -28,9 +28,12 @@ import { partirNegritas } from '../../lib/negritas';
 
 interface Props {
   proyecto: Proyecto;
+  /** La de arriba de la página: su foto se pide de entrada, sin esperar a
+      que el navegador calcule que está en pantalla. */
+  primera?: boolean;
 }
 
-const { proyecto } = Astro.props;
+const { proyecto, primera = false } = Astro.props;
 
 const escritorio = estiloMuescas([
   { esquina: 'tl', ancho: 102, alto: 99.87 },
@@ -58,7 +61,14 @@ const alt = proyecto.imagenGrande === proyecto.imagen ? proyecto.imagenAlt : '';
 
 <article class="grande">
   <div class="grande__marco muescas" style={forma}>
-    <img class="grande__foto" src={proyecto.imagenGrande} alt={alt} loading="lazy" decoding="async" />
+    <img
+      class="grande__foto"
+      src={proyecto.imagenGrande}
+      alt={alt}
+      loading={primera ? 'eager' : 'lazy'}
+      fetchpriority={primera ? 'high' : undefined}
+      decoding="async"
+    />
     <span class="grande__velo muescas__trazo" aria-hidden="true"></span>
     <div class="grande__texto">
       <h2 class="grande__nombre display t-h2">{proyecto.nombre}</h2>
