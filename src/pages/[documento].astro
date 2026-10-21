@@ -1,0 +1,227 @@
+---
+/* Páginas legales: /politica-de-privacidad, /terminos-y-condiciones y
+   /tratamiento-de-datos, una por cada .md de src/data/legal/ (ver
+   src/lib/legal.ts). Las rutas fijas (/nosotros, /proyectos…) tienen
+   prioridad sobre esta, así que un .md nunca pisa una página.
+
+   No están en el diseño: llevan el encabezado de las páginas internas y
+   debajo el documento sobre un panel gris, con el texto al ancho del párrafo
+   del encabezado (794). Al final, los enlaces a los otros documentos. */
+import Base from '../layouts/Base.astro';
+import EncabezadoPagina from '../components/EncabezadoPagina.astro';
+import { documentosLegales } from '../lib/legal';
+
+export function getStaticPaths() {
+  return documentosLegales.map((doc) => ({ params: { documento: doc.slug } }));
+}
+
+const doc = documentosLegales.find((d) => d.slug === Astro.params.documento)!;
+const { Content } = doc;
+const otros = documentosLegales.filter((d) => d !== doc);
+
+/* «Política de privacidad» → «Política de » + «privacidad» en morado. */
+const acento = doc.acento && doc.titulo.endsWith(doc.acento) ? doc.acento : '';
+const inicio = doc.titulo.slice(0, doc.titulo.length - acento.length);
+---
+
+<Base title={`${doc.titulo} — Elexa`} description={doc.descripcion} path={doc.href} separacionPie={144}>
+  <EncabezadoPagina>
+    {inicio}{acento && <span class="acento">{acento}</span>}
+    <Fragment slot="texto">{doc.descripcion}</Fragment>
+  </EncabezadoPagina>
+
+  <article class="legal">
+    <header class="legal__cabecera">
+      <p class="legal__documento display">{doc.documento}</p>
+      <p class="legal__fecha">
+        Última actualización: <time datetime={doc.actualizado}>{doc.actualizadoTexto}</time>
+      </p>
+    </header>
+    <div class="legal__cuerpo">
+      <Content />
+    </div>
+  </article>
+
+  <nav class="otros contenedor" aria-label="Otros documentos legales">
+    <p class="otros__titulo">Otros documentos legales</p>
+    <ul role="list">
+      {
+        otros.map((d) => (
+          <li>
+            <a class="btn btn--borde" href={d.href}>
+              {d.titulo}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</Base>
+
+<style>
+  /* ---------- Teléfono ---------- */
+
+  /* «Tratamiento» y «condiciones» son más anchas que «disponibles», la palabra
+     con la que se midió el Banner móvil: a 60 se salen de los 342. A 14vw
+     (54,6 en el frame de 390) entran hasta en un teléfono de 320. */
+  @media (max-width: 767px) {
+    :global(.encabezado__titulo.t-banner) {
+      font-size: min(60px, 14vw);
+    }
+  }
+
+  .legal {
+    width: min(1000px, 100% - 2 * var(--margen-panel));
+    margin: var(--space-2xl) auto 0;
+    padding: var(--space-xl) var(--space-lg);
+    border-radius: var(--radius-panel);
+    background: var(--neutral-200);
+  }
+
+  .legal__cabecera {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--neutral-300);
+  }
+
+  /* Un paso por encima de los títulos de sección del cuerpo. */
+  .legal__documento {
+    color: var(--brand-500);
+    font-size: 24px;
+    line-height: 28px;
+  }
+
+  .legal__fecha {
+    font-family: var(--font-note);
+    font-size: 14px;
+    line-height: 18px;
+  }
+
+  /* El cuerpo sale del Markdown: sus etiquetas no llevan la marca de estilos
+     de este archivo, de ahí los :global(). */
+  .legal__cuerpo {
+    padding-top: var(--space-lg);
+    line-height: 22px;
+  }
+
+  .legal__cuerpo :global(h2) {
+    margin: var(--space-xl) 0 var(--space-sm);
+    color: var(--brand-500);
+    font-family: var(--font-display);
+    font-size: 20px;
+    font-weight: 900;
+    font-variation-settings: 'opsz' 14;
+    line-height: 24px;
+    letter-spacing: -0.02em;
+  }
+
+  .legal__cuerpo :global(p),
+  .legal__cuerpo :global(ul) {
+    margin-bottom: var(--space-md);
+  }
+
+  .legal__cuerpo > :global(:first-child) {
+    margin-top: 0;
+  }
+  .legal__cuerpo > :global(:last-child) {
+    margin-bottom: 0;
+  }
+
+  .legal__cuerpo :global(ul) {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding: 0;
+    list-style: none;
+  }
+
+  .legal__cuerpo :global(li) {
+    position: relative;
+    padding-left: var(--space-lg);
+  }
+
+  /* Viñeta: un punto magenta a la altura de la primera línea. */
+  .legal__cuerpo :global(li::before) {
+    content: '';
+    position: absolute;
+    top: 8px;
+    left: 6px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--accent-300);
+  }
+
+  .legal__cuerpo :global(a) {
+    color: var(--brand-300);
+    text-underline-offset: 2px;
+  }
+  .legal__cuerpo :global(a:hover) {
+    color: var(--brand-300-hover);
+  }
+
+  .otros {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    margin-top: var(--space-2xl);
+    text-align: center;
+  }
+
+  .otros__titulo {
+    color: var(--brand-500);
+    font-weight: 700;
+  }
+
+  .otros ul {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--space-sm) var(--space-md);
+  }
+
+  /* ---------- Tablet ---------- */
+  @media (min-width: 768px) {
+    .legal {
+      margin-top: 64px;
+      padding: var(--space-2xl) 64px;
+    }
+
+    .legal__cuerpo {
+      line-height: 24px;
+    }
+
+    .legal__cuerpo :global(h2) {
+      margin-top: 40px;
+    }
+
+    .legal__cuerpo :global(li::before) {
+      top: 9px;
+    }
+  }
+
+  /* ---------- Escritorio: el texto queda en 794 (1000 − 2 × 103) ---------- */
+  @media (min-width: 1240px) {
+    .legal {
+      margin-top: var(--space-section);
+      padding: 80px 103px;
+    }
+
+    .legal__documento {
+      font-size: 32px;
+      line-height: 36px;
+    }
+
+    .legal__cuerpo :global(h2) {
+      font-size: 24px;
+      line-height: 30px;
+    }
+
+    .otros {
+      margin-top: 64px;
+    }
+  }
+</style>

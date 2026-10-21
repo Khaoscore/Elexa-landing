@@ -10,9 +10,11 @@
    en 16 con el crédito y los enlaces uno debajo del otro.
 
    Los destinos salen de src/data/site.ts; los que todavía no existen se
-   pintan como texto (ver el comentario de ese archivo). */
+   pintan como texto (ver el comentario de ese archivo). Los enlaces legales,
+   de los documentos de src/data/legal/ (ver src/lib/legal.ts). */
 import Logo from './Logo.astro';
-import { footerColumns, legalLinks, redes, esExterno, POWERED_BY } from '../data/site';
+import { footerColumns, redes, esExterno, POWERED_BY } from '../data/site';
+import { documentosLegales } from '../lib/legal';
 
 interface Props {
   /** Distancia en escritorio con lo de arriba: 23 en la portada, 0 donde la
@@ -98,9 +100,9 @@ const anio = new Date().getFullYear();
     </p>
     <ul role="list">
       {
-        legalLinks.map((enlace) => (
+        documentosLegales.map((doc) => (
           <li>
-            <a href={enlace.href ?? undefined}>{enlace.label}</a>
+            <a href={doc.href}>{doc.titulo}</a>
           </li>
         ))
       }

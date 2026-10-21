@@ -10,13 +10,13 @@
    Móvil — «Frame 7» (303:4483), 390 × 324: los cuatro bloques en columna con
    el mismo ancho fijo (así los textos parten en dos líneas como en Figma) y
    su propia exportación del símbolo (303:4484, 537 × 524). El diseño móvil
-   pone primero «+8 Años construyendo en Cali»; el escritorio sigue con «+7»
+   pone primero «9 Años construyendo en Cali»; el escritorio sigue con «7»
    al final, así que se deja el orden y la cifra del sitio. */
 const cifras = [
-  { numero: '+30', texto: ['Proyectos colectivos'], ancho: 227 },
+  { numero: '37', texto: ['Proyectos colectivos'], ancho: 227 },
   { numero: '+300', texto: ['Socios vinculados'], ancho: 256 },
   { numero: '+$100', texto: ['Mil millones en', 'portafolio de proyectos'], ancho: 366 },
-  { numero: '+7', texto: ['Años construyendo', 'en Cali'], ancho: 229 },
+  { numero: '9', texto: ['Años construyendo', 'en Cali'], ancho: 229 },
 ];
 ---
 
@@ -32,7 +32,7 @@ const cifras = [
           <span class="cifras__numero display t-h1">{cifra.numero}</span>
           <span class="cifras__texto">
             {cifra.texto.map((linea, i) => (
-              <>
+              <>  
                 {i > 0 && <br />}
                 {linea}
               </>

@@ -20,10 +20,10 @@ export const RADIOGRAFIA_CONFIG = {
      envía siempre. */
   enviarEnDesarrollo: true,
 
-  /* Política de tratamiento de datos. Elexa todavía no tiene la suya
-     publicada (ver `legalLinks` en site.ts), así que se usa la de
-     Florentino, que es de la misma empresa. */
-  politica: 'https://florentino.elexa.com.co/politica-de-privacidad',
+  /* El enlace de la casilla de autorización: la autorización para el
+     tratamiento de datos de Elexa (src/data/legal/tratamiento-de-datos.md).
+     Se abre en otra pestaña para no perder lo que se lleva llenado. */
+  politica: '/tratamiento-de-datos',
 
   /* true = mientras la persona llena, sus respuestas quedan en su propio
      navegador (localStorage) para que no las pierda si se cierra la pestaña.

@@ -48,8 +48,8 @@ export const footerColumns: { titulo: string; enlaces: Enlace[] }[] = [
     enlaces: [
       { label: 'Florentino', href: 'https://florentino.elexa.com.co' },
       { label: 'Proyecto e', href: 'https://proyecto-e.elexa.com.co' },
-      { label: 'En alquiler', href: ESPACIOS_URL },
       { label: 'Ver todos', href: PROYECTOS_URL },
+      { label: 'En alquiler', href: ESPACIOS_URL },
     ],
   },
   {
@@ -69,12 +69,6 @@ export const redes: { icono: 'whatsapp' | 'instagram' | 'youtube'; label: string
   { icono: 'whatsapp', label: '333 4307 840', href: WHATSAPP_URL },
   { icono: 'instagram', label: '@elexa_real_estate', href: 'https://www.instagram.com/elexa_real_estate/' },
   { icono: 'youtube', label: '@luis_inversionista', href: 'https://www.youtube.com/@luis_inversionista' },
-];
-
-export const legalLinks: Enlace[] = [
-  { label: 'Política de privacidad', href: null },
-  { label: 'Términos y condiciones', href: null },
-  { label: 'Cookies', href: null },
 ];
 
 /* Crédito de la agencia, en el centro de la línea legal del pie. */
