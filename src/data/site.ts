@@ -71,6 +71,11 @@ export const redes: { icono: 'whatsapp' | 'instagram' | 'youtube'; label: string
   { icono: 'youtube', label: '@luis_inversionista', href: 'https://www.youtube.com/@luis_inversionista' },
 ];
 
+/* Pixel de Meta: el conjunto de datos «ELEXA-Principal» del Administrador de
+   eventos, el mismo que usa la landing de Proyecto e. Vacío, el sitio no
+   carga el pixel. Ver src/components/MetaPixel.astro. */
+export const META_PIXEL_ID = '1526674725440438';
+
 /* Crédito de la agencia, en el centro de la línea legal del pie. */
 export const POWERED_BY = { label: 'Khaos Core', href: 'https://khaoscore.com' };
 
