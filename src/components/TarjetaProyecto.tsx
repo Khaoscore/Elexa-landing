@@ -26,6 +26,7 @@ import type { CSSProperties } from 'react';
 import type { Proyecto } from '../lib/proyectos';
 import { estiloMuescas, type Muesca } from '../lib/formas';
 import { partirNegritas } from '../lib/negritas';
+import { nombreParaPixel } from '../lib/pixel';
 
 function forma(muescas: Muesca[], sufijo: 'movil' | 'ancho'): Record<string, string> {
   const estilo = estiloMuescas(muescas);
@@ -110,6 +111,9 @@ export default function TarjetaProyecto({ proyecto, ancha = false }: Props) {
         className="btn btn--primario tarjeta__boton"
         href={proyecto.enlace}
         {...(externo ? { target: '_blank', rel: 'noopener' } : {})}
+        data-pixel="ViewContent"
+        data-pixel-nombre={nombreParaPixel(proyecto.nombre)}
+        data-pixel-categoria="proyectos"
       >
         {ancha ? (
           'Ver proyecto'

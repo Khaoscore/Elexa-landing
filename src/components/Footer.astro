@@ -80,7 +80,11 @@ const anio = new Date().getFullYear();
         {
           redes.map((red) => (
             <li>
-              <a href={red.href} {...externo(red.href)}>
+              <a
+                href={red.href}
+                {...externo(red.href)}
+                {...(red.icono === 'whatsapp' ? { 'data-pixel': 'Contact', 'data-pixel-nombre': 'whatsapp_footer' } : {})}
+              >
                 <img src={`/img/pie/${red.icono}.svg`} alt="" />
                 <span>{red.label}</span>
               </a>

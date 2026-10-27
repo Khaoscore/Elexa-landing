@@ -26,6 +26,7 @@ Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-re
   path="/proyectos"
   separacionPie={0}
   conectar={origenesDe([abiertos[0]?.imagenGrande])}
+  pixel={{ evento: 'ViewContent', parametros: { content_category: 'proyectos' } }}
 >
   <EncabezadoPagina>
     Nuestros <span class="acento">proyectos</span>

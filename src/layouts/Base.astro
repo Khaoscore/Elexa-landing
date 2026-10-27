@@ -23,6 +23,7 @@ import Footer from '../components/Footer.astro';
 import MetaPixel from '../components/MetaPixel.astro';
 import Navbar from '../components/Navbar.astro';
 import { SITE_NAME, SITE_URL } from '../data/site';
+import type { EventoPagina } from '../lib/pixel';
 
 interface Props {
   title: string;
@@ -41,6 +42,9 @@ interface Props {
       arriba de la página: el navegador abre la conexión mientras lee el HTML
       y la foto llega antes. Ver src/lib/origenes.ts. */
   conectar?: string[];
+  /** Evento del pixel de Meta que la página reporta al cargar, además de la
+      visita. Ver src/components/MetaPixel.astro. */
+  pixel?: EventoPagina;
 }
 
 const {
@@ -52,6 +56,7 @@ const {
   separacionPieMovil,
   imagen,
   conectar = [],
+  pixel,
 } = Astro.props;
 const canonical = new URL(path, SITE_URL).toString();
 const ogImagen = imagen ? new URL(imagen, SITE_URL).toString() : null;
@@ -80,7 +85,7 @@ const ogImagen = imagen ? new URL(imagen, SITE_URL).toString() : null;
     {ogImagen && <meta property="og:image" content={ogImagen} />}
   </head>
   <body>
-    <MetaPixel />
+    <MetaPixel evento={pixel} />
     {
       barra && (
         <div class="barra-pagina">

@@ -2,14 +2,43 @@
 /* Pixel de Meta (Facebook e Instagram). Base.astro lo pone al principio del
    <body>, así queda en todas las páginas.
 
-   · El código base de Meta, sin cambios, con la visita (PageView).
-   · Un clic en cualquier enlace de WhatsApp cuenta como «Lead»: los botones
-     «Hablemos» y «Agenda tu cita» (que por ahora también abren WhatsApp), el
-     ícono del pie y los números del equipo en /nosotros. Es el mismo evento
-     que usa la landing de Proyecto e con este mismo pixel, así las campañas
-     cuentan igual los dos sitios. Lo que se mide es el clic que abre el
-     chat, no que la persona escriba: eso pasa ya en WhatsApp, donde el
-     pixel no entra.
+   Qué se reporta (acordado con marketing el 27 oct 2026):
+
+     Todas las páginas         PageView            sola, en cada visita
+     /proyectos                ViewContent         content_category: proyectos
+     /como-participar          IntentSignal        content_name: como_participar
+                               (personalizado)
+     «Ver proyecto»            ViewContent         content_name: Proyecto_E,
+                                                   Florentino…; content_category:
+                                                   proyectos
+     «Hablemos» (barra)        Lead                hablemos_header,
+                                                   content_category: whatsapp
+     WhatsApp del pie          Contact             whatsapp_footer
+     WhatsApp del equipo       Contact             whatsapp_equipo
+     «Agenda tu cita»          Schedule            agendar_reunion
+     Radiografía: datos        Lead                radiografia_financiera,
+       de contacto enviados                        content_category: lead_form
+     Radiografía: resultado    CompleteRegistration  registro_completado
+
+   Lead es el evento con el que se optimizan las campañas, así que sale sólo
+   en dos lugares: «Hablemos», que abre la conversación por WhatsApp (decisión
+   de marketing del 27 oct 2026), y la radiografía cuando la persona deja sus
+   datos. `content_category` los separa en el reporte (whatsapp / lead_form).
+   «Hablemos» sólo se ve en escritorio (1240 px o más); en el celular, la barra
+   muestra «Agenda tu cita».
+
+   · Los eventos de las páginas llegan por la prop `evento` (ver Base.astro y
+     src/lib/pixel.ts).
+   · Los botones se marcan en el HTML con `data-pixel` (el evento),
+     `data-pixel-nombre` y, si aplica, `data-pixel-categoria`. Un solo
+     escucha en el documento los reporta, así sirve también para los que
+     aparecen después (las tarjetas del carrusel, la radiografía).
+   · Un enlace de WhatsApp sin marca cuenta como Contact «whatsapp», para que
+     uno nuevo no se escape.
+   · El formulario reporta desde su propio código (Radiografia.tsx).
+
+   Cada evento sale una vez por página: dos clics en el mismo botón son una
+   sola intención.
 
    Va en el <body> y no en el <head> porque el <noscript> lleva una imagen,
    y una imagen dentro del <head> lo cierra antes de tiempo. El script carga
@@ -18,12 +47,19 @@
    Sólo corre en elexa.com.co: las pruebas en local y las vistas previas de
    Vercel no cuentan. El ID está en src/data/site.ts. */
 import { META_PIXEL_ID } from '../data/site';
+import type { EventoPagina } from '../lib/pixel';
+
+interface Props {
+  evento?: EventoPagina;
+}
+
+const { evento = null } = Astro.props;
 ---
 
 {
   META_PIXEL_ID && (
     <Fragment>
-      <script is:inline define:vars={{ pixelId: META_PIXEL_ID }}>
+      <script is:inline define:vars={{ pixelId: META_PIXEL_ID, eventoPagina: evento }}>
         if (/(^|\.)elexa\.com\.co$/.test(location.hostname)) {
           !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
           n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -35,20 +71,30 @@ import { META_PIXEL_ID } from '../data/site';
           fbq('init', pixelId);
           fbq('track', 'PageView');
 
-          /* Un solo escucha en el documento en vez de uno por botón: sirve
-             también para los enlaces que aparecen después, como el de la
-             radiografía. Se reconoce WhatsApp por el dominio del enlace
-             (wa.link, wa.me, whatsapp.com). Un Lead por página: quien abre
-             el chat desde la barra y después desde el pie es una sola
-             intención. */
+          var enviados = {};
+          function reportar(tipo, nombre, parametros) {
+            var clave = nombre + '|' + (parametros.content_name || '');
+            if (enviados[clave]) return;
+            enviados[clave] = true;
+            fbq(tipo, nombre, parametros);
+          }
+
+          if (eventoPagina) {
+            reportar(eventoPagina.propio ? 'trackCustom' : 'track', eventoPagina.evento, eventoPagina.parametros);
+          }
+
           var whatsapp = /^(wa\.me|wa\.link|(api\.|web\.)?whatsapp\.com)$/;
-          var reportado = false;
           document.addEventListener('click', function (clic) {
-            if (reportado) return;
             var enlace = clic.target.closest && clic.target.closest('a[href]');
-            if (!enlace || !whatsapp.test(enlace.hostname)) return;
-            reportado = true;
-            fbq('track', 'Lead', { content_name: 'WhatsApp' });
+            if (!enlace) return;
+            var marca = enlace.dataset;
+            if (marca.pixel) {
+              var parametros = { content_name: marca.pixelNombre };
+              if (marca.pixelCategoria) parametros.content_category = marca.pixelCategoria;
+              reportar('track', marca.pixel, parametros);
+            } else if (whatsapp.test(enlace.hostname)) {
+              reportar('track', 'Contact', { content_name: 'whatsapp' });
+            }
           });
         }
       </script>

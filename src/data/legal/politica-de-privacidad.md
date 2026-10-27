@@ -56,7 +56,7 @@ Elexa no venderá ni compartirá sus datos personales con terceros sin su consen
 
 ## 6. Cookies y píxel de Meta
 
-El sitio web www.elexa.com.co usa el píxel de Meta, una herramienta de Meta Platforms, Inc. (Facebook e Instagram) que funciona con cookies y tecnologías similares. Con ella se registra información sobre su visita, como las páginas que abre, los clics en los botones de WhatsApp, su dirección IP y el tipo de navegador y dispositivo que usa. Si usted escribe su correo o su número de WhatsApp en un formulario del sitio, como la radiografía financiera, el píxel puede enviarlos a Meta cifrados, para relacionar la visita con su cuenta de Facebook o Instagram.
+El sitio web www.elexa.com.co usa el píxel de Meta, una herramienta de Meta Platforms, Inc. (Facebook e Instagram) que funciona con cookies y tecnologías similares. Con ella se registra información sobre su visita, como las páginas que abre, los botones en los que hace clic, su dirección IP y el tipo de navegador y dispositivo que usa. Si usted escribe su correo o su número de WhatsApp en un formulario del sitio, como la radiografía financiera, el píxel puede enviarlos a Meta cifrados, para relacionar la visita con su cuenta de Facebook o Instagram.
 
 Elexa usa esta información para medir los resultados de sus anuncios en Facebook e Instagram y para mostrar publicidad a personas que ya visitaron el sitio. Meta la recibe en sus servidores, que pueden estar fuera de Colombia, y la trata según su propia [política de privacidad](https://www.facebook.com/privacy/policy).
 
