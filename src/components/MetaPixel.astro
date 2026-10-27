@@ -1,0 +1,68 @@
+---
+/* Pixel de Meta (Facebook e Instagram). Base.astro lo pone al principio del
+   <body>, así queda en todas las páginas.
+
+   · El código base de Meta, sin cambios, con la visita (PageView).
+   · Un clic en cualquier enlace de WhatsApp cuenta como «Lead»: los botones
+     «Hablemos» y «Agenda tu cita» (que por ahora también abren WhatsApp), el
+     ícono del pie y los números del equipo en /nosotros. Es el mismo evento
+     que usa la landing de Proyecto e con este mismo pixel, así las campañas
+     cuentan igual los dos sitios. Lo que se mide es el clic que abre el
+     chat, no que la persona escriba: eso pasa ya en WhatsApp, donde el
+     pixel no entra.
+
+   Va en el <body> y no en el <head> porque el <noscript> lleva una imagen,
+   y una imagen dentro del <head> lo cierra antes de tiempo. El script carga
+   async, así que no se nota.
+
+   Sólo corre en elexa.com.co: las pruebas en local y las vistas previas de
+   Vercel no cuentan. El ID está en src/data/site.ts. */
+import { META_PIXEL_ID } from '../data/site';
+---
+
+{
+  META_PIXEL_ID && (
+    <Fragment>
+      <script is:inline define:vars={{ pixelId: META_PIXEL_ID }}>
+        if (/(^|\.)elexa\.com\.co$/.test(location.hostname)) {
+          !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+          n.callMethod.apply(n,arguments):n.queue.push(arguments)};
+          if(!f._fbq)f._fbq=n;n.push=n;n.loaded=!0;n.version='2.0';
+          n.queue=[];t=b.createElement(e);t.async=!0;
+          t.src=v;s=b.getElementsByTagName(e)[0];
+          s.parentNode.insertBefore(t,s)}(window, document,'script',
+          'https://connect.facebook.net/en_US/fbevents.js');
+          fbq('init', pixelId);
+          fbq('track', 'PageView');
+
+          /* Un solo escucha en el documento en vez de uno por botón: sirve
+             también para los enlaces que aparecen después, como el de la
+             radiografía. Se reconoce WhatsApp por el dominio del enlace
+             (wa.link, wa.me, whatsapp.com). Un Lead por página: quien abre
+             el chat desde la barra y después desde el pie es una sola
+             intención. */
+          var whatsapp = /^(wa\.me|wa\.link|(api\.|web\.)?whatsapp\.com)$/;
+          var reportado = false;
+          document.addEventListener('click', function (clic) {
+            if (reportado) return;
+            var enlace = clic.target.closest && clic.target.closest('a[href]');
+            if (!enlace || !whatsapp.test(enlace.hostname)) return;
+            reportado = true;
+            fbq('track', 'Lead', { content_name: 'WhatsApp' });
+          });
+        }
+      </script>
+
+      {/* Para quien navega sin JavaScript: sólo cuenta la visita. */}
+      <noscript>
+        <img
+          height="1"
+          width="1"
+          style="display:none"
+          alt=""
+          src={`https://www.facebook.com/tr?id=${META_PIXEL_ID}&ev=PageView&noscript=1`}
+        />
+      </noscript>
+    </Fragment>
+  )
+}
