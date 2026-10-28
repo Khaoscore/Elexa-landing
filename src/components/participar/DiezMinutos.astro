@@ -39,7 +39,15 @@ const externo = esExterno(AGENDA_URL) ? { target: '_blank', rel: 'noopener' } : 
       Reserva un espacio para aclarar tus dudas sobre el proyecto de tu interés y empieza a construir tu libertad
       financiera.
     </p>
-    <a class="btn luis__boton" href={AGENDA_URL ?? undefined} {...externo}>Agenda tu cita</a>
+    <a
+      class="btn luis__boton"
+      href={AGENDA_URL ?? undefined}
+      {...externo}
+      data-pixel="Schedule"
+      data-pixel-nombre="agendar_reunion"
+    >
+      Agenda tu cita
+    </a>
   </div>
 
   <picture class="luis__marco">

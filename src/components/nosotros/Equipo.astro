@@ -76,7 +76,13 @@ const altoLogo = ({ ancho, alto }: Empresa['logo']) => Math.round(110 * (ancho /
                     </a>
                   )}
                   {persona.telefono && (
-                    <a href={`https://wa.me/${persona.telefono.replace(/\D/g, '')}`} target="_blank" rel="noopener">
+                    <a
+                      href={`https://wa.me/${persona.telefono.replace(/\D/g, '')}`}
+                      target="_blank"
+                      rel="noopener"
+                      data-pixel="Contact"
+                      data-pixel-nombre="whatsapp_equipo"
+                    >
                       {persona.telefono}
                       <span class="sr-only">(WhatsApp, se abre en una pestaña nueva)</span>
                     </a>

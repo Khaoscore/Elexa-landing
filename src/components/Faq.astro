@@ -54,7 +54,15 @@ const VIDEO_ID = '0lzrbcof0PU';
 
     <div class="faq__columna">
       <FaqAcordeon client:visible={{ rootMargin: '400px' }} preguntas={preguntas} />
-      <a class="btn btn--primario faq__cta" href={AGENDA_URL ?? undefined} {...externo}>Agenda tu cita</a>
+      <a
+        class="btn btn--primario faq__cta"
+        href={AGENDA_URL ?? undefined}
+        {...externo}
+        data-pixel="Schedule"
+        data-pixel-nombre="agendar_reunion"
+      >
+        Agenda tu cita
+      </a>
     </div>
   </div>
 </section>

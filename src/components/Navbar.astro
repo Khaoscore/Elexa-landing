@@ -71,7 +71,16 @@ const esActual = (href: string) => (href === '/' ? actual === '/' : actual === h
 
   <div class="nav__acciones">
     <a class="btn btn--borde" href={LOGIN_URL ?? undefined} {...externo(LOGIN_URL)}>Log in</a>
-    <a class="btn btn--primario" href={HABLEMOS_URL} {...externo(HABLEMOS_URL)}>Hablemos</a>
+    <a
+      class="btn btn--primario"
+      href={HABLEMOS_URL}
+      {...externo(HABLEMOS_URL)}
+      data-pixel="Lead"
+      data-pixel-nombre="hablemos_header"
+      data-pixel-categoria="whatsapp"
+    >
+      Hablemos
+    </a>
   </div>
 
   <details class="nav__menu">
@@ -96,7 +105,15 @@ const esActual = (href: string) => (href === '/' ? actual === '/' : actual === h
           </nav>
           <div class="nav__panel-botones">
             <a class="btn btn--borde" href={LOGIN_URL ?? undefined} {...externo(LOGIN_URL)}>Log in</a>
-            <a class="btn btn--primario" href={AGENDA_URL ?? undefined} {...externo(AGENDA_URL)}>Agenda tu cita</a>
+            <a
+              class="btn btn--primario"
+              href={AGENDA_URL ?? undefined}
+              {...externo(AGENDA_URL)}
+              data-pixel="Schedule"
+              data-pixel-nombre="agendar_reunion"
+            >
+              Agenda tu cita
+            </a>
           </div>
         </div>
       </div>

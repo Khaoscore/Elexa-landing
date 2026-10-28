@@ -27,6 +27,7 @@ import { Fragment, useEffect, useMemo, useRef, useState, type CSSProperties, typ
 import { RADIOGRAFIA_CONFIG as CFG } from '../../data/radiografia';
 import { AGENDA_URL, PROYECTOS_URL, RADIOGRAFIA_URL, esExterno } from '../../data/site';
 import { partirNegritas } from '../../lib/negritas';
+import { reportarPixel } from '../../lib/pixel';
 import * as R from '../../lib/radiografia';
 import { cargarJsPDF, construirPDF, nombreArchivo } from '../../lib/radiografia-pdf';
 import CampoDinero from './CampoDinero';
@@ -288,11 +289,18 @@ export default function Radiografia() {
 
   function registrarInicio() {
     if (completoEnviado.current || demo) return;
+    /* El Lead del pixel sale con el primer envío de los datos de contacto; si
+       la persona vuelve a la pantalla 1 y sigue, es la misma persona. */
+    const primera = !inicioEnviado.current;
     inicioEnviado.current = true;
     if (MODO_PRUEBA) return;
-    R.enviar(CFG.endpoint, R.datosInicio({ id: idFila.current, ...contacto, edad: S.edad || 0 })).catch((e) =>
-      console.warn('[radiografia] no se pudo guardar el contacto:', e),
-    );
+    R.enviar(CFG.endpoint, R.datosInicio({ id: idFila.current, ...contacto, edad: S.edad || 0 }))
+      .then(() => {
+        if (primera) {
+          reportarPixel('Lead', { content_name: 'radiografia_financiera', content_category: 'lead_form' });
+        }
+      })
+      .catch((e) => console.warn('[radiografia] no se pudo guardar el contacto:', e));
   }
 
   function verResultado() {
@@ -306,11 +314,14 @@ export default function Radiografia() {
     }
     setRegistro('guardando');
     /* Solo cuenta como enviado cuando el receptor lo confirma: si falla, al
-       retomar la radiografía se vuelve a intentar (ver empezar()). */
+       retomar la radiografía se vuelve a intentar (ver empezar()). El pixel
+       recibe CompleteRegistration sólo la primera vez. */
+    const primera = !completoEnviado.current;
     R.enviar(CFG.endpoint, R.datosCompletos({ id: idFila.current, ...contacto, edad: S.edad || 0 }, entrada, rate))
       .then(() => {
         completoEnviado.current = true;
         setRegistro('ok');
+        if (primera) reportarPixel('CompleteRegistration', { content_name: 'registro_completado' });
       })
       .catch((e) => {
         console.warn('[radiografia] no se pudo guardar:', e);
@@ -1244,7 +1255,13 @@ export default function Radiografia() {
             </p>
             <p className="rf-cierre__cita display">«Yo no necesito que me creas. Necesito que preguntes.»</p>
             <div className="rf-cierre__botones">
-              <a className="btn btn--primario" href={AGENDA_URL ?? undefined} {...externo}>
+              <a
+                className="btn btn--primario"
+                href={AGENDA_URL ?? undefined}
+                {...externo}
+                data-pixel="Schedule"
+                data-pixel-nombre="agendar_reunion"
+              >
                 Agenda tu cita
               </a>
               <a className="btn btn--borde" href={PROYECTOS_URL}>

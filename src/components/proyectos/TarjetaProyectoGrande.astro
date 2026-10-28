@@ -25,6 +25,7 @@
 import type { Proyecto } from '../../lib/proyectos';
 import { estiloMuescas } from '../../lib/formas';
 import { partirNegritas } from '../../lib/negritas';
+import { nombreParaPixel } from '../../lib/pixel';
 
 interface Props {
   proyecto: Proyecto;
@@ -83,7 +84,14 @@ const alt = proyecto.imagenGrande === proyecto.imagen ? proyecto.imagenAlt : '';
     <img class="grande__icono-movil" src="/img/iconos/corporate-fare-23.svg" alt="" width="22.7" height="22.7" />
   </span>
 
-  <a class="btn btn--primario grande__boton" href={proyecto.enlace} {...externo}>
+  <a
+    class="btn btn--primario grande__boton"
+    href={proyecto.enlace}
+    {...externo}
+    data-pixel="ViewContent"
+    data-pixel-nombre={nombreParaPixel(proyecto.nombre)}
+    data-pixel-categoria="proyectos"
+  >
     Ver proyecto<span class="sr-only"> {proyecto.nombre}</span>
   </a>
 </article>
