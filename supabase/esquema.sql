@@ -90,23 +90,28 @@ alter table public.propiedades_elexa add column if not exists fotos text;
 --  cambie a mano acá lo pisa la próxima sincronización. Todo es texto, como
 --  en la hoja; el sitio lo interpreta (src/lib/espacios.ts).
 --  Si la tabla ya existía (la creó el script), el create no la toca y sólo
---  se le agrega `orden`.
+--  se le agregan las columnas que falten. Las viejas `parqueadero` y
+--  `ascensor` ya no están en la hoja.
 -- ---------------------------------------------------------------------------
 create table if not exists public.propiedades (
   id          text        primary key,   -- lo pone el script en la hoja
   nombre      text        not null,
   barrio      text,
   valor       text,                      -- «$3.934.000 + IVA»
-  area        text,                      -- «67» (en m²) o «150 a 400»
-  parqueadero text,                      -- «Sí» / «No» / cuántos
-  ascensor    text,                      -- «Sí» / «No»
-  amenidades  text,                      -- una por renglón
+  area        text,                      -- «64 m² (24+40 terraza)» o «67» (en m²)
+  amenidades  text,                      -- «Características y atractivos»: la Descripción
   fotos       text,                      -- URLs de las fotos, una por renglón
+  direccion   text,                      -- «Cra 66 # 2 A - 33»
+  latitud     text,                      -- «3.3983629»: el punto del mapa
+  longitud    text,                      -- «-76.5522176»
   orden       integer,                   -- la posición de la fila en la hoja
   updated_at  timestamptz not null default now()
 );
 
 alter table public.propiedades add column if not exists orden integer;
+alter table public.propiedades add column if not exists direccion text;
+alter table public.propiedades add column if not exists latitud text;
+alter table public.propiedades add column if not exists longitud text;
 
 -- ---------------------------------------------------------------------------
 --  Permisos: con la clave pública sólo se puede LEER (en `proyectos`, sólo

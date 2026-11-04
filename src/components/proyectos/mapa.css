@@ -139,6 +139,20 @@
   border: 0;
 }
 
+/* Con Mapbox: el pin bajo el mouse sube sobre los vecinos (Leaflet lo hace
+   solo con riseOnHover) sin pasar al elegido, que va con z-index 10. */
+.mapboxgl-marker.pin-mapa:hover {
+  z-index: 5;
+}
+.mapboxgl-marker.pin-mapa:focus-visible {
+  outline: none;
+}
+.mapboxgl-marker.pin-mapa:focus-visible .pin {
+  outline: 3px solid var(--accent-300);
+  outline-offset: 2px;
+  border-radius: var(--radius-full);
+}
+
 .pin {
   position: relative;
   display: block;
@@ -167,6 +181,25 @@
 }
 .mapa__lienzo--lejos .pin--chico {
   transform: scale(0.55);
+}
+
+/* Al pasar el mouse el pin crece apoyado en la punta (no se corre del
+   lugar); el elegido, apoyado en su punto morado. Al tocarlo, el mapa se
+   acerca (MapaProyectos.tsx). */
+.pin--elegido {
+  transform-origin: 43px 117px;
+  transition: transform 0.2s;
+}
+@media (hover: hover) {
+  .pin--chico:hover {
+    transform: scale(1.22);
+  }
+  .mapa__lienzo--lejos .pin--chico:hover {
+    transform: scale(0.85);
+  }
+  .pin--elegido:hover {
+    transform: scale(1.1);
+  }
 }
 .pin__circulo {
   top: 0;
@@ -567,6 +600,14 @@
 
   .mapa__carrusel {
     margin-top: -50px;
+  }
+
+  /* Las tarjetas se montan 50 sobre el borde de abajo del mapa: el logo y
+     los créditos (obligatorios en Mapbox y OpenStreetMap) suben por encima. */
+  .mapa__lienzo .mapboxgl-ctrl-bottom-left,
+  .mapa__lienzo .mapboxgl-ctrl-bottom-right,
+  .mapa__lienzo .leaflet-bottom {
+    bottom: 56px;
   }
 
   .mapa__tarjetas {
