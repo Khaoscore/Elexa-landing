@@ -11,6 +11,9 @@
    · amenidades   la columna «Características y atractivos»: el texto de la
                   sección «Descripción» de la ficha. Cada renglón de la celda
                   (Alt + Enter) es un párrafo.
+   · disponibilidad  «Inmediata» → «Disponibilidad inmediata»; un año
+                  («2027») o un mes y año → «Disponible en 2027». Otro texto,
+                  tal cual. Vacío no se muestra.
    · direccion    tal cual, en la lista de la ficha.
    · latitud /    el punto del mapa de la ficha. En Google Maps, clic derecho
      longitud     sobre el lugar → el primer renglón del menú son las dos
@@ -28,10 +31,12 @@ import { consultar, hayBaseDeDatos, urlImagen } from './supabase';
 import { coordenadas, type Coordenadas } from './coordenadas';
 import { propiedadesRespaldo } from '../data/espacios';
 
-export type Icono = 'ubicacion' | 'area' | 'direccion';
+export type Icono = 'ubicacion' | 'area' | 'disponibilidad' | 'direccion';
 
 export type Caracteristica = {
   icono: Icono;
+  /** Lo que es, en chico encima del dato: «Barrio», «Área»… */
+  etiqueta: string;
   texto: string;
   /** Un enlace chico debajo del texto («Ver en el mapa»). */
   enlace?: { href: string; texto: string };
@@ -68,7 +73,10 @@ export type Espacio = {
       atractivos»). */
   descripcion: string[];
   fotos: Foto[];
-  /** La lista de la ficha, cada una con su ícono: barrio, área y dirección. */
+  /** «Disponibilidad inmediata», «Disponible en 2027». Vacío = sin dato. */
+  disponibilidad: string;
+  /** La lista de la ficha, cada una con su ícono: barrio, área,
+      disponibilidad y dirección. */
   caracteristicas: Caracteristica[];
 };
 
@@ -81,6 +89,7 @@ export type FilaPropiedad = {
   area?: string | null;
   /** «Características y atractivos» en la hoja. */
   amenidades?: string | null;
+  disponibilidad?: string | null;
   direccion?: string | null;
   latitud?: string | number | null;
   longitud?: string | number | null;
@@ -125,6 +134,27 @@ function conUnidad(area: string): string {
   const v = limpio(area);
   if (/\bm2\b/i.test(v)) return v.replace(/\bm2\b/i, 'm²');
   return /\d$/.test(v) ? `${v} m²` : v;
+}
+
+const mayuscula = (texto: string) => texto.charAt(0).toLocaleUpperCase('es-CO') + texto.slice(1);
+
+/* «Inmediata» / «2027» / «Diciembre 2026» / otro texto, en frase
+   («Disponible en 2027», para la descripción al compartir) y corto («Desde
+   2027», para el pin, que ya dice «Disponibilidad» encima). */
+function disponibilidad(valor: string): { frase: string; corta: string } {
+  const v = limpio(valor);
+  const n = sinTildes(v);
+  if (!v) return { frase: '', corta: '' };
+  if (/^(inmediat[ao]|ya|ahora|disponible)$/.test(n)) return { frase: 'Disponibilidad inmediata', corta: 'Inmediata' };
+  if (/^([a-z]+\s+(de\s+)?)?\d{4}$/.test(n)) {
+    const fecha = v.toLocaleLowerCase('es-CO');
+    return { frase: `Disponible en ${fecha}`, corta: `Desde ${fecha}` };
+  }
+  if (/^disponib/.test(n)) {
+    const resto = v.replace(/^disponib\S*\s+(en\s+|desde\s+)?/i, '');
+    return { frase: mayuscula(v), corta: mayuscula(resto || v) };
+  }
+  return { frase: mayuscula(v), corta: mayuscula(v) };
 }
 
 /* La celda de «Características y atractivos» → un párrafo por renglón. */
@@ -197,11 +227,16 @@ export function aEspacio(fila: FilaPropiedad): Espacio {
   }
 
   const caracteristicas: Caracteristica[] = [];
-  if (barrio) caracteristicas.push({ icono: 'ubicacion', texto: barrio });
-  if (area) caracteristicas.push({ icono: 'area', texto: area });
+  if (barrio) caracteristicas.push({ icono: 'ubicacion', etiqueta: 'Barrio', texto: barrio });
+  if (area) caracteristicas.push({ icono: 'area', etiqueta: 'Área', texto: area });
+  const disponible = disponibilidad(fila.disponibilidad ?? '');
+  if (disponible.corta) {
+    caracteristicas.push({ icono: 'disponibilidad', etiqueta: 'Disponibilidad', texto: disponible.corta });
+  }
   if (direccion) {
     caracteristicas.push({
       icono: 'direccion',
+      etiqueta: 'Dirección',
       texto: direccion,
       enlace: ubicacion ? { href: `#${ANCLA_MAPA}`, texto: 'Ver en el mapa' } : undefined,
     });
@@ -218,6 +253,7 @@ export function aEspacio(fila: FilaPropiedad): Espacio {
     precioNota: precio ? nota : '',
     direccion,
     ubicacion,
+    disponibilidad: disponible.frase,
     descripcion: parrafos(fila.amenidades ?? ''),
     fotos: fotosDe(fila.fotos ?? '', nombre),
     caracteristicas,
@@ -258,18 +294,31 @@ export async function getEspacios(): Promise<Espacio[]> {
   }
 }
 
-/** El espacio de esa URL, o null si ya no está en la hoja. `exacto` es false
-    cuando se encontró por el ID pero el nombre cambió: la ficha redirige a
-    la URL nueva. Si Supabase falla lanza el error: mejor un 500 que un «no
-    existe» falso. */
-export async function getEspacio(slug: string): Promise<{ espacio: Espacio; exacto: boolean } | null> {
+/* «Otros espacios disponibles» al pie de la ficha: primero los del mismo
+   barrio y después los que siguen en la hoja (dando la vuelta), sin repetir
+   el de la ficha. */
+function otrosEspacios(espacio: Espacio, espacios: Espacio[], cuantos: number): Espacio[] {
+  const desde = espacios.indexOf(espacio);
+  const siguientes = [...espacios.slice(desde + 1), ...espacios.slice(0, desde)];
+  const mismoBarrio = espacio.barrio ? siguientes.filter((e) => e.barrio === espacio.barrio) : [];
+  return [...mismoBarrio, ...siguientes.filter((e) => !mismoBarrio.includes(e))].slice(0, cuantos);
+}
+
+/** El espacio de esa URL, o null si ya no está en la hoja, con dos más para
+    sugerir al pie. `exacto` es false cuando se encontró por el ID pero el
+    nombre cambió: la ficha redirige a la URL nueva. Si Supabase falla lanza
+    el error: mejor un 500 que un «no existe» falso. */
+export async function getEspacio(
+  slug: string,
+): Promise<{ espacio: Espacio; exacto: boolean; otros: Espacio[] } | null> {
   const espacios = await leer();
   const exacto = espacios.find((e) => e.slug === slug);
-  if (exacto) return { espacio: exacto, exacto: true };
-
-  const porId = espacios.find((e) => {
-    const clave = claveDe(e.id);
-    return slug === clave || slug.endsWith(`-${clave}`);
-  });
-  return porId ? { espacio: porId, exacto: false } : null;
+  const porId =
+    exacto ??
+    espacios.find((e) => {
+      const clave = claveDe(e.id);
+      return slug === clave || slug.endsWith(`-${clave}`);
+    });
+  if (!porId) return null;
+  return { espacio: porId, exacto: Boolean(exacto), otros: otrosEspacios(porId, espacios, 2) };
 }

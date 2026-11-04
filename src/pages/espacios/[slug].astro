@@ -1,40 +1,38 @@
 ---
-/* Ficha de un espacio — frame "Desktop - 5" (48:1862).
+/* Ficha de un espacio — parte del frame "Desktop - 5" (48:1862), rearmado
+   para que no queden huecos (nov 2026).
 
    La URL es /espacios/{slug}; el espacio sale de la tabla `propiedades` (ver
    src/lib/espacios.ts). Si ya no está en la hoja la página responde 404; si
    cambió de nombre, redirige a su URL nueva.
 
-   · Cabecera (48:2233 + 48:2227): ruta «En alquiler / barrio» (Text button
-     morado; en el diseño iba el nombre, pero ya está en el título), el nombre
-     en Header 2 y «Ver más espacios» (306) a la derecha.
-   · Foto con el precio en la muesca: FotosEspacio.astro.
-   · Características (48:2186): columna de 305 a 102 de la foto; cada una es
-     un círculo magenta de 66.66 con su ícono (31) y el texto en Header 4.
-     Son el barrio, el área y la dirección; ésta, con «Ver en el mapa».
+   · Cabecera: ruta «En alquiler / barrio» (Text button morado) y el nombre
+     en Header 2, a todo el ancho. Sin el encabezado grande de /espacios
+     («Espacios disponibles para alquilar»): en la ficha empujaba el espacio
+     media pantalla hacia abajo, y «En alquiler» ya lleva a la lista.
+   · Dos columnas en escritorio (1240 o más):
+     — a la izquierda la foto con el precio en la muesca (FotosEspacio),
+       «Descripción» (el texto de «Características y atractivos», un párrafo
+       por renglón de la celda) y «Ubicación» (dirección, «Cómo llegar» y el
+       mapa en el punto exacto; sin coordenadas no sale);
+     — a la derecha una tarjeta gris que acompaña al bajar (sticky): los
+       datos con su círculo magenta (barrio, área, disponibilidad y
+       dirección, ésta con «Ver en el mapa»), «Me interesa este espacio»
+       (WhatsApp con el nombre del espacio ya escrito) y «Ver más espacios».
+   · Al pie, «Otros espacios disponibles»: dos tarjetas de /espacios, primero
+     las del mismo barrio.
 
-   Fuera del diseño, debajo:
-   · Descripción: el texto de «Características y atractivos», un párrafo por
-     renglón de la celda.
-   · Ubicación: la dirección, «Cómo llegar» (Google Maps) y el mapa con el
-     punto exacto (MapaEspacio.astro). Sin coordenadas en la hoja no sale.
-
-   En el teléfono («iPhone 13 & 14 - 5», 303:5064), todo en una columna:
-   · ruta y nombre en Mobile/Header 1 (48/52) — «Frame 75» (303:5129);
-   · la foto pegada debajo — «Vector 2» (303:5134);
-   · a 40 la lista — «Frame 73» (303:5135): el círculo a la izquierda y el
-     texto a su derecha, a 16, en Mobile/Header 3 (24/28), 20 entre filas;
-   · Descripción y Ubicación;
-   · y a 40, «Ver más espacios» a todo el ancho — «Frame 74» (303:5132). */
+   En el teléfono y la tableta, todo en una columna y en ese orden: foto,
+   tarjeta, descripción, ubicación y otros espacios. */
 export const prerender = false;
 
 import Base from '../../layouts/Base.astro';
-import EncabezadoEspacios from '../../components/espacios/EncabezadoEspacios.astro';
 import FotosEspacio from '../../components/espacios/FotosEspacio.astro';
 import MapaEspacio from '../../components/espacios/MapaEspacio.astro';
+import TarjetaEspacio from '../../components/espacios/TarjetaEspacio.astro';
 import { ANCLA_MAPA, comoLlegar, getEspacio } from '../../lib/espacios';
 import { origenesDe } from '../../lib/origenes';
-import { ESPACIOS_URL } from '../../data/site';
+import { ESPACIOS_URL, SITE_URL, whatsappConMensaje } from '../../data/site';
 
 const { slug = '' } = Astro.params;
 const encontrado = await getEspacio(slug);
@@ -44,6 +42,7 @@ if (encontrado && !encontrado.exacto) {
 }
 
 const espacio = encontrado?.espacio ?? null;
+const otros = encontrado?.otros ?? [];
 
 if (!espacio) Astro.response.status = 404;
 Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
@@ -54,12 +53,21 @@ const descripcion = espacio
       `${espacio.nombre}${espacio.barrio ? `, ${espacio.barrio}` : ''}.`,
       espacio.direccion && `${espacio.direccion}.`,
       espacio.area && `${espacio.area}.`,
+      espacio.disponibilidad && `${espacio.disponibilidad}.`,
       valor && `${valor}.`,
       'Espacio comercial en alquiler en un proyecto de Elexa.',
     ]
       .filter(Boolean)
       .join(' ')
   : 'El espacio que busca ya no está disponible.';
+
+/* El mensaje ya escrito: quien atiende el WhatsApp sabe de qué espacio le
+   hablan, con el enlace a la ficha. */
+const meInteresa = espacio
+  ? whatsappConMensaje(
+      `Hola, me interesa el espacio «${espacio.nombre}»${espacio.barrio ? ` en ${espacio.barrio}` : ''}: ${SITE_URL}${ESPACIOS_URL}/${espacio.slug}`,
+    )
+  : '';
 ---
 
 <Base
@@ -68,16 +76,14 @@ const descripcion = espacio
   path={`${ESPACIOS_URL}/${espacio?.slug ?? slug}`}
   imagen={espacio?.fotos[0]?.jpeg}
   conectar={origenesDe([espacio?.fotos[0]?.src])}
-  separacionPie={184}
+  separacionPie={144}
   separacionPieMovil={61}
 >
-  <EncabezadoEspacios nivel="p" />
-
   {
     espacio ? (
-      <article class="ficha contenedor">
-        <header class="ficha__cabecera">
-          <div>
+      <>
+        <article class="ficha contenedor">
+          <header class="ficha__cabecera">
             <nav class="ficha__ruta" aria-label="Ruta">
               <a href={ESPACIOS_URL}>En alquiler</a>
               {espacio.barrio && (
@@ -88,70 +94,110 @@ const descripcion = espacio
               )}
             </nav>
             <h1 class:list={['display t-h2', { 'ficha__nombre-largo': espacio.nombre.length > 32 }]}>{espacio.nombre}</h1>
-          </div>
-          <a class="btn btn--primario ficha__volver" href={ESPACIOS_URL}>
-            Ver más espacios
-          </a>
-        </header>
+          </header>
 
-        <div class="ficha__cuerpo">
-          <FotosEspacio espacio={espacio} />
+          <div class="ficha__cuerpo">
+            <div class="ficha__fotos">
+              <FotosEspacio espacio={espacio} />
+            </div>
 
-          {espacio.caracteristicas.length > 0 && (
-            <ul class="ficha__datos" role="list">
-              {espacio.caracteristicas.map((c) => (
-                <li>
-                  <span class="ficha__icono" aria-hidden="true">
-                    <img src={`/img/iconos/${c.icono}.svg`} alt="" width="31.08" height="31.08" />
-                  </span>
-                  <span class="ficha__dato">
-                    <span class="display t-h4">{c.texto}</span>
-                    {c.enlace && (
-                      <a class="ficha__enlace" href={c.enlace.href}>
-                        {c.enlace.texto}
-                      </a>
+            <aside class="ficha__lateral" aria-label="Datos del espacio">
+              <div class="ficha__resumen">
+                {espacio.caracteristicas.length > 0 && (
+                  <ul class="ficha__datos" role="list">
+                    {espacio.caracteristicas.map((c) => (
+                      <li>
+                        <span class="ficha__icono" aria-hidden="true">
+                          <img src={`/img/iconos/${c.icono}.svg`} alt="" width="26" height="26" />
+                        </span>
+                        <span class="ficha__dato">
+                          <span class="ficha__etiqueta">{c.etiqueta}</span>
+                          <span class="ficha__valor display">{c.texto}</span>
+                          {c.enlace && (
+                            <a class="ficha__enlace" href={c.enlace.href}>
+                              {c.enlace.texto}
+                            </a>
+                          )}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <div class="ficha__acciones">
+                  <a
+                    class="btn btn--primario"
+                    href={meInteresa}
+                    target="_blank"
+                    rel="noopener"
+                    data-pixel="Contact"
+                    data-pixel-nombre="whatsapp_espacio"
+                    data-pixel-categoria="espacios"
+                  >
+                    <img src="/img/iconos/whatsapp.svg" alt="" width="20" height="20" />
+                    Me interesa este espacio
+                  </a>
+                  <a class="btn btn--borde" href={ESPACIOS_URL}>
+                    Ver más espacios
+                  </a>
+                </div>
+              </div>
+            </aside>
+
+            {espacio.descripcion.length > 0 && (
+              <section class="ficha__seccion ficha__descripcion" aria-labelledby="titulo-descripcion">
+                <h2 id="titulo-descripcion" class="display t-h3">
+                  Descripción
+                </h2>
+                <div class="ficha__texto">
+                  {espacio.descripcion.map((parrafo) => (
+                    <p>{parrafo}</p>
+                  ))}
+                </div>
+              </section>
+            )}
+
+            {espacio.ubicacion && (
+              <section class="ficha__seccion ficha__ubicacion" id={ANCLA_MAPA} aria-labelledby="titulo-ubicacion">
+                <div class="ficha__seccion-cabecera">
+                  <div>
+                    <h2 id="titulo-ubicacion" class="display t-h3">
+                      Ubicación
+                    </h2>
+                    {(espacio.direccion || espacio.barrio) && (
+                      <p class="ficha__direccion">{[espacio.direccion, espacio.barrio].filter(Boolean).join(' · ')}</p>
                     )}
-                  </span>
+                  </div>
+                  <a class="btn btn--borde ficha__como-llegar" href={comoLlegar(espacio.ubicacion)} target="_blank" rel="noopener">
+                    Cómo llegar
+                  </a>
+                </div>
+                <MapaEspacio ubicacion={espacio.ubicacion} nombre={espacio.nombre} />
+              </section>
+            )}
+          </div>
+        </article>
+
+        {otros.length > 0 && (
+          <section class="otros contenedor" aria-labelledby="titulo-otros">
+            <div class="otros__cabecera">
+              <h2 id="titulo-otros" class="display t-h3">
+                Otros espacios disponibles
+              </h2>
+              <a class="ficha__enlace" href={ESPACIOS_URL}>
+                Ver todos
+              </a>
+            </div>
+            <ul class="otros__lista" role="list">
+              {otros.map((otro) => (
+                <li>
+                  <TarjetaEspacio espacio={otro} />
                 </li>
               ))}
             </ul>
-          )}
-        </div>
-
-        {espacio.descripcion.length > 0 && (
-          <section class="ficha__seccion" aria-labelledby="titulo-descripcion">
-            <h2 id="titulo-descripcion" class="display t-h3">
-              Descripción
-            </h2>
-            <div class="ficha__texto">
-              {espacio.descripcion.map((parrafo) => (
-                <p>{parrafo}</p>
-              ))}
-            </div>
           </section>
         )}
-
-        {espacio.ubicacion && (
-          <section class="ficha__seccion ficha__ubicacion" id={ANCLA_MAPA} aria-labelledby="titulo-ubicacion">
-            <div class="ficha__seccion-cabecera">
-              <div>
-                <h2 id="titulo-ubicacion" class="display t-h3">
-                  Ubicación
-                </h2>
-                {(espacio.direccion || espacio.barrio) && (
-                  <p class="ficha__direccion">
-                    {[espacio.direccion, espacio.barrio].filter(Boolean).join(' · ')}
-                  </p>
-                )}
-              </div>
-              <a class="btn btn--borde ficha__como-llegar" href={comoLlegar(espacio.ubicacion)} target="_blank" rel="noopener">
-                Cómo llegar
-              </a>
-            </div>
-            <MapaEspacio ubicacion={espacio.ubicacion} nombre={espacio.nombre} />
-          </section>
-        )}
-      </article>
+      </>
     ) : (
       <section class="no-encontrado contenedor">
         <h1 class="display t-h2">Este espacio ya no está disponible</h1>
@@ -166,26 +212,15 @@ const descripcion = espacio
 
 <style>
   .ficha {
-    margin-top: 48px;
+    margin-top: 40px;
     color: var(--brand-500);
   }
 
+  /* ---------- Cabecera ---------- */
   .ficha__cabecera {
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: var(--space-lg);
-  }
-
-  /* Los nombres de la hoja pueden ser largos: el título se parte en su
-     columna y el botón se queda a la derecha mientras quepan los dos. */
-  .ficha__cabecera > div {
-    display: flex;
-    flex: 1 1 480px;
     flex-direction: column;
     gap: var(--space-sm);
-    min-width: 0;
   }
 
   .ficha__ruta {
@@ -204,37 +239,44 @@ const descripcion = espacio
     text-decoration: underline;
   }
 
-  .ficha__volver {
-    flex: none;
-    width: 306px;
-    max-width: 100%;
-  }
-
+  /* ---------- Cuerpo ----------
+     Una columna; en escritorio, la grilla de dos (ver abajo). */
   .ficha__cuerpo {
-    display: flex;
-    flex-direction: column;
-    gap: var(--space-2xl);
-    margin-top: 48px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px;
+    margin-top: 32px;
   }
 
-  .ficha__datos {
+  /* ---------- Tarjeta de datos ---------- */
+  .ficha__resumen {
     display: flex;
     flex-direction: column;
-    gap: 20px;
+    gap: 28px;
+    padding: 28px 24px;
+    border-radius: var(--radius-panel);
+    background: var(--neutral-200);
+  }
+
+  /* En la tableta la tarjeta es ancha: los datos van de a dos. */
+  .ficha__datos {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px 24px;
   }
 
   .ficha__datos li {
     display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
+    align-items: center;
+    gap: var(--space-md);
   }
 
   .ficha__icono {
     display: grid;
+    flex: none;
     place-items: center;
-    width: 66.66px;
-    height: 66.66px;
+    width: 56px;
+    height: 56px;
     border-radius: var(--radius-full);
     background: var(--accent-300);
   }
@@ -242,11 +284,25 @@ const descripcion = espacio
   .ficha__dato {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .ficha__etiqueta {
+    font-size: 14px;
+    line-height: 18px;
+    color: var(--ink-300);
+  }
+
+  .ficha__valor {
+    font-size: 20px;
+    line-height: 24px;
+    overflow-wrap: anywhere;
   }
 
   .ficha__enlace {
     align-self: flex-start;
+    margin-top: 2px;
     font-weight: 700;
     font-size: 16px;
     line-height: 20px;
@@ -258,25 +314,34 @@ const descripcion = espacio
     color: var(--brand-300-hover);
   }
 
+  .ficha__acciones {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+    padding-top: 28px;
+    border-top: 1px solid var(--neutral-300);
+  }
+  .ficha__acciones .btn {
+    width: 100%;
+  }
+
   /* ---------- Descripción y Ubicación ---------- */
   .ficha__seccion {
     display: flex;
     flex-direction: column;
-    gap: var(--space-lg);
-    margin-top: 72px;
+    gap: 20px;
+    margin-top: 16px;
     /* «Ver en el mapa» salta acá: que el menú flotante no tape el título. */
     scroll-margin-top: 124px;
   }
 
-  /* El ancho de la foto: más largo, el renglón cansa. */
   .ficha__texto {
     display: flex;
     flex-direction: column;
     gap: var(--space-md);
-    max-width: 793px;
     color: var(--ink-300);
-    font-size: 18px;
-    line-height: 28px;
+    font-size: 16px;
+    line-height: 24px;
   }
 
   .ficha__seccion-cabecera {
@@ -295,8 +360,8 @@ const descripcion = espacio
 
   .ficha__direccion {
     font-weight: 700;
-    font-size: 18px;
-    line-height: 24px;
+    font-size: 16px;
+    line-height: 22px;
     color: var(--ink-300);
   }
 
@@ -304,80 +369,27 @@ const descripcion = espacio
     flex: none;
   }
 
-  @media (max-width: 767px) {
-    /* El botón de la cabecera pasa al final: la cabecera no arma caja y el
-       botón se ordena después del cuerpo. */
-    .ficha {
-      display: flex;
-      flex-direction: column;
-      margin-top: 61px;
-    }
+  /* ---------- Otros espacios ---------- */
+  .otros {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    margin-top: 72px;
+    color: var(--brand-500);
+  }
 
-    .ficha__cabecera {
-      display: contents;
-    }
+  .otros__cabecera {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-sm) var(--space-lg);
+  }
 
-    .ficha__cabecera > div {
-      flex: none;
-    }
-
-    .ficha__cabecera h1 {
-      font-size: min(48px, 12.3vw);
-      line-height: 1.0834;
-    }
-
-    /* Con los nombres largos de la hoja («Mall con Ara de ancla sobre la
-       Cra 66 con 2A - Esquinero») el Header 1 ocupa cinco renglones y deja
-       la foto fuera de la pantalla: bajan a Mobile/Header 2 (30/34). */
-    .ficha__cabecera h1.ficha__nombre-largo {
-      font-size: 30px;
-      line-height: 34px;
-    }
-
-    .ficha__volver {
-      order: 1;
-      width: 100%;
-      margin-top: 40px;
-    }
-
-    .ficha__cuerpo {
-      gap: 40px;
-      margin-top: 0;
-    }
-
-    .ficha__datos li {
-      flex-direction: row;
-      align-items: center;
-      gap: var(--space-md);
-    }
-
-    .ficha__icono {
-      flex: none;
-    }
-
-    .ficha__datos .t-h4 {
-      font-size: 24px;
-      line-height: 28px;
-    }
-
-    .ficha__seccion {
-      gap: 20px;
-      margin-top: 56px;
-    }
-
-    .ficha__texto {
-      font-size: 16px;
-      line-height: 24px;
-    }
-
-    .ficha__direccion {
-      font-size: 16px;
-      line-height: 22px;
-    }
-
-    .ficha__como-llegar {
-      width: 100%;
-    }
+  .otros__lista {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 32px 20px;
   }
 
   .no-encontrado {
@@ -390,25 +402,102 @@ const descripcion = espacio
     text-align: center;
   }
 
-  @media (min-width: 1240px) {
+  /* ---------- Teléfono ---------- */
+  @media (max-width: 767px) {
     .ficha {
-      margin-top: 93px;
+      margin-top: 32px;
+    }
+
+    .ficha__cabecera h1 {
+      font-size: min(48px, 12.3vw);
+      line-height: 1.0834;
+    }
+
+    /* Con los nombres largos de la hoja el Header 1 ocupa cinco renglones y
+       deja la foto fuera de la pantalla: bajan a Mobile/Header 2 (30/34). */
+    .ficha__cabecera h1.ficha__nombre-largo {
+      font-size: 30px;
+      line-height: 34px;
     }
 
     .ficha__cuerpo {
-      flex-direction: row;
-      align-items: flex-start;
-      gap: 102px;
-      margin-top: 93px;
+      margin-top: 24px;
     }
 
-    .ficha__datos {
-      flex: 0 0 305px;
-      margin-top: 18px;
+    .ficha__resumen {
+      padding: 24px 20px;
+    }
+
+    .ficha__como-llegar {
+      width: 100%;
+    }
+
+    .otros {
+      margin-top: 56px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .ficha__texto {
+      font-size: 18px;
+      line-height: 28px;
+    }
+
+    .ficha__direccion {
+      font-size: 18px;
+      line-height: 24px;
+    }
+
+    .otros__lista {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  /* ---------- Escritorio: dos columnas ----------
+     La foto a 793 como en el diseño; a su lado la tarjeta, que acompaña al
+     bajar por la descripción y el mapa (sticky, debajo del menú flotante). */
+  @media (min-width: 1240px) {
+    .ficha {
+      margin-top: 56px;
+    }
+
+    .ficha__cuerpo {
+      grid-template-columns: 793px minmax(0, 1fr);
+      grid-template-areas:
+        'fotos lateral'
+        'descripcion lateral'
+        'ubicacion lateral';
+      align-items: start;
+      gap: 56px 40px;
+      margin-top: 40px;
+    }
+
+    .ficha__fotos {
+      grid-area: fotos;
+    }
+    .ficha__descripcion {
+      grid-area: descripcion;
+    }
+    .ficha__ubicacion {
+      grid-area: ubicacion;
+    }
+
+    .ficha__lateral {
+      position: sticky;
+      top: 124px;
+      grid-area: lateral;
     }
 
     .ficha__seccion {
-      margin-top: var(--space-section);
+      margin-top: 0;
+    }
+
+    .ficha__resumen {
+      padding: 32px 28px;
+    }
+
+    .otros {
+      margin-top: 96px;
     }
   }
 </style>

@@ -576,7 +576,10 @@
     margin: 0 22px;
   }
 
-  .mapa__lienzo {
+  /* Con `.mapa` adelante: la hoja de Mapbox, que llega después, le pone
+     `position: relative` a `.mapboxgl-map` (el mismo elemento) y con un
+     selector de igual peso ganaba ella: el mapa quedaba con alto 0. */
+  .mapa .mapa__lienzo {
     position: absolute;
     inset: 0;
     height: auto;

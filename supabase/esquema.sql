@@ -100,6 +100,7 @@ create table if not exists public.propiedades (
   valor       text,                      -- «$3.934.000 + IVA»
   area        text,                      -- «64 m² (24+40 terraza)» o «67» (en m²)
   amenidades  text,                      -- «Características y atractivos»: la Descripción
+  disponibilidad text,                   -- «Inmediata», «2027»
   fotos       text,                      -- URLs de las fotos, una por renglón
   direccion   text,                      -- «Cra 66 # 2 A - 33»
   latitud     text,                      -- «3.3983629»: el punto del mapa
@@ -109,6 +110,7 @@ create table if not exists public.propiedades (
 );
 
 alter table public.propiedades add column if not exists orden integer;
+alter table public.propiedades add column if not exists disponibilidad text;
 alter table public.propiedades add column if not exists direccion text;
 alter table public.propiedades add column if not exists latitud text;
 alter table public.propiedades add column if not exists longitud text;
