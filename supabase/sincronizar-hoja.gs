@@ -20,7 +20,7 @@
 
    Instalación o actualización:
    1. En Supabase, correr supabase/esquema.sql (agrega las columnas `orden`,
-      `direccion`, `latitud` y `longitud` y deja la tabla de sólo lectura
+      `disponibilidad`, `direccion`, `latitud` y `longitud` y deja la tabla de sólo lectura
       para la clave pública).
    2. Pegar este archivo en el editor de Apps Script, reemplazando el anterior.
    3. Ejecutar installTriggers a mano: pide permiso para leer Drive (por las
@@ -39,7 +39,8 @@ const MAX_FOTOS = 30; // por espacio
 // Encabezado de la hoja → columna en Supabase (el orden en la hoja no importa;
 // las tildes y las mayúsculas tampoco). «Características y atractivos» va a
 // `amenidades`, el nombre que tenía la columna antes: es el texto de la
-// sección «Descripción» de la ficha. Latitud y Longitud ubican el mapa.
+// sección «Descripción» de la ficha. Latitud y Longitud ubican el mapa;
+// Disponibilidad («Inmediata», «2027») es un pin de la ficha.
 const COLUMNS = [
   { header: 'ID', field: 'id' },
   { header: 'Nombre', field: 'nombre' },
@@ -47,6 +48,7 @@ const COLUMNS = [
   { header: 'Valor', field: 'valor' },
   { header: 'Area', field: 'area' },
   { header: 'Caracteristicas y atractivos', field: 'amenidades' },
+  { header: 'Disponibilidad', field: 'disponibilidad' },
   { header: 'Fotos', field: 'fotos' },
   { header: 'Dirección', field: 'direccion' },
   { header: 'Latitud', field: 'latitud' },
