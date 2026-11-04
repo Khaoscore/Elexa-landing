@@ -3,8 +3,8 @@
    48:1969, 48:1990 y 48:2011: 590 × 669.5.
 
    Medidas del trazado del vector 48:1971:
-   · muesca de arriba de 98.74 × 89.6 con el círculo magenta (accent/300) de
-     74 y el ícono «local_grocery_store»;
+   · arriba a la izquierda el diseño tenía una muesca con un carrito en un
+     círculo magenta: Elexa pidió quitarlos y dejar la esquina entera;
    · muesca de abajo de 121.76 × 63.42 con la cajita de la flecha (96.92 ×
      45.47, borde de 2 en neutral/300), pegada a la esquina;
    · degradado de palette/ink/500 de transparente (22 %) a opaco (91 %), al
@@ -14,8 +14,8 @@
 
    En el teléfono es «Group 1» / «Group 2» (303:5027, 303:5037), 342 × 388:
    exactamente esta tarjeta al 58 % (342 / 590), con las esquinas de 9.28 y
-   el trazo de 1.16. Por eso la foto con sus muescas, el círculo del carrito
-   y la cajita de la flecha se dibujan a tamaño de escritorio y se achican con
+   el trazo de 1.16. Por eso la foto con su muesca y la cajita de la flecha
+   se dibujan a tamaño de escritorio y se achican con
    `scale` (las muescas de formas.ts tienen el radio fijo en 16). El texto no
    se achica: va en los estilos móviles (Header 3 24/28, Body 16/20 y
    Header 4 20/24), a 22 del borde izquierdo y a 20 del de abajo.
@@ -24,7 +24,8 @@
    hoja: el nombre arriba, el área y el valor en la línea chica, y el barrio
    abajo. La foto es la primera de la lista; sin fotos va el símbolo de Elexa
    sobre el fondo oscuro. Su texto alternativo va vacío: el nombre ya es el
-   texto del enlace. */
+   texto del enlace. Al pasar el mouse (o con el foco del teclado) crece toda
+   la tarjeta, y la foto un poco más adentro. */
 import type { Espacio } from '../../lib/espacios';
 import { estiloMuescas } from '../../lib/formas';
 
@@ -41,10 +42,7 @@ const valor = [espacio.precio, espacio.precioNota].filter(Boolean).join(' ');
 const resumen = [espacio.area, valor].filter(Boolean).join(' · ');
 
 const forma = Object.entries(
-  estiloMuescas([
-    { esquina: 'tl', ancho: 98.74, alto: 89.6 },
-    { esquina: 'br', ancho: 121.76, alto: 63.42 },
-  ]),
+  estiloMuescas([{ esquina: 'br', ancho: 121.76, alto: 63.42 }]),
 )
   .map(([propiedad, valor]) => `${propiedad}:${valor}`)
   .join(';');
@@ -78,10 +76,6 @@ const forma = Object.entries(
     {espacio.barrio && <span class="espacio__barrio display t-h4">{espacio.barrio}</span>}
   </span>
 
-  <span class="espacio__icono" aria-hidden="true">
-    <img src="/img/iconos/carrito.svg" alt="" width="40" height="40" />
-  </span>
-
   <span class="espacio__flecha" aria-hidden="true">
     <img src="/img/iconos/flecha-espacio.svg" alt="" width="58.92" height="15.33" />
   </span>
@@ -96,6 +90,19 @@ const forma = Object.entries(
     text-decoration: none;
   }
 
+  /* Crece toda la tarjeta (con su texto y la flecha) y se pone encima de la
+     vecina: entre columnas hay 20 y al 102.5 % se come 7 de cada lado. */
+  @media (prefers-reduced-motion: no-preference) {
+    .espacio {
+      transition: transform 0.45s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .espacio:hover,
+    .espacio:focus-visible {
+      z-index: 1;
+      transform: scale(1.025);
+    }
+  }
+
   .espacio__marco {
     position: absolute;
     inset: 0;
@@ -107,10 +114,15 @@ const forma = Object.entries(
     width: 100%;
     height: 100%;
     object-fit: cover;
-    transition: transform 0.4s ease;
   }
-  .espacio:hover .espacio__foto {
-    transform: scale(1.03);
+  @media (prefers-reduced-motion: no-preference) {
+    .espacio__foto {
+      transition: transform 0.6s cubic-bezier(0.2, 0.7, 0.2, 1);
+    }
+    .espacio:hover .espacio__foto,
+    .espacio:focus-visible .espacio__foto {
+      transform: scale(1.04);
+    }
   }
 
   .espacio__sin-foto {
@@ -142,18 +154,6 @@ const forma = Object.entries(
 
   .espacio__resumen {
     margin-top: 12px;
-  }
-
-  .espacio__icono {
-    position: absolute;
-    top: 0;
-    left: 0;
-    display: grid;
-    place-items: center;
-    width: 74px;
-    height: 74px;
-    border-radius: var(--radius-full);
-    background: var(--accent-300);
   }
 
   .espacio__flecha {
@@ -208,11 +208,6 @@ const forma = Object.entries(
 
     .espacio__resumen {
       margin-top: 6.96px;
-    }
-
-    .espacio__icono {
-      transform: scale(var(--escala));
-      transform-origin: 0 0;
     }
 
     .espacio__flecha {

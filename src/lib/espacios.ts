@@ -8,11 +8,13 @@
    · valor        «$3.934.000 + IVA» → la cifra grande y la nota chica. Un
                   número pelado (3934000) se escribe como $3.934.000.
    · area         «67» → «67 m²». Si ya trae unidad o termina en letra, tal cual.
-   · parqueadero  «Sí» → «Con parqueadero»; un número → «2 parqueaderos»;
-   · ascensor     «Sí» → «Con ascensor». «No» o vacío no se muestra.
-   · amenidades   una por renglón (Alt + Enter en la celda) o separadas por
-                  punto y coma. Las comas no separan: «academias de baile,
-                  yoga, etc.» es una sola.
+   · amenidades   la columna «Características y atractivos»: el texto de la
+                  sección «Descripción» de la ficha. Cada renglón de la celda
+                  (Alt + Enter) es un párrafo.
+   · direccion    tal cual, en la lista de la ficha.
+   · latitud /    el punto del mapa de la ficha. En Google Maps, clic derecho
+     longitud     sobre el lugar → el primer renglón del menú son las dos
+                  cifras (3.39…, -76.55…). Sin ellas la ficha no lleva mapa.
    · fotos        URLs separadas por espacios, comas o renglones: fotos de
                   Drive (el script convierte el enlace de la carpeta en la
                   lista de sus fotos), cualquier URL de imagen o una ruta del
@@ -23,11 +25,20 @@
    encontrando el espacio y la ficha redirige a la URL nueva. */
 
 import { consultar, hayBaseDeDatos, urlImagen } from './supabase';
+import { coordenadas, type Coordenadas } from './coordenadas';
 import { propiedadesRespaldo } from '../data/espacios';
 
-export type Icono = 'ubicacion' | 'area' | 'niveles' | 'parqueadero' | 'ascensor' | 'amenidad';
+export type Icono = 'ubicacion' | 'area' | 'direccion';
 
-export type Caracteristica = { icono: Icono; texto: string };
+export type Caracteristica = {
+  icono: Icono;
+  texto: string;
+  /** Un enlace chico debajo del texto («Ver en el mapa»). */
+  enlace?: { href: string; texto: string };
+};
+
+/** El id de la sección del mapa en la ficha. */
+export const ANCLA_MAPA = 'ubicacion';
 
 export type Foto = {
   src: string;
@@ -49,8 +60,15 @@ export type Espacio = {
   precio: string;
   /** Lo que va en chico al lado del precio («+ IVA»). */
   precioNota: string;
+  /** «Cra 66 # 2 A - 33». */
+  direccion: string;
+  /** El punto del mapa; null = la ficha va sin mapa. */
+  ubicacion: Coordenadas | null;
+  /** Los párrafos de «Descripción» (la columna «Características y
+      atractivos»). */
+  descripcion: string[];
   fotos: Foto[];
-  /** La lista de la ficha, cada una con su ícono. */
+  /** La lista de la ficha, cada una con su ícono: barrio, área y dirección. */
   caracteristicas: Caracteristica[];
 };
 
@@ -61,9 +79,11 @@ export type FilaPropiedad = {
   barrio?: string | null;
   valor?: string | null;
   area?: string | null;
-  parqueadero?: string | null;
-  ascensor?: string | null;
+  /** «Características y atractivos» en la hoja. */
   amenidades?: string | null;
+  direccion?: string | null;
+  latitud?: string | number | null;
+  longitud?: string | number | null;
   fotos?: string | null;
   /** La posición de la fila en la hoja. */
   orden?: number | string | null;
@@ -72,8 +92,6 @@ export type FilaPropiedad = {
 /* ------------------------------- Textos -------------------------------- */
 
 const limpio = (v: string | null | undefined) => (v ?? '').replace(/\s+/g, ' ').trim();
-
-const capital = (texto: string) => texto.charAt(0).toLocaleUpperCase('es-CO') + texto.slice(1);
 
 const sinTildes = (texto: string) => texto.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -109,39 +127,9 @@ function conUnidad(area: string): string {
   return /\d$/.test(v) ? `${v} m²` : v;
 }
 
-/* «Sí» / «No» / un número / otro texto. */
-function respuesta(valor: string): boolean | number | string {
-  const v = limpio(valor);
-  const n = sinTildes(v);
-  if (!n || /^(no|n|false|falso|0|-)$/.test(n)) return false;
-  if (/^(si|s|yes|x|true|verdadero)$/.test(n)) return true;
-  if (/^\d+$/.test(n)) return Number(n);
-  return capital(v);
-}
-
-function parqueadero(valor: string): string {
-  const r = respuesta(valor);
-  if (r === false) return '';
-  if (r === true || r === 1) return 'Con parqueadero';
-  if (typeof r === 'number') return `${r} parqueaderos`;
-  return r;
-}
-
-function ascensor(valor: string): string {
-  const r = respuesta(valor);
-  if (r === false) return '';
-  return typeof r === 'string' ? r : 'Con ascensor';
-}
-
-function amenidades(valor: string): Caracteristica[] {
-  return (valor ?? '')
-    .split(/\r?\n|;|•|\|/)
-    .map(limpio)
-    .filter(Boolean)
-    .map((texto) => ({
-      icono: /mez+an+ine|nivel/i.test(texto) ? 'niveles' : 'amenidad',
-      texto: capital(texto),
-    }));
+/* La celda de «Características y atractivos» → un párrafo por renglón. */
+function parrafos(valor: string): string[] {
+  return (valor ?? '').split(/\r?\n/).map(limpio).filter(Boolean);
 }
 
 /* -------------------------------- Fotos -------------------------------- */
@@ -200,14 +188,24 @@ export function aEspacio(fila: FilaPropiedad): Espacio {
   const area = conUnidad(fila.area ?? '');
   const { precio, nota } = separarValor(fila.valor ?? '');
 
+  const direccion = limpio(fila.direccion);
+  const ubicacion = coordenadas(fila.latitud, fila.longitud);
+  if (!ubicacion && (limpio(String(fila.latitud ?? '')) || limpio(String(fila.longitud ?? '')))) {
+    console.warn(
+      `[espacios] «${nombre}» va sin mapa: latitud «${fila.latitud}» y longitud «${fila.longitud}» no caen en Colombia.`,
+    );
+  }
+
   const caracteristicas: Caracteristica[] = [];
   if (barrio) caracteristicas.push({ icono: 'ubicacion', texto: barrio });
   if (area) caracteristicas.push({ icono: 'area', texto: area });
-  caracteristicas.push(...amenidades(fila.amenidades ?? ''));
-  const conParqueadero = parqueadero(fila.parqueadero ?? '');
-  if (conParqueadero) caracteristicas.push({ icono: 'parqueadero', texto: conParqueadero });
-  const conAscensor = ascensor(fila.ascensor ?? '');
-  if (conAscensor) caracteristicas.push({ icono: 'ascensor', texto: conAscensor });
+  if (direccion) {
+    caracteristicas.push({
+      icono: 'direccion',
+      texto: direccion,
+      enlace: ubicacion ? { href: `#${ANCLA_MAPA}`, texto: 'Ver en el mapa' } : undefined,
+    });
+  }
 
   const id = String(fila.id);
   return {
@@ -218,10 +216,18 @@ export function aEspacio(fila: FilaPropiedad): Espacio {
     area,
     precio,
     precioNota: precio ? nota : '',
+    direccion,
+    ubicacion,
+    descripcion: parrafos(fila.amenidades ?? ''),
     fotos: fotosDe(fila.fotos ?? '', nombre),
     caracteristicas,
   };
 }
+
+/** «Cómo llegar»: Google Maps con la ruta hasta el punto (en el teléfono
+    abre la app). */
+export const comoLlegar = ({ latitud, longitud }: Coordenadas) =>
+  `https://www.google.com/maps/dir/?api=1&destination=${latitud},${longitud}`;
 
 /* En el orden de la hoja. Las filas sin `orden` (antes de actualizar el
    script) van al final, por nombre. */

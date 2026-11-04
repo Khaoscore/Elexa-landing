@@ -1,0 +1,149 @@
+---
+/* El mapa de la ficha de un espacio (/espacios/{slug}): el punto exacto de
+   la latitud y longitud de la hoja «Alquiler Elexa», con el pin grande de
+   Elexa del mapa de /proyectos («Group 12»: el símbolo arriba y el punto
+   morado justo sobre el lugar).
+
+   El mapa lo arma src/lib/mapa.ts: Mapbox en 3D con los colores de Elexa y
+   de la bandera de Cali, o Leaflet si Mapbox no está. Acá se elige la
+   cámara: inclinada y un poco girada al oeste; cerca de la Torre de Cali,
+   mirando hacia ella para que se vea al fondo (src/lib/torre-de-cali.ts).
+
+   Se arma recién cuando el mapa está por entrar en pantalla (quien no baja
+   hasta acá no gasta una carga de Mapbox); antes es un recuadro gris. */
+import type { Coordenadas } from '../../lib/coordenadas';
+
+interface Props {
+  ubicacion: Coordenadas;
+  nombre: string;
+}
+
+const { ubicacion, nombre } = Astro.props;
+---
+
+<div
+  class="mapa-espacio"
+  data-mapa-espacio
+  data-latitud={ubicacion.latitud}
+  data-longitud={ubicacion.longitud}
+  data-nombre={nombre}
+  role="region"
+  aria-label={`Mapa con la ubicación de ${nombre}`}
+>
+</div>
+
+<script>
+  import { crearMapa } from '../../lib/mapa';
+  import { camaraHaciaLaTorre } from '../../lib/torre-de-cali';
+
+  /* El pin grande de /proyectos sin el nombre debajo. Mide 86 × 137 y el
+     centro del punto morado (43, 117) es el que cae sobre el lugar. */
+  const PIN = `
+    <span class="pin-espacio">
+      <img class="pin-espacio__cuerpo" src="/img/mapa/pin-grande.svg" alt="" width="117" height="143">
+      <img class="pin-espacio__logo" src="/img/mapa/pin-grande-simbolo.svg" alt="" width="44" height="33">
+      <img class="pin-espacio__punto" src="/img/mapa/punto.svg" alt="" width="40" height="40">
+    </span>`;
+
+  async function montar(lienzo: HTMLElement) {
+    const punto = { latitud: Number(lienzo.dataset.latitud), longitud: Number(lienzo.dataset.longitud) };
+    if (!Number.isFinite(punto.latitud) || !Number.isFinite(punto.longitud)) return;
+
+    /* En el teléfono el mapa es angosto: un poco más lejos para que se vean
+       las calles de alrededor. Cerca de la torre, un poco más lejos todavía
+       y con el punto más abajo, para que entre entera. */
+    const zoom = lienzo.clientWidth < 600 ? 15.8 : 16.4;
+    const torre = camaraHaciaLaTorre(punto.latitud, punto.longitud);
+
+    const mapa = await crearMapa(lienzo, {
+      centro: punto,
+      zoom: torre ? zoom - 0.4 : zoom,
+      inclinacion: torre?.pitch ?? 58,
+      giro: torre?.bearing ?? -20,
+      relleno: torre ? { arriba: Math.round(lienzo.clientHeight * 0.58), abajo: 0, izquierda: 0, derecha: 0 } : undefined,
+      pantallaCompleta: true,
+    });
+    mapa.ponerPin('espacio', {
+      punto,
+      html: PIN,
+      tamano: [86, 137],
+      ancla: [43, 117],
+      titulo: lienzo.dataset.nombre ?? '',
+      clase: 'pin-espacio-icono',
+    });
+  }
+
+  const lienzos = [...document.querySelectorAll<HTMLElement>('[data-mapa-espacio]')];
+  if ('IntersectionObserver' in window) {
+    const observador = new IntersectionObserver(
+      (entradas) => {
+        for (const entrada of entradas) {
+          if (!entrada.isIntersecting) continue;
+          observador.unobserve(entrada.target);
+          montar(entrada.target as HTMLElement);
+        }
+      },
+      { rootMargin: '400px' },
+    );
+    lienzos.forEach((lienzo) => observador.observe(lienzo));
+  } else {
+    lienzos.forEach(montar);
+  }
+</script>
+
+<style>
+  /* z-index 0 encierra las capas del mapa (Leaflet llega a 1000). */
+  .mapa-espacio {
+    position: relative;
+    z-index: 0;
+    height: 380px;
+    border-radius: var(--radius-panel);
+    overflow: hidden;
+    background: #ece8f1;
+    font-family: var(--font-body);
+  }
+
+  @media (min-width: 768px) {
+    .mapa-espacio {
+      height: 520px;
+    }
+  }
+
+  /* El pin lo arma la biblioteca en el navegador: estas reglas tienen que
+     ser globales. Las piezas van en las posiciones de «Group 12» (las mismas
+     de src/components/proyectos/mapa.css). La caja es de la biblioteca (la
+     posiciona ella); el pin va adentro. */
+  .mapa-espacio :global(.pin-espacio-icono) {
+    background: none;
+    border: 0;
+  }
+  .mapa-espacio :global(.pin-espacio) {
+    position: relative;
+    display: block;
+    width: 86px;
+    height: 137px;
+  }
+  .mapa-espacio :global(.pin-espacio img) {
+    position: absolute;
+    max-width: none;
+  }
+  /* El SVG trae 16 px de margen por la sombra. */
+  .mapa-espacio :global(.pin-espacio__cuerpo) {
+    top: -16px;
+    left: -16px;
+    width: 117.06px;
+    height: 142.63px;
+  }
+  .mapa-espacio :global(.pin-espacio__logo) {
+    top: 27px;
+    left: 21px;
+    width: 43.6px;
+    height: 32.82px;
+  }
+  .mapa-espacio :global(.pin-espacio__punto) {
+    top: 97px;
+    left: 23px;
+    width: 40px;
+    height: 40px;
+  }
+</style>

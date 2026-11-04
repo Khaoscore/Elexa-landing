@@ -46,11 +46,18 @@ export default defineConfig({
   /* Las credenciales de Supabase se leen en el servidor y en tiempo de
      ejecución (no quedan horneadas en el build ni llegan al navegador). Son
      opcionales: sin ellas la sección muestra los proyectos de respaldo de
-     src/data/proyectos.ts, que es lo que pasa en local recién clonado. */
+     src/data/proyectos.ts, que es lo que pasa en local recién clonado.
+
+     PUBLIC_MAPBOX_TOKEN es el token público de Mapbox (`pk.…`): va al
+     navegador a propósito, como pide Mapbox, y se protege restringiéndolo a
+     los dominios del sitio en la cuenta de Mapbox. En Vercel va como
+     «Config», en Production y Preview. Sin él, los mapas usan Leaflet con
+     OpenStreetMap. */
   env: {
     schema: {
       SUPABASE_URL: envField.string({ context: 'server', access: 'secret', optional: true, url: true }),
       SUPABASE_KEY: envField.string({ context: 'server', access: 'secret', optional: true }),
+      PUBLIC_MAPBOX_TOKEN: envField.string({ context: 'client', access: 'public', optional: true }),
     },
   },
 });

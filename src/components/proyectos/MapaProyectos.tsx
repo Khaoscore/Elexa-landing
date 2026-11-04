@@ -4,10 +4,11 @@
    En Figma el mapa es una captura de Google Maps (Rectangle 16, 1352 × 978)
    con pines de Elexa encima y la instrucción «Desplazate en el mapa y haz
    click en el proyecto que quieres conocer». Para que eso funcione con los
-   35 proyectos repartidos por la ciudad, acá es un mapa de verdad (Leaflet
-   con OpenStreetMap) y cada proyecto se ubica por latitud y longitud desde la
-   hoja «Propiedades Elexa» (tabla `propiedades_elexa`). Los pines, el panel y
-   las tarjetas son los del diseño:
+   35 proyectos repartidos por la ciudad, acá es un mapa de verdad (Mapbox en
+   3D con los colores de Elexa y de la bandera de Cali, o Leaflet de
+   respaldo; ver src/lib/mapa.ts) y cada proyecto se ubica por latitud y
+   longitud desde la hoja «Propiedades Elexa» (tabla `propiedades_elexa`).
+   Los pines, el panel y las tarjetas son los del diseño:
 
    · pin elegido — «Group 12» (85 × 110, con sombra) con el símbolo encima, un
      punto morado donde está el proyecto y su nombre debajo;
@@ -29,23 +30,22 @@
    y las tarjetas («Cards», 303:4904) son las mismas al 84 %, en una fila que
    se desliza debajo del panel gris.
 
-   Leaflet toca `window` al cargarse, así que se importa recién en el
-   navegador (dentro del efecto). Antes de eso el mapa es un fondo gris y el
-   panel y las tarjetas ya están en el HTML. */
+   El mapa se arma recién en el navegador (dentro del efecto): las
+   bibliotecas tocan `window`. Antes de eso es un fondo gris y el panel y las
+   tarjetas ya están en el HTML. */
 import { useEffect, useId, useMemo, useRef, useState } from 'react';
-import type { Map as MapaLeaflet, Marker } from 'leaflet';
 import type { ProyectoAnterior } from '../../lib/anteriores';
-import 'leaflet/dist/leaflet.css';
+import { distancia } from '../../lib/coordenadas';
+import { crearMapa, type Mapa } from '../../lib/mapa';
 import './mapa.css';
 
 type Props = { proyectos: ProyectoAnterior[] };
 
-/* Teselas de OpenStreetMap: libres, con atribución obligatoria y pensadas
-   para tráfico moderado. Para un estilo más parecido al del diseño se puede
-   cambiar por un proveedor con clave (MapTiler, Stadia…) sólo acá. */
-const TESELAS = 'https://tile.openstreetmap.org/{z}/{x}/{y}.png';
-const ATRIBUCION = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>';
-const ZOOM = 16;
+/* El zoom al elegir un proyecto, en la escala de Mapbox (ver mapa.ts): se
+   ven la manzana y los edificios en 3D alrededor. */
+const ZOOM = 15.8;
+/* Inclinado, para que se vean los edificios en 3D. */
+const INCLINACION = 50;
 
 /* El panel tapa la parte izquierda del mapa en escritorio: el punto elegido
    se centra en lo que queda a la derecha. En el teléfono la ficha tapa la
@@ -351,9 +351,9 @@ export default function MapaProyectos({ proyectos }: Props) {
   const seccion = useRef<HTMLDivElement>(null);
   const lienzo = useRef<HTMLDivElement>(null);
   const panel = useRef<HTMLElement>(null);
-  const mapa = useRef<MapaLeaflet | null>(null);
-  const leaflet = useRef<typeof import('leaflet') | null>(null);
-  const marcadores = useRef(new Map<string, Marker>());
+  const mapa = useRef<Mapa | null>(null);
+  /* Los ids de los pines que están puestos en el mapa. */
+  const puestos = useRef(new Set<string>());
   /* El alto de la ficha la última vez que se vio: cerrada mide 0, y al
      reabrirla hay que centrar contando lo que va a tapar. */
   const altoFicha = useRef(0);
@@ -384,60 +384,47 @@ export default function MapaProyectos({ proyectos }: Props) {
   const centrar = (p: ProyectoAnterior, animar = true, abierta = fichaAbierta) => {
     const m = mapa.current;
     if (!m) return;
-    const zoom = Math.max(m.getZoom(), ZOOM);
     const { ancho, alto } = tapado(abierta);
-    const punto = m.project([p.latitud, p.longitud], zoom).subtract([ancho / 2, -alto / 2]);
-    m.setView(m.unproject(punto, zoom), zoom, { animate: animar });
+    m.centrar(p, Math.max(m.zoom(), ZOOM), { izquierda: ancho, abajo: alto, arriba: 0, derecha: 0 }, animar);
   };
 
   /* Crea el mapa una sola vez. */
   useEffect(() => {
     let cancelado = false;
-    import('leaflet').then(({ default: L }) => {
-      if (cancelado || !lienzo.current) return;
-      leaflet.current = L;
-      /* En el teléfono la ficha tapa la esquina de abajo, donde va la
-         atribución: ahí sube a la de arriba a la izquierda. */
-      const fichaAbajo = window.matchMedia(FICHA_ABAJO).matches;
-      const m = L.map(lienzo.current, {
-        zoomControl: false,
-        attributionControl: !fichaAbajo,
-        scrollWheelZoom: false,
-        /* En el teléfono arrastrar con un dedo movería el mapa en vez de la
-           página: ahí se mueve con los botones de zoom y tocando pines. */
-        dragging: !L.Browser.mobile,
-      });
-      if (fichaAbajo) L.control.attribution({ position: 'topleft' }).addTo(m);
-      L.control.zoom({ position: 'topright', zoomInTitle: 'Acercar', zoomOutTitle: 'Alejar' }).addTo(m);
-      L.tileLayer(TESELAS, { maxZoom: 19, attribution: ATRIBUCION }).addTo(m);
+    const contenedor = lienzo.current;
+    if (!contenedor || !proyectos.length) return;
+
+    const centro = { latitud: mediana(proyectos.map((p) => p.latitud)), longitud: mediana(proyectos.map((p) => p.longitud)) };
+    crearMapa(contenedor, {
+      centro,
+      zoom: 12,
+      inclinacion: INCLINACION,
+      /* En el teléfono la ficha tapa la esquina de abajo, donde van los
+         créditos: ahí suben a la de arriba a la izquierda. */
+      creditosArriba: window.matchMedia(FICHA_ABAJO).matches,
+    }).then((m) => {
+      if (cancelado) return m.destruir();
       mapa.current = m;
 
       /* De lejos los pines chicos se encogen (ver mapa.css): en el norte de
          Cali hay varios a pocas cuadras y a tamaño completo se tapan. */
-      const contenedor = lienzo.current;
-      m.on('zoomend', () => contenedor.classList.toggle('mapa__lienzo--lejos', m.getZoom() < ZOOM - 1));
+      m.alCambiarZoom((zoom) => contenedor.classList.toggle('mapa__lienzo--lejos', zoom < ZOOM - 1));
 
-      const centro = L.latLng(mediana(proyectos.map((p) => p.latitud)), mediana(proyectos.map((p) => p.longitud)));
-      const cerca = proyectos.filter((p) => centro.distanceTo([p.latitud, p.longitud]) <= RADIO_INICIAL);
+      const cerca = proyectos.filter((p) => distancia(centro, p) <= RADIO_INICIAL);
       if (cerca.length > 1) {
-        const limites = L.latLngBounds(cerca.map((p) => [p.latitud, p.longitud]));
         const { ancho, alto } = tapado();
-        m.fitBounds(limites, {
-          paddingTopLeft: [ancho ? ancho + 38 : 40, 140],
-          paddingBottomRight: [60, alto + 120],
-          maxZoom: ZOOM,
-        });
-      } else if (proyectos[0]) {
-        m.setView([proyectos[0].latitud, proyectos[0].longitud], ZOOM);
+        m.encuadrar(cerca, { izquierda: ancho ? ancho + 38 : 40, arriba: 140, derecha: 60, abajo: alto + 120 }, ZOOM);
+      } else {
         centrar(proyectos[0], false);
       }
+      contenedor.classList.toggle('mapa__lienzo--lejos', m.zoom() < ZOOM - 1);
       setListo(true);
     });
     return () => {
       cancelado = true;
-      mapa.current?.remove();
+      mapa.current?.destruir();
       mapa.current = null;
-      marcadores.current.clear();
+      puestos.current.clear();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -445,38 +432,30 @@ export default function MapaProyectos({ proyectos }: Props) {
   /* Pinta los pines: el elegido grande, el resto chicos; los que no pasan el
      filtro de búsqueda se sacan. */
   useEffect(() => {
-    const L = leaflet.current;
     const m = mapa.current;
-    if (!listo || !L || !m) return;
+    if (!listo || !m) return;
 
-    for (const [id, marcador] of marcadores.current) {
+    for (const id of puestos.current) {
       if (!visibles.some((p) => p.id === id)) {
-        marcador.remove();
-        marcadores.current.delete(id);
+        m.quitarPin(id);
+        puestos.current.delete(id);
       }
     }
 
     for (const p of visibles) {
       const esElegido = p.id === elegido?.id;
-      const icono = L.divIcon({
-        className: 'pin-mapa',
+      m.ponerPin(p.id, {
+        punto: p,
         html: htmlPin(p, esElegido),
-        iconSize: esElegido ? [86, 148] : [64, 84],
-        iconAnchor: esElegido ? [43, 117] : [32, 83],
+        tamano: esElegido ? [86, 148] : [64, 84],
+        ancla: esElegido ? [43, 117] : [32, 83],
+        titulo: p.nombre,
+        clase: 'pin-mapa',
+        encima: esElegido,
+        /* Elige el proyecto y el mapa vuela hasta él, acercándose. */
+        alClic: () => elegir(p, false),
       });
-      let marcador = marcadores.current.get(p.id);
-      if (!marcador) {
-        marcador = L.marker([p.latitud, p.longitud], { icon: icono, title: p.nombre, keyboard: true, riseOnHover: true });
-        marcador.on('click', () => {
-          setElegidoId(p.id);
-          setFichaAbierta(true);
-        });
-        marcador.addTo(m);
-        marcadores.current.set(p.id, marcador);
-      } else {
-        marcador.setIcon(icono);
-      }
-      marcador.setZIndexOffset(esElegido ? 1000 : 0);
+      puestos.current.add(p.id);
     }
   }, [listo, visibles, elegido?.id]);
 

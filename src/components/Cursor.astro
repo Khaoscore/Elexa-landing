@@ -247,7 +247,9 @@
           [data-cursor='nativo'],
           [data-cursor='nativo'] *,
           .leaflet-container,
-          .leaflet-container *
+          .leaflet-container *,
+          .mapboxgl-map,
+          .mapboxgl-map *
         )
     ) {
     cursor: none !important;
@@ -255,8 +257,9 @@
 
   /* Esas excepciones heredarían el `none` del padre: se devuelven a `auto`
      sin peso (:where), para que sigan mandando sus propias reglas, como la
-     mano de arrastre de Leaflet. */
-  :where(html.cursor-elexa) :where(input, textarea, select, [contenteditable], [data-cursor='nativo'], .leaflet-container) {
+     mano de arrastre de los mapas (Mapbox y Leaflet). */
+  :where(html.cursor-elexa)
+    :where(input, textarea, select, [contenteditable], [data-cursor='nativo'], .leaflet-container, .mapboxgl-map) {
     cursor: auto;
   }
 </style>
@@ -273,6 +276,7 @@
     '[contenteditable]:not([contenteditable="false"])',
     '[data-cursor="nativo"]',
     '.leaflet-container',
+    '.mapboxgl-map',
   ].join(', ');
 
   const INTERACTIVO = [

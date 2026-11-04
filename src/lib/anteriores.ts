@@ -18,6 +18,7 @@
 
 import { consultar, hayBaseDeDatos } from './supabase';
 import { fotosDe, type Foto } from './espacios';
+import { coordenadas } from './coordenadas';
 import { anterioresRespaldo } from '../data/anteriores';
 
 export type ProyectoAnterior = {
@@ -46,43 +47,12 @@ export type FilaAnterior = {
 
 const limpio = (v: string | null | undefined) => (v ?? '').replace(/\s+/g, ' ').trim();
 
-/* Colombia, con margen. */
-const LATITUD = { min: -5, max: 14 };
-const LONGITUD = { min: -82, max: -66 };
-
-const dentro = (n: number, { min, max }: { min: number; max: number }) => n >= min && n <= max;
-
-/* «3.4611743», «3,4611743» o el número. */
-function numero(valor: string | number | null): number {
-  const texto = String(valor ?? '').replace(/\s/g, '');
-  if (!texto) return NaN;
-  return Number(/^-?\d+,\d+$/.test(texto) ? texto.replace(',', '.') : texto);
-}
-
-function coordenadas(fila: FilaAnterior): { latitud: number; longitud: number } | null {
-  let latitud = numero(fila.latitud);
-  let longitud = numero(fila.longitud);
-
-  /* La hoja está en español de México, donde la coma separa los miles: al
-     pegar «3,4611743» Sheets guarda 34.611.743 y la coma decimal se pierde
-     (llegan 34611743 y -765327887). En Colombia la longitud siempre tiene dos
-     cifras enteras: de ella sale cuántos decimales se perdieron, y la latitud,
-     que viene del mismo lado, se divide igual. */
-  if (Number.isInteger(longitud) && !dentro(longitud, LONGITUD)) {
-    const escala = 10 ** (String(Math.abs(longitud)).length - 2);
-    longitud /= escala;
-    if (Number.isInteger(latitud) && !dentro(latitud, LATITUD)) latitud /= escala;
-  }
-
-  return dentro(latitud, LATITUD) && dentro(longitud, LONGITUD) ? { latitud, longitud } : null;
-}
-
 export function aAnterior(fila: FilaAnterior): ProyectoAnterior | null {
   const id = limpio(String(fila.codigo ?? ''));
   const nombre = limpio(fila.nombre_del_proyecto);
   if (!id || !nombre) return null;
 
-  const ubicacion = coordenadas(fila);
+  const ubicacion = coordenadas(fila.latitud, fila.longitud);
   if (!ubicacion) {
     console.warn(
       `[anteriores] «${nombre}» (${id}) no sale en el mapa: latitud «${fila.latitud}» y longitud «${fila.longitud}» no caen en Colombia.`,
