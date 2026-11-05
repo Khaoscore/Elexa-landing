@@ -4,9 +4,13 @@
 
    · Escritorio: 793 × 669.5, muesca arriba a la izquierda de 384.5 × 99.87
      con el precio en accent/300: 48/46 la cifra y 24/30 la nota («+ IVA»).
-   · Teléfono: 341.5 × 622.5, muesca de 229 × 83; el precio en Mobile/Header 2
-     (30/34) y la nota en Body (16/20). El frame no trae precio, pero la
-     muesca es la de escritorio achicada: el precio va ahí.
+   · Teléfono: muesca de 229 × 83; el precio en Mobile/Header 2 (30/34) y la
+     nota en Body (16/20). El frame no trae precio, pero la muesca es la de
+     escritorio achicada: el precio va ahí.
+     El frame del teléfono mide 341.5 × 622.5, pero las fotos de la hoja son
+     casi todas horizontales (4:3 y 16:9): en ese marco alto se perdía más de
+     la mitad de cada una y la foto no cabía en la pantalla al abrir la
+     ficha. Por pedido del cliente (nov 2026) el marco del teléfono es 4:3.
    Sin precio, la foto va sin esa muesca.
 
    El diseño muestra una sola foto, pero la hoja trae varias: cuando hay más
@@ -14,7 +18,13 @@
    cajita de la flecha de las tarjetas de /espacios, con los botones redondos
    del carrusel de «Proyectos abiertos». Es el scroll nativo con scroll-snap:
    en el teléfono se arrastra con el dedo y sin JavaScript también se pasan.
-   Sin fotos, el símbolo de Elexa sobre gris. */
+   Sin fotos, el símbolo de Elexa sobre gris.
+
+   Al tocar una foto se abre el visor: todas las fotos a pantalla completa,
+   enteras (sin recortar) sobre fondo oscuro, empezando por la que se tocó.
+   Se pasan igual (dedo, flechas o las teclas ← →) y se cierra con la X, Esc
+   o el botón «atrás» del teléfono. Abajo a la izquierda de la foto, una
+   pastilla con el ícono de ampliar y el contador avisa que se puede abrir. */
 import type { Espacio } from '../../lib/espacios';
 import { estiloMuescas, type Muesca } from '../../lib/formas';
 
@@ -46,25 +56,38 @@ const estilo = [
 ].join(';');
 
 const pistaId = `fotos-${espacio.id}`;
+const visorId = `visor-${espacio.id}`;
+const textoAlt = (i: number) => (conFlechas ? `${nombre}, foto ${i + 1} de ${fotos.length}` : nombre);
 ---
 
-<div class="fotos" data-galeria={conFlechas ? '' : undefined}>
+<div class="fotos" data-fotos>
   <div class="fotos__marco muescas" style={estilo}>
     {
       fotos.length > 0 ? (
         <ul class="fotos__pista" id={pistaId} role="list" aria-label={`Fotos de ${nombre}`}>
           {fotos.map((foto, i) => (
             <li>
-              <img
-                src={foto.src}
-                srcset={foto.srcset}
-                sizes="(min-width: 1240px) 793px, calc(100vw - 48px)"
-                alt={conFlechas ? `${nombre}, foto ${i + 1} de ${fotos.length}` : nombre}
-                loading={i === 0 ? 'eager' : 'lazy'}
-                fetchpriority={i === 0 ? 'high' : undefined}
-                decoding="async"
-                referrerpolicy="no-referrer"
-              />
+              <button
+                type="button"
+                class="fotos__abrir"
+                data-abrir={i}
+                data-cursor="ver"
+                data-cursor-texto="Ampliar"
+                aria-haspopup="dialog"
+                aria-controls={visorId}
+                aria-label={`${textoAlt(i)}. Ver en pantalla completa`}
+              >
+                <img
+                  src={foto.src}
+                  srcset={foto.srcset}
+                  sizes="(min-width: 1240px) 793px, calc(100vw - 48px)"
+                  alt=""
+                  loading={i === 0 ? 'eager' : 'lazy'}
+                  fetchpriority={i === 0 ? 'high' : undefined}
+                  decoding="async"
+                  referrerpolicy="no-referrer"
+                />
+              </button>
             </li>
           ))}
         </ul>
@@ -74,6 +97,21 @@ const pistaId = `fotos-${espacio.id}`;
     }
     <span class="muescas__trazo" aria-hidden="true"></span>
   </div>
+
+  {
+    fotos.length > 0 && (
+      <span class="fotos__ampliar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="16" height="16">
+          <path d="M21 11V3h-8l3.29 3.29-10 10L3 13v8h8l-3.29-3.29 10-10z" fill="currentColor" />
+        </svg>
+        {conFlechas && (
+          <span>
+            <span data-actual>1</span> / {fotos.length}
+          </span>
+        )}
+      </span>
+    )
+  }
 
   {
     precio && (
@@ -95,39 +133,170 @@ const pistaId = `fotos-${espacio.id}`;
       </div>
     )
   }
+
+  {
+    fotos.length > 0 && (
+      <dialog class="visor" id={visorId} aria-label={`Fotos de ${nombre}`} data-cursor="nativo">
+        <ul class="visor__pista" role="list">
+          {fotos.map((foto, i) => (
+            <li>
+              <img
+                src={foto.src}
+                srcset={foto.srcset}
+                sizes="100vw"
+                alt={textoAlt(i)}
+                loading="lazy"
+                decoding="async"
+                referrerpolicy="no-referrer"
+              />
+            </li>
+          ))}
+        </ul>
+
+        <div class="visor__barra">
+          {conFlechas ? (
+            <p class="visor__contador" aria-live="polite">
+              <span data-actual>1</span> / {fotos.length}
+            </p>
+          ) : (
+            <span />
+          )}
+          <button type="button" class="visor__cerrar" data-cerrar aria-label="Cerrar fotos">
+            <img src="/img/iconos/close.svg" alt="" width="24" height="24" />
+          </button>
+        </div>
+
+        {conFlechas && (
+          <div class="visor__flechas">
+            <button type="button" class="visor__flecha visor__flecha--atras" data-mover="-1" aria-label="Foto anterior">
+              <img src="/img/iconos/flecha-activa.svg" alt="" width="40" height="40" />
+            </button>
+            <button type="button" class="visor__flecha" data-mover="1" aria-label="Foto siguiente">
+              <img src="/img/iconos/flecha-activa.svg" alt="" width="40" height="40" />
+            </button>
+          </div>
+        )}
+      </dialog>
+    )
+  }
 </div>
 
 <script>
-  /* Cada flecha corre la pista una foto (su ancho); el scroll-snap la deja
-     alineada. La que no tiene a dónde ir queda deshabilitada. */
+  /* Dos pistas por espacio, la de la ficha y la del visor, con el mismo
+     manejo: cada flecha corre la pista una foto (su ancho) y el scroll-snap
+     la deja alineada; la flecha que no tiene a dónde ir queda deshabilitada,
+     y el contador dice qué foto se ve. */
   const TOLERANCIA = 2;
   const quieto = window.matchMedia('(prefers-reduced-motion: reduce)');
 
-  for (const galeria of document.querySelectorAll<HTMLElement>('[data-galeria]')) {
-    const pista = galeria.querySelector<HTMLElement>('.fotos__pista');
-    const botones = [...galeria.querySelectorAll<HTMLButtonElement>('[data-mover]')];
-    if (!pista) continue;
+  const indice = (pista: HTMLElement) => Math.round(pista.scrollLeft / Math.max(pista.clientWidth, 1));
+
+  const irA = (pista: HTMLElement, i: number, suave = false) =>
+    pista.scrollTo({ left: i * pista.clientWidth, behavior: suave && !quieto.matches ? 'smooth' : 'auto' });
+
+  function manejar(
+    pista: HTMLElement,
+    botones: HTMLButtonElement[],
+    contador: HTMLElement | null,
+    alMover?: (i: number) => void,
+  ) {
+    /* Adónde va la pista mientras se desliza: con dos toques seguidos el
+       segundo cuenta desde ahí y no desde la foto a medio pasar. Se olvida
+       cuando la pista se queda quieta. */
+    let destino: number | null = null;
+    let quieta = 0;
 
     const medir = () => {
+      const i = indice(pista);
       const fin = pista.scrollWidth - pista.clientWidth;
       for (const boton of botones) {
         boton.disabled =
           boton.dataset.mover === '1' ? pista.scrollLeft >= fin - TOLERANCIA : pista.scrollLeft <= TOLERANCIA;
       }
+      if (contador) contador.textContent = String(i + 1);
+      alMover?.(i);
+      clearTimeout(quieta);
+      quieta = window.setTimeout(() => (destino = null), 150);
     };
 
     for (const boton of botones) {
       boton.addEventListener('click', () => {
-        pista.scrollBy({
-          left: Number(boton.dataset.mover) * pista.clientWidth,
-          behavior: quieto.matches ? 'auto' : 'smooth',
-        });
+        const total = Math.round(pista.scrollWidth / Math.max(pista.clientWidth, 1));
+        const desde = destino ?? indice(pista);
+        destino = Math.min(Math.max(desde + Number(boton.dataset.mover), 0), total - 1);
+        irA(pista, destino, true);
       });
     }
 
     pista.addEventListener('scroll', medir, { passive: true });
     new ResizeObserver(medir).observe(pista);
     medir();
+  }
+
+  for (const galeria of document.querySelectorAll<HTMLElement>('[data-fotos]')) {
+    const pista = galeria.querySelector<HTMLElement>('.fotos__pista');
+    const visor = galeria.querySelector<HTMLDialogElement>('.visor');
+    const pistaVisor = visor?.querySelector<HTMLElement>('.visor__pista');
+    if (!pista || !visor || !pistaVisor) continue;
+
+    const cerrar = visor.querySelector<HTMLButtonElement>('[data-cerrar]')!;
+
+    manejar(
+      pista,
+      [...galeria.querySelectorAll<HTMLButtonElement>('.fotos__flechas [data-mover]')],
+      galeria.querySelector('.fotos__ampliar [data-actual]'),
+    );
+
+    /* La foto que se ve en el visor; al cerrarlo, la ficha queda en ésa. */
+    let enVisor = 0;
+    manejar(
+      pistaVisor,
+      [...visor.querySelectorAll<HTMLButtonElement>('[data-mover]')],
+      visor.querySelector('[data-actual]'),
+      (i) => (enVisor = i),
+    );
+
+    /* Abrir el visor suma un paso al historial: «atrás» (el botón del
+       teléfono o el gesto) lo cierra en vez de salir de la ficha. */
+    let conPaso = false;
+
+    const abrir = (i: number) => {
+      if (visor.open) return;
+      visor.showModal();
+      cerrar.focus({ preventScroll: true });
+      document.documentElement.classList.add('con-visor');
+      irA(pistaVisor, i);
+      history.pushState({ visorFotos: true }, '');
+      conPaso = true;
+    };
+
+    visor.addEventListener('close', () => {
+      document.documentElement.classList.remove('con-visor');
+      irA(pista, enVisor);
+      if (conPaso) {
+        conPaso = false;
+        if (history.state?.visorFotos) history.back();
+      }
+    });
+
+    window.addEventListener('popstate', () => {
+      if (!visor.open) return;
+      conPaso = false;
+      visor.close();
+    });
+
+    for (const boton of pista.querySelectorAll<HTMLButtonElement>('[data-abrir]')) {
+      boton.addEventListener('click', () => abrir(Number(boton.dataset.abrir)));
+    }
+
+    cerrar.addEventListener('click', () => visor.close());
+
+    /* ← y → hacen lo mismo que las flechas del visor. */
+    visor.addEventListener('keydown', (e) => {
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      visor.querySelector<HTMLButtonElement>(`[data-mover="${e.key === 'ArrowRight' ? 1 : -1}"]`)?.click();
+    });
   }
 </script>
 
@@ -162,6 +331,20 @@ const pistaId = `fotos-${espacio.id}`;
     scroll-snap-align: start;
   }
 
+  .fotos__abrir {
+    display: block;
+    width: 100%;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: zoom-in;
+  }
+  .fotos__abrir:focus-visible {
+    outline: 3px solid var(--brand-300);
+    outline-offset: -6px;
+  }
+
   .fotos__pista img {
     width: 100%;
     height: 100%;
@@ -178,16 +361,39 @@ const pistaId = `fotos-${espacio.id}`;
     transform: translate(-50%, -50%);
   }
 
+  /* Encima de la foto: no recibe el toque, que pasa a la foto. */
+  .fotos__ampliar {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: var(--radius-full);
+    background: rgb(15 19 22 / 0.6);
+    color: var(--neutral-100);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 18px;
+    font-variant-numeric: tabular-nums;
+    pointer-events: none;
+  }
+
   /* El precio vive en la muesca, a 23 del borde de arriba de la foto. La
      nota es un bloque en línea: si una cifra larga («$10.900.000») no deja
      lugar, «+ IVA» baja entera al renglón de abajo, que todavía cae en la
-     muesca. */
+     muesca. El párrafo ocupa la muesca entera (384.5 × 99.87 menos los 16
+     que la separan de la foto): la foto sigue debajo aunque la máscara no
+     la muestre, y así un clic en el hueco no abre el visor. */
   .fotos__precio {
     position: absolute;
-    top: 23px;
+    top: 0;
     left: 0;
-    max-width: 368.5px;
+    width: 384.5px;
+    height: 99.87px;
     margin: 0;
+    padding: 23px 16px 0 0;
     color: var(--accent-300);
     font-size: 48px;
     line-height: 46px;
@@ -198,15 +404,21 @@ const pistaId = `fotos-${espacio.id}`;
     line-height: 30px;
   }
 
+  /* También del tamaño de su muesca, por lo mismo. */
   .fotos__flechas {
     position: absolute;
     right: 0;
     bottom: 0;
     display: flex;
+    align-items: flex-end;
+    justify-content: flex-end;
     gap: 8px;
+    width: 144px;
+    height: 72px;
   }
 
-  .fotos__flecha {
+  .fotos__flecha,
+  .visor__flecha {
     display: grid;
     place-items: center;
     width: 56px;
@@ -216,26 +428,156 @@ const pistaId = `fotos-${espacio.id}`;
     border-radius: var(--radius-full);
     background: var(--brand-300);
     cursor: pointer;
-    transition: background-color 0.2s ease;
+    transition:
+      background-color 0.2s ease,
+      opacity 0.2s ease;
   }
-  .fotos__flecha img {
+  .fotos__flecha img,
+  .visor__flecha img {
     width: 30px;
     height: 30px;
   }
-  .fotos__flecha:hover:not(:disabled) {
+  .fotos__flecha:hover:not(:disabled),
+  .visor__flecha:hover:not(:disabled) {
     background: var(--brand-300-hover);
   }
   .fotos__flecha:disabled {
     background: var(--neutral-300);
     cursor: default;
   }
-  .fotos__flecha--atras img {
+  .fotos__flecha--atras img,
+  .visor__flecha--atras img {
     transform: rotate(180deg);
+  }
+
+  /* ---------- Visor ----------
+     Pantalla completa sobre ink/500. Cada foto entera (contain) en su
+     diapositiva; en escritorio con 96 a los lados, donde van las flechas,
+     el contador y la X.
+     El visor va en la capa de arriba de todo, encima del cursor de Elexa
+     (Cursor.astro), que quedaría tapado: con data-cursor="nativo" adentro
+     vuelve el del sistema. */
+  .visor {
+    position: fixed;
+    inset: 0;
+    width: 100%;
+    max-width: none;
+    height: 100%;
+    max-height: none;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    background: var(--ink-500);
+    color: var(--neutral-100);
+    overflow: hidden;
+  }
+  .visor::backdrop {
+    background: transparent;
+  }
+  .visor[open] {
+    animation: visor-entra 0.2s ease;
+  }
+  @keyframes visor-entra {
+    from {
+      opacity: 0;
+    }
+  }
+
+  .visor__pista {
+    display: flex;
+    height: 100%;
+    overflow-x: auto;
+    overscroll-behavior: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .visor__pista::-webkit-scrollbar {
+    display: none;
+  }
+
+  .visor__pista li {
+    flex: 0 0 100%;
+    padding: 24px 96px;
+    scroll-snap-align: start;
+    scroll-snap-stop: always;
+  }
+
+  .visor__pista img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .visor__barra {
+    position: absolute;
+    top: 0;
+    right: 0;
+    left: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 20px 24px;
+    pointer-events: none;
+  }
+  .visor__barra > * {
+    pointer-events: auto;
+  }
+
+  .visor__contador {
+    margin: 0;
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 24px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .visor__cerrar {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: var(--neutral-100);
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  .visor__cerrar:hover {
+    background: var(--neutral-200);
+  }
+
+  .visor__cerrar:focus-visible,
+  .visor__flecha:focus-visible {
+    outline: 3px solid var(--neutral-100);
+    outline-offset: 3px;
+  }
+
+  /* Escritorio: una flecha a cada lado, a media altura. */
+  .visor__flecha {
+    position: absolute;
+    top: 50%;
+    right: 20px;
+    transform: translateY(-50%);
+  }
+  .visor__flecha--atras {
+    right: auto;
+    left: 20px;
+  }
+  .visor__flecha:disabled {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .visor[open] {
+      animation: none;
+    }
   }
 
   @media (max-width: 767px) {
     .fotos {
-      aspect-ratio: 341.5 / 622.5;
+      aspect-ratio: 4 / 3;
     }
 
     .fotos__marco {
@@ -243,17 +585,28 @@ const pistaId = `fotos-${espacio.id}`;
       --muescas-trazo: var(--trazo-movil);
     }
 
+    .fotos__ampliar {
+      bottom: 12px;
+      left: 12px;
+    }
+
     /* En la muesca: 213 de ancho (229 menos los 16 que la separan de la
        foto), centrado en el alto. */
     .fotos__precio {
-      top: 17px;
-      max-width: 213px;
+      width: 229px;
+      height: 83px;
+      padding-top: 17px;
       font-size: 30px;
       line-height: 34px;
     }
     .fotos__precio span {
       font-size: 16px;
       line-height: 20px;
+    }
+
+    .fotos__flechas {
+      width: 112px;
+      height: 56px;
     }
 
     .fotos__flecha {
@@ -264,6 +617,36 @@ const pistaId = `fotos-${espacio.id}`;
       width: 24px;
       height: 24px;
     }
+
+    /* Teléfono: las fotos de lado a lado; la X arriba y las flechas abajo,
+       al centro, a la mano del pulgar. */
+    .visor__pista li {
+      padding: 80px 0;
+    }
+
+    .visor__barra {
+      padding: 16px;
+    }
+
+    /* 56 cada una y 8 entre las dos: cada borde a 60 del centro. */
+    .visor__flecha {
+      top: auto;
+      right: calc(50% - 60px);
+      bottom: 20px;
+      transform: none;
+    }
+    .visor__flecha--atras {
+      right: auto;
+      left: calc(50% - 60px);
+    }
+    .visor__flecha:disabled {
+      opacity: 0.3;
+      pointer-events: auto;
+      cursor: default;
+    }
+    .visor__flecha:disabled:hover {
+      background: var(--brand-300);
+    }
   }
 
   @media (min-width: 1240px) {
@@ -272,5 +655,10 @@ const pistaId = `fotos-${espacio.id}`;
       height: 670px;
       aspect-ratio: auto;
     }
+  }
+
+  /* Con el visor abierto la página de atrás no se mueve. */
+  :global(html.con-visor) {
+    overflow: hidden;
   }
 </style>

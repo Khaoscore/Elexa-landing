@@ -167,8 +167,10 @@ function parrafos(valor: string): string[] {
 /* Drive sirve cada foto pública al ancho que se le pida y en WebP (`-rw`):
    la de 28 MB del dron llega en ~400 KB. Las <img> van con
    referrerpolicy="no-referrer": con un Referer de localhost Drive contesta
-   429 en vez de la foto, así que sin eso en `npm run dev` no se ven. */
-const ANCHOS = [640, 1080, 1600];
+   429 en vez de la foto, así que sin eso en `npm run dev` no se ven.
+   La de 2400 es para el visor a pantalla completa de la ficha en pantallas
+   grandes o de alta densidad; las tarjetas y la foto de la ficha no la piden. */
+const ANCHOS = [640, 1080, 1600, 2400];
 
 const DRIVE_ARCHIVO = [
   /drive\.google\.com\/file\/(?:u\/\d+\/)?d\/([\w-]{20,})/,
