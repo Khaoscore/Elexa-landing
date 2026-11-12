@@ -16,7 +16,7 @@
      Una foto nueva en la carpeta no edita la hoja: aparece en la revisión
      de cada hora o con Supabase → Sincronizar ahora.
    · Carpeta: el enlace de la carpeta de Drive que se descarga con el botón
-     «Descargar carpeta» de la ficha del espacio (todo lo que haya adentro:
+     «Fotos y documentos» de la ficha del espacio (todo lo que haya adentro:
      fotos, PDF, planos). Va a la columna `carpeta`, en su forma limpia.
      Si la celda está vacía o no trae un enlace de carpeta de Drive, se usa
      la carpeta de Fotos; si tampoco hay, la ficha no lleva el botón. La
@@ -157,7 +157,7 @@ function fotosDeCarpeta_(id, cache) {
 }
 
 // La primera carpeta de Drive de una celda (Carpeta o Fotos), en su forma
-// limpia: el botón «Descargar carpeta» de la ficha. Vacío si no hay carpeta
+// limpia: el botón «Fotos y documentos» de la ficha. Vacío si no hay carpeta
 // (un texto como «VACANCIAS PAGINA WEB» no cuenta).
 function carpetaDe_(celda) {
   const m = str_(celda).match(DRIVE_CARPETA);

@@ -74,7 +74,7 @@ public/img/                        assets exportados de Figma
 public/sala-assets/                fotos, logos y tipografía de la sala
 supabase/esquema.sql               tablas, permisos, bucket y datos iniciales
 supabase/sincronizar-hoja.gs       Apps Script de la hoja «Alquiler Elexa» → `propiedades`
-apps-script/Code.gs                Apps Script de la hoja de la sala de Karanis
+apps-script/Code.gs                Apps Script de «Eventos lanzamientos ELEXA» (salas de Karanis y Florentino)
 ```
 
 ## Base de datos
@@ -141,8 +141,8 @@ la ruta en la columna `imagen`, o pegar una URL completa. JPG o WebP de
     `02.jpg`… para elegir el orden). Una foto nueva en
     la carpeta no edita la hoja: aparece en la revisión de cada hora o con
     el menú **Supabase → Sincronizar ahora**.
-  - **Carpeta**: el enlace de la carpeta de Drive del botón **«Descargar
-    carpeta»** de la ficha (todo lo que tenga adentro: fotos, PDF, planos),
+  - **Carpeta**: el enlace de la carpeta de Drive del botón **«Fotos y
+    documentos»** de la ficha (todo lo que tenga adentro: fotos, PDF, planos),
     compartida como «Cualquier persona con el enlace». Si la celda está
     vacía o no trae un enlace de carpeta de Drive, se usa la carpeta de
     Fotos; si tampoco hay, la ficha no lleva el botón.
@@ -190,17 +190,28 @@ y las fotos. Son páginas sueltas: no usan `Base.astro` ni `global.css`, llevan
   YouTube, endpoint, destinos de los botones, el enlace que se muestra durante
   el directo y la pregunta del ejercicio.
 - **Antes del evento**, completar lo marcado «POR CONFIRMAR» en ese archivo:
-  fecha, video (no listado y con «Permitir insertar»), Calendly de Karanis y
-  `ENDPOINT`.
+  fecha, video (no listado y con «Permitir insertar») y Calendly de Karanis.
+- **Una sola hoja para todas las salas de Elexa**: «Eventos lanzamientos
+  ELEXA», con un solo Apps Script (`apps-script/Code.gs`) y la misma URL
+  `/exec` que la sala de Florentino. Cada proyecto escribe en sus pestañas,
+  que llevan el evento al final del nombre («Asistentes - kar lanzamiento»,
+  «Preguntas - Flo lista 0 abierta»…). `PROYECTO: 'kar'` en `sala.ts` es lo
+  que manda los datos de esta sala a las de Karanis; lo que llega sin
+  proyecto (la sala de Florentino no lo manda) va a las de Florentino. El
+  panel, el muro, los expulsados y las claves también van por proyecto: el
+  panel de Karanis no toca la sala de Florentino.
+- **Evento nuevo**: se cambia `evento` del proyecto en `PROYECTOS`
+  (`apps-script/Code.gs`), se publica una versión nueva del script y se corre
+  `setup` (menú Salas ELEXA). Crea las pestañas vacías con el color del
+  proyecto. Los pasos para pegar y publicar el script están al principio del
+  archivo.
 - **`ENDPOINT` vacío = modo local**: la sala y el panel se hablan sólo dentro
   del mismo navegador (abrir `/sala` y `/panel` en dos pestañas; en el panel
-  sirve cualquier clave) y nada se envía a Google. Para el evento real, crear
-  una hoja nueva con `apps-script/Code.gs` (los pasos están al principio del
-  archivo) y pegar su URL `/exec`. No usar la URL de la sala de Florentino:
-  escribiría en su hoja y este panel controlaría también esa sala.
-- **Claves del panel** (propiedades del script): `PANEL_KEY` ve todo
-  (por defecto `karanis2026`) y `MOD_KEY` sólo modera el chat (por defecto
-  `modkaranis2026`). Cambiarlas antes del evento.
+  sirve cualquier clave) y nada se envía a Google.
+- **Claves del panel** (propiedades del script): `PANEL_KEY_KAR` ve todo
+  (por defecto `karanis2026`) y `MOD_KEY_KAR` sólo modera el chat (por
+  defecto `modkaranis2026`). `PANEL_KEY` y `MOD_KEY`, sin sufijo, son las de
+  Florentino. Cambiar las de Karanis antes del evento.
 - La letra Henderson Sans viene del kit de Typekit de Elexa (`nnu5pnp`): si
   `www.elexa.com.co` no está autorizado en ese kit, sale la fuente del sistema.
   Duna Slab (títulos y cifras) va en `public/sala-assets/fonts/`.

@@ -199,7 +199,7 @@ const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
               <p class="eyebrow">{NOMBRE} · Elexa Real Estate</p>
               <h1 class="display room__title" id="room-title">Karanis</h1>
               <p class="room__lede">
-                Un street mall diseñado para generar renta, que ya cuenta con inquilinos como Dollarcity, 
+                Un strip mall diseñado para generar renta, que ya cuenta con inquilinos como Dollarcity, 
                 D1 y la multinacional Fitness24Seven.
               </p>
             </div>
@@ -242,28 +242,10 @@ const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
                 <a class="btn btn--ink" id="ctaAgendo" data-accion="agendo" href="#" target="_blank" rel="noopener">
                   Quiero agendar mi cita
                 </a>
-                <a class="btn btn--outline" id="ctaDossier" data-accion="dossier" href="#" target="_blank" rel="noopener">
-                  Quiero el dossier completo
+                <a class="btn btn--outline" id="ctaYoutube" data-accion="youtube" href="#" target="_blank" rel="noopener">
+                  Ver el directo en YouTube
                 </a>
               </div>
-              <form id="dossierForm" hidden style="margin-top:16px" novalidate>
-                <div class="field">
-                  <label for="dossierEmail" style="color:var(--aura-3)">¿A qué correo te lo enviamos?</label>
-                  <input
-                    class="input"
-                    id="dossierEmail"
-                    type="email"
-                    inputmode="email"
-                    autocomplete="email"
-                    placeholder="tucorreo@ejemplo.com"
-                    required
-                  />
-                </div>
-                <div class="actions" style="margin-top:12px">
-                  <button class="btn btn--primary btn--sm" type="submit">Enviar</button>
-                  <p class="hint" id="dossierMsg"></p>
-                </div>
-              </form>
             </div>
 
             {/* Enlace que el panel muestra u oculta (ENLACE en data/sala.ts) */}
@@ -423,10 +405,14 @@ const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
         /* ---------------- transporte ---------------- */
         var ENDPOINT = String(CFG.ENDPOINT || '').trim();
         var LOCAL = !ENDPOINT;
+        // la hoja es compartida con Florentino: PROYECTO dice en qué pestañas escribe esta sala
+        var PROYECTO = String(CFG.PROYECTO || '').trim();
+        var Q_PROYECTO = PROYECTO ? '&proyecto=' + encodeURIComponent(PROYECTO) : '';
         var canal = (LOCAL && 'BroadcastChannel' in window) ? new BroadcastChannel('sala-karanis') : null;
         var user = LS.get('sala_user', null);
 
         function base(payload) {
+          if (PROYECTO) payload.proyecto = PROYECTO;
           payload.ts_cliente = ahoraISO();
           if (user) { if (!payload.numero) payload.numero = user.numero; if (!payload.nombre) payload.nombre = user.nombre; }
           return payload;
@@ -471,7 +457,7 @@ const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
             e.expulsado = !!(n && modLocal().expulsados[n]);
             return Promise.resolve(e);
           }
-          return fetch(ENDPOINT + '?action=estado' + (n ? '&numero=' + encodeURIComponent(n) : '') + '&t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); });
+          return fetch(ENDPOINT + '?action=estado' + Q_PROYECTO + (n ? '&numero=' + encodeURIComponent(n) : '') + '&t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); });
         }
         // Moderación en modo local: la escribe el panel de este mismo navegador.
         function modLocal() { var m = LS.get('sala_moderacion', {}) || {}; return { borradas: m.borradas || {}, expulsados: m.expulsados || {} }; }
@@ -613,7 +599,7 @@ const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
 
         /* ---------------- sala ---------------- */
         // Cada botón de cierre tiene su propio interruptor. Un valor booleano (versiones anteriores) aplica a los tres.
-        var CTA_IDS = ['separo', 'agendo', 'dossier'];
+        var CTA_IDS = ['separo', 'agendo', 'youtube'];
         function normalizarCtas(v) {
           var o = {};
           CTA_IDS.forEach(function (id) { o[id] = (v && typeof v === 'object') ? !!v[id] : v === true; });
@@ -647,8 +633,7 @@ const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
           // botones de cierre con identificador de la persona
           $('#ctaSeparo').href = conParam(CFG.PAGO_URL, 'ref', user.numero);
           $('#ctaAgendo').href = conParam(conParam(conParam(CFG.CALENDLY_URL, 'name', user.nombre), 'utm_source', 'sala_karanis'), 'utm_content', user.numero);
-          if (CFG.DOSSIER_URL) { $('#ctaDossier').href = conParam(CFG.DOSSIER_URL, 'ref', user.numero); }
-          else { $('#ctaDossier').href = '#'; $('#ctaDossier').removeAttribute('target'); }
+          $('#ctaYoutube').href = CFG.CANAL_URL || 'https://www.youtube.com/@luis_inversionista/streams';
           (CFG.CTAS || []).forEach(function (c) { var el = document.querySelector('[data-accion="' + c.id + '"]'); if (el && c.titulo) el.textContent = c.titulo; });
           prepararEnlace();
           renderMisPreguntas();
@@ -893,39 +878,24 @@ const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
         }
 
         /* ---------------- botones de cierre ---------------- */
-        var FRASES_CTA = { separo: 'separar tu cupo', agendo: 'agendar tu cita', dossier: 'pedir el dossier completo' };
+        var FRASES_CTA = { separo: 'separar tu cupo', agendo: 'agendar tu cita', youtube: 'ver el directo en YouTube' };
         function renderCtas(nuevos) {
           var card = $('#ctas');
           var visibles = CTA_IDS.filter(function (id) { return estado.ctas[id]; });
           CTA_IDS.forEach(function (id) { $('#cta' + id.charAt(0).toUpperCase() + id.slice(1)).hidden = !estado.ctas[id]; });
-          if (!estado.ctas.dossier) $('#dossierForm').hidden = true;
           card.hidden = visibles.length === 0;
           if (nuevos && nuevos.length && !card.hidden) {
             toast('Ya puedes ' + nuevos.map(function (id) { return FRASES_CTA[id]; }).join(' y ') + '.');
             if (!fsActivo && window.matchMedia('(max-width:1023.98px)').matches) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
           }
         }
-        ['#ctaSeparo', '#ctaAgendo', '#ctaDossier'].forEach(function (sel) {
-          $(sel).addEventListener('click', function (ev) {
+        ['#ctaSeparo', '#ctaAgendo', '#ctaYoutube'].forEach(function (sel) {
+          $(sel).addEventListener('click', function () {
             var accion = this.getAttribute('data-accion');
             // el clic se registra aunque la persona no complete la acción en el destino
             enviar({ tipo: 'cta', numero: user.numero, accion: accion }, { beacon: true });
             var acc = LS.get('sala_acciones', []); acc.push({ accion: accion, ts: ahoraISO() }); LS.set('sala_acciones', acc);
-            if (accion === 'dossier' && !CFG.DOSSIER_URL) {
-              ev.preventDefault();
-              var f = $('#dossierForm'); f.hidden = false;
-              if (!$('#dossierEmail').value && user.correo) $('#dossierEmail').value = user.correo;
-              $('#dossierEmail').focus();
-            }
           });
-        });
-        $('#dossierForm').addEventListener('submit', function (ev) {
-          ev.preventDefault();
-          var email = $('#dossierEmail').value.trim();
-          if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { $('#dossierMsg').textContent = 'Revisa el correo.'; return; }
-          enviar({ tipo: 'dossier', numero: user.numero, email: email });
-          $('#dossierMsg').textContent = 'Listo. Te lo enviamos a ' + email + '.';
-          $('#dossierEmail').disabled = true; this.querySelector('button').disabled = true;
         });
 
         /* ---------------- enlace (lo muestra u oculta el panel) ----------------
@@ -995,7 +965,7 @@ const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
               return { ts: horaLocal(p.ts_cliente), nombre: String(p.nombre || '').split(' ')[0], texto: p.texto };
             }) });
           }
-          return fetch(ENDPOINT + '?action=preguntas&t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); });
+          return fetch(ENDPOINT + '?action=preguntas' + Q_PROYECTO + '&t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); });
         }
 
         function pintarMuro(lista) {
