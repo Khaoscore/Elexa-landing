@@ -102,7 +102,7 @@ create table if not exists public.propiedades (
   amenidades  text,                      -- «Características y atractivos»: la Descripción
   disponibilidad text,                   -- «Inmediata», «2027»
   fotos       text,                      -- URLs de las fotos, una por renglón
-  carpeta     text,                      -- la carpeta de Drive de Fotos: «Descargar carpeta»
+  carpeta     text,                      -- la carpeta de Drive de Fotos: «Fotos y documentos»
   direccion   text,                      -- «Cra 66 # 2 A - 33»
   latitud     text,                      -- «3.3983629»: el punto del mapa
   longitud    text,                      -- «-76.5522176»

@@ -23,7 +23,7 @@
                   lista de sus fotos), cualquier URL de imagen o una ruta del
                   bucket `imagenes`. La primera es la portada.
    · carpeta      la columna «Carpeta» de la hoja (o, si está vacía, la
-                  carpeta de Drive de Fotos): el botón «Información general» de
+                  carpeta de Drive de Fotos): el botón «Fotos y documentos» de
                   la ficha. Sólo cuenta un enlace de carpeta de Drive; vacía
                   o con otro texto, el botón no sale.
 
@@ -77,7 +77,7 @@ export type Espacio = {
       atractivos»). */
   descripcion: string[];
   fotos: Foto[];
-  /** La carpeta de Drive del espacio, para «Información general». Vacío = sin
+  /** La carpeta de Drive del espacio, para «Fotos y documentos». Vacío = sin
       botón. */
   carpeta: string;
   /** «Disponibilidad inmediata», «Disponible en 2027». Vacío = sin dato. */
@@ -101,7 +101,7 @@ export type FilaPropiedad = {
   latitud?: string | number | null;
   longitud?: string | number | null;
   fotos?: string | null;
-  /** La carpeta de Drive de «Información general» (columna Carpeta de la hoja). */
+  /** La carpeta de Drive de «Fotos y documentos» (columna Carpeta de la hoja). */
   carpeta?: string | null;
   /** La posición de la fila en la hoja. */
   orden?: number | string | null;

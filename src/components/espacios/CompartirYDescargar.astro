@@ -1,27 +1,27 @@
 ---
-/* «Compartir» e «Información general», debajo de los botones de la tarjeta
+/* «Compartir» y «Fotos y documentos», debajo de los botones de la tarjeta
    de la ficha de un espacio.
 
    · Compartir: la ventana de src/components/Compartir.astro, con la
      dirección pública de la ficha, que trae la foto de portada en la vista
      previa. Evento del pixel: CompartirEspacio.
-   · Información general: abre en otra pestaña la carpeta de Drive del
+   · Fotos y documentos: abre en otra pestaña la carpeta de Drive del
      espacio (la columna Carpeta de la hoja; ver src/lib/espacios.ts). En el
      computador Drive ofrece «Descargar todo» (un .zip); en el teléfono se
      bajan los archivos uno por uno. Sin carpeta, el botón no sale. Antes se
-     llamaba «Descargar carpeta»: el evento del pixel sigue siendo
-     DescargarCarpeta para no partir los reportes de Meta.
+     llamó «Descargar carpeta» e «Información general»: el evento del pixel
+     sigue siendo DescargarCarpeta para no partir los reportes de Meta.
 
    Los dos eventos son propios y no cuentan como contacto (ver
    MetaPixel.astro).
 
    En /comerciales no hay «Me interesa este espacio» (el asesor comparte la
    ficha, no escribe): ahí Compartir pasa a ser el botón principal, arriba de
-   «Ver más espacios», e «Información general» queda solo debajo. Por eso la
+   «Ver más espacios», y «Fotos y documentos» queda solo debajo. Por eso la
    ficha lo pone en dos partes (`parte`):
    · extras     las dos píldoras (/espacios);
    · principal  sólo Compartir, como botón morado: «Compartir este espacio»;
-   · carpeta    sólo «Información general».
+   · carpeta    sólo «Fotos y documentos».
    Lo que venga en el slot (el «Seleccionar» de /comerciales) va primero en
    la fila de las píldoras. */
 import Compartir from '../Compartir.astro';
@@ -31,7 +31,7 @@ interface Props {
   barrio: string;
   /** La dirección pública de la ficha (https://www.elexa.com.co/espacios/…). */
   url: string;
-  /** La carpeta de Drive del espacio. Vacío = sin «Información general». */
+  /** La carpeta de Drive del espacio. Vacío = sin «Fotos y documentos». */
   carpeta: string;
   /** /comerciales: el mensaje al compartir no nombra a Elexa y el pixel lo
       cuenta en la categoría «comerciales». */
@@ -91,10 +91,10 @@ const conSlot = parte !== 'principal' && Astro.slots.has('default');
             <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
               <path
                 fill="currentColor"
-                d="M11 7h2v2h-2zm0 4h2v6h-2zm1-9C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"
+                d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"
               />
             </svg>
-            Información general
+            Fotos y documentos
           </a>
         )
       }

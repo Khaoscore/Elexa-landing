@@ -1,51 +1,105 @@
 /**
  * =====================================================================
- *  SALA KARANIS · Endpoint de captura (Google Apps Script)
+ *  SALAS ELEXA · Endpoint de captura (Google Apps Script)
  * ---------------------------------------------------------------------
- *  Recibe lo que pasa en www.elexa.com.co/sala (entradas, señales de
- *  presencia, respuestas, clics, preguntas) y guarda el estado que fija
- *  /panel. Es el mismo código de la sala de Florentino con otro nombre y
- *  otras claves: Karanis va en su propia hoja.
+ *  Un solo script y una sola hoja («Eventos lanzamientos ELEXA») para las
+ *  salas de todos los proyectos. Recibe lo que pasa en cada /sala (entradas,
+ *  señales de presencia, respuestas, clics, preguntas) y guarda el estado
+ *  que fija cada /panel.
  *
- *  Cómo instalarlo (5 minutos):
- *   1. Crea una hoja de Google nueva para Karanis (no uses la de Florentino).
- *   2. Extensiones → Apps Script. Borra lo que haya y pega este archivo.
- *   3. Ejecuta una vez la función `setup` (botón ▶). Acepta los permisos.
- *      Crea las pestañas Asistentes / Preguntas / Eventos / Calendario y las
- *      claves del panel.
- *   4. Implementar → Nueva implementación → tipo "Aplicación web":
- *        - Ejecutar como: Yo
- *        - Quién tiene acceso: Cualquier usuario
- *      Copia la URL que termina en /exec y pégala en src/data/sala.ts → ENDPOINT.
- *   5. Cambia las claves: Configuración del proyecto ⚙ → Propiedades del
- *      script. PANEL_KEY (por defecto: karanis2026) ve todo el /panel.
- *      MOD_KEY (por defecto: modkaranis2026) entra al mismo /panel pero sólo
- *      ve el chat: borra mensajes y expulsa personas. PANEL_KEY también
- *      modera. Si borras MOD_KEY, sólo modera PANEL_KEY.
- *   6. Prueba: abre `…/exec?action=estado`. Tiene que responder con
- *      `"enlace":false`.
+ *  Cada proyecto escribe en sus propias pestañas, que llevan el evento al
+ *  final del nombre: «Asistentes - kar lanzamiento», «Preguntas - kar
+ *  lanzamiento»… (se definen en PROYECTOS, más abajo). La sala y el panel de
+ *  cada sitio dicen de qué proyecto son (PROYECTO en src/data/sala.ts). Lo
+ *  que llega sin proyecto es de la sala de Florentino: Floren-main no lo
+ *  manda, y así sigue funcionando sin tocarla.
  *
- *  Cada vez que edites este código: Implementar → Gestionar implementaciones
- *  → ✎ → Versión: Nueva → Implementar. La URL /exec no cambia. Mientras no se
- *  publique la versión nueva, la sala sigue hablando con el código viejo.
- *  («Nueva implementación» crea otra URL, que la sala no conoce.)
+ *  Cada proyecto tiene lo suyo por separado: las pestañas, lo que muestra el
+ *  panel (ejercicio, botones, enlace), el muro de preguntas, los expulsados y
+ *  las claves. El panel de Karanis no prende nada en la sala de Florentino ni
+ *  al revés.
  *
- *  Para un webinar nuevo en la misma hoja: renombra Asistentes, Preguntas,
- *  Eventos y Calendario (p. ej. «Preguntas 26-nov») y corre `setup` desde el
- *  menú. Crea las pestañas vacías; si no, el muro de la sala muestra las
- *  preguntas del webinar anterior.
+ *  Cómo instalarlo o actualizarlo:
+ *   1. En la hoja: Extensiones → Apps Script. Borra todo y pega este archivo.
+ *   2. Ejecuta una vez `setup` (botón ▶) y acepta los permisos. Crea las
+ *      pestañas que le falten a cada proyecto y sus claves.
+ *   3. Implementar → Gestionar implementaciones → ✎ → Versión: Nueva →
+ *      Implementar. La URL /exec no cambia: es la que tienen las salas.
+ *      («Nueva implementación» crea otra URL, que ninguna sala conoce.)
+ *      Mientras no se publique la versión nueva, las salas siguen hablando
+ *      con el código viejo.
+ *   4. Prueba: `…/exec?action=ping&proyecto=kar` responde con las pestañas de
+ *      Karanis, y `…/exec?action=estado&proyecto=kar` con `"enlace":false`.
+ *
+ *  Claves del panel: Configuración del proyecto ⚙ → Propiedades del script.
+ *  Las de un proyecto no abren el panel de otro.
+ *   · Karanis: PANEL_KEY_KAR (por defecto karanis2026) ve todo el /panel;
+ *     MOD_KEY_KAR (por defecto modkaranis2026) sólo ve el chat: borra
+ *     mensajes y expulsa personas.
+ *   · Florentino: PANEL_KEY y MOD_KEY, las mismas de antes.
+ *  La clave del panel también modera.
+ *
+ *  Evento nuevo de un proyecto: cambia su `evento` en PROYECTOS (p. ej.
+ *  'kar lista 0'), publica la versión nueva y corre `setup` desde el menú
+ *  Salas ELEXA. Crea las pestañas vacías con el color del proyecto; las del
+ *  evento anterior quedan como están (se pueden ocultar). Sin pestañas
+ *  nuevas, el muro de la sala mostraría las preguntas del evento anterior.
+ *
+ *  Proyecto nuevo: se suma a PROYECTOS y su src/data/sala.ts lleva
+ *  PROYECTO con la misma clave (la de la izquierda: flo, kar…).
  * =====================================================================
  */
 
 var TZ = 'America/Bogota';
-var HOJAS = { asistentes: 'Asistentes', preguntas: 'Preguntas', eventos: 'Eventos', registrados: 'Registrados', calendario: 'Calendario' };
+
+/* Proyectos que comparten la hoja. La clave (flo, kar) es la que manda la sala.
+   · evento: lo que va después de « - » en el nombre de sus pestañas.
+   · color: el de sus pestañas. Sólo se aplica a las que crea el script.
+   · encabezado: fondo de la fila de títulos de las pestañas que crea el script.
+   · props: lo que se suma al nombre de sus propiedades del script (ESTADO,
+     EXPULSADOS, PANEL_KEY, MOD_KEY). Florentino va sin nada porque así estaban
+     guardadas antes de compartir la hoja: conserva su estado y sus claves.
+   · clave / claveMod: las del panel, mientras no exista la propiedad. */
+var PROYECTOS = {
+  flo: { nombre: 'Florentino', evento: 'Flo lista 0 abierta', color: '#ff00ff', encabezado: '#ffe7e1', props: '',     clave: 'florentino2026', claveMod: 'moderador2026' },
+  kar: { nombre: 'Karanis',    evento: 'kar lanzamiento',     color: '#bf9000', encabezado: '#fbe6a2', props: '_KAR', clave: 'karanis2026',    claveMod: 'modkaranis2026' }
+};
+// La sala de Florentino (Floren-main) no manda `proyecto`: lo que llega sin él es suyo.
+var PROYECTO_POR_DEFECTO = 'flo';
+
+var BASES = { asistentes: 'Asistentes', preguntas: 'Preguntas', eventos: 'Eventos', registrados: 'Registrados', calendario: 'Calendario' };
+// El proyecto con el que se trabaja y los nombres de sus pestañas. Los fija usarProyecto_
+// al empezar cada petición (cada una corre por separado, no se pisan entre sí).
+var PROY = null, HOJAS = null;
+
+function usarProyecto_(id) {
+  id = String(id || PROYECTO_POR_DEFECTO).trim().toLowerCase();
+  if (!Object.prototype.hasOwnProperty.call(PROYECTOS, id)) throw new Error('proyecto desconocido: ' + id);
+  PROY = PROYECTOS[id];
+  PROY.id = id;
+  HOJAS = {};
+  Object.keys(BASES).forEach(function (k) { HOJAS[k] = BASES[k] + ' - ' + PROY.evento; });
+  return PROY;
+}
+// 'ESTADO' → 'ESTADO_KAR' en Karanis; igual en Florentino.
+function prop_(nombre) { return nombre + PROY.props; }
+
+// Las opciones del menú (menos setup) trabajan con el proyecto de la pestaña abierta.
+function proyectoDeHojaActiva_() {
+  var nombre = SpreadsheetApp.getActiveSheet().getName();
+  var id = Object.keys(PROYECTOS).filter(function (k) { return nombre.endsWith(' - ' + PROYECTOS[k].evento); })[0];
+  if (id) return usarProyecto_(id);
+  var ejemplos = Object.keys(PROYECTOS).map(function (k) { return '«' + BASES.asistentes + ' - ' + PROYECTOS[k].evento + '»'; }).join(' o ');
+  SpreadsheetApp.getUi().alert('Abre primero una pestaña del proyecto, por ejemplo ' + ejemplos + ', y vuelve a elegir la opción del menú.');
+  return null;
+}
+
 // Pestaña Calendario: una fila por persona que pulsó «Agregar a Google Calendar».
 var CAL_COLUMNAS = ['primer_clic', 'nombre', 'numero', 'correo', 'desde', 'clics', 'ultimo_clic'];
-var CLAVE_POR_DEFECTO = 'karanis2026';
-var CLAVE_MOD_POR_DEFECTO = 'modkaranis2026';
 
 // Una fila por persona. Los ejercicios escriben en su propia columna; si llega un
-// campo nuevo la columna se crea sola al final.
+// campo nuevo la columna se crea sola al final. COLUMNAS es la misma para todos
+// los proyectos.
 // La sala hace una sola pregunta —EJERCICIOS en src/data/sala.ts, campo `e1_decision`—
 // y esa es la única columna de ejercicio que existe. Si algún día vuelve a haber más de
 // una, se agregan acá en el mismo orden en el que salen en el directo.
@@ -64,13 +118,27 @@ var ACTIVO_SEG = 120;
 
 /* ======================= configuración inicial ======================= */
 
+// Prepara todos los proyectos de PROYECTOS. A las pestañas que ya existen sólo les agrega
+// las columnas que falten y vuelve a aplicar los formatos: no borra ni mueve nada.
 function setup() {
   var ss = SpreadsheetApp.getActive();
   try { ss.setSpreadsheetTimeZone(TZ); } catch (e) {}
+  var props = PropertiesService.getScriptProperties(), resumen = [];
+  Object.keys(PROYECTOS).forEach(function (id) {
+    usarProyecto_(id);
+    setupProyecto_(ss);
+    resumen.push(PROY.nombre + ': pestañas «… - ' + PROY.evento + '» · clave del panel ' + props.getProperty(prop_('PANEL_KEY')) +
+      ' (' + prop_('PANEL_KEY') + ') · de moderación ' + props.getProperty(prop_('MOD_KEY')) + ' (' + prop_('MOD_KEY') + ')');
+  });
+  Logger.log('Listo.\n' + resumen.join('\n') + '\nLas claves se cambian en Propiedades del script.');
+}
 
+// Prepara las pestañas, las claves y el estado del proyecto activo (usarProyecto_).
+function setupProyecto_(ss) {
+  ss = ss || SpreadsheetApp.getActive();
   var sa = hoja_(ss, HOJAS.asistentes);
   if (sa.getLastRow() === 0) {
-    sa.getRange(1, 1, 1, COLUMNAS.length).setValues([COLUMNAS]).setFontWeight('bold').setBackground('#fbe6a2');
+    sa.getRange(1, 1, 1, COLUMNAS.length).setValues([COLUMNAS]).setFontWeight('bold').setBackground(PROY.encabezado);
     sa.setFrozenRows(1);
   } else {
     // agrega columnas que falten, sin mover las existentes
@@ -85,25 +153,25 @@ function setup() {
   });
 
   var sp = hoja_(ss, HOJAS.preguntas);
-  if (sp.getLastRow() === 0) { sp.appendRow(['hora', 'nombre', 'numero', 'pregunta', 'estado']); sp.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground('#fbe6a2'); sp.setFrozenRows(1); sp.getRange('C:C').setNumberFormat('@'); }
-  else if (!String(sp.getRange(1, 5).getValue())) sp.getRange(1, 5).setValue('estado').setFontWeight('bold').setBackground('#fbe6a2');
+  if (sp.getLastRow() === 0) { sp.appendRow(['hora', 'nombre', 'numero', 'pregunta', 'estado']); sp.getRange(1, 1, 1, 5).setFontWeight('bold').setBackground(PROY.encabezado); sp.setFrozenRows(1); sp.getRange('C:C').setNumberFormat('@'); }
+  else if (!String(sp.getRange(1, 5).getValue())) sp.getRange(1, 5).setValue('estado').setFontWeight('bold').setBackground(PROY.encabezado);
 
   var se = hoja_(ss, HOJAS.eventos);
-  if (se.getLastRow() === 0) { se.appendRow(['hora', 'tipo', 'numero', 'detalle']); se.getRange(1, 1, 1, 4).setFontWeight('bold').setBackground('#fbe6a2'); se.setFrozenRows(1); se.getRange('C:C').setNumberFormat('@'); }
+  if (se.getLastRow() === 0) { se.appendRow(['hora', 'tipo', 'numero', 'detalle']); se.getRange(1, 1, 1, 4).setFontWeight('bold').setBackground(PROY.encabezado); se.setFrozenRows(1); se.getRange('C:C').setNumberFormat('@'); }
 
   hojaCalendario_(ss);
 
   var props = PropertiesService.getScriptProperties();
-  if (!props.getProperty('PANEL_KEY')) props.setProperty('PANEL_KEY', CLAVE_POR_DEFECTO);
-  if (!props.getProperty('MOD_KEY')) props.setProperty('MOD_KEY', CLAVE_MOD_POR_DEFECTO);
-  if (!props.getProperty('ESTADO')) guardarEstado_({ ejercicio: 0, ctas: false, enlace: false });
-
-  Logger.log('Listo. Clave del panel: ' + props.getProperty('PANEL_KEY') + ' · clave de moderación: ' + props.getProperty('MOD_KEY') + ' (cámbialas en Propiedades del script → PANEL_KEY / MOD_KEY)');
+  if (!props.getProperty(prop_('PANEL_KEY'))) props.setProperty(prop_('PANEL_KEY'), PROY.clave);
+  if (!props.getProperty(prop_('MOD_KEY'))) props.setProperty(prop_('MOD_KEY'), PROY.claveMod);
+  if (!props.getProperty(prop_('ESTADO'))) guardarEstado_({ ejercicio: 0, ctas: false, enlace: false });
 }
 
 function onOpen() {
-  SpreadsheetApp.getUi().createMenu('Sala Karanis')
-    .addItem('Configurar hojas (setup)', 'setup')
+  // Todas las opciones menos la primera trabajan con el proyecto de la pestaña abierta.
+  SpreadsheetApp.getUi().createMenu('Salas ELEXA')
+    .addItem('Configurar las pestañas de todos los proyectos (setup)', 'setup')
+    .addSeparator()
     .addItem('Limpiar columnas de ejercicios viejos', 'limpiarEjerciciosViejos')
     .addItem('Ordenar columnas', 'ordenarColumnas')
     .addItem('Cruzar con registrados', 'cruzarConRegistrados')
@@ -111,7 +179,11 @@ function onOpen() {
     .addToUi();
 }
 
-function reiniciarEstado() { guardarEstado_({ ejercicio: 0, ctas: false, enlace: false }); }
+function reiniciarEstado() {
+  if (!proyectoDeHojaActiva_()) return;
+  guardarEstado_({ ejercicio: 0, ctas: false, enlace: false });
+  SpreadsheetApp.getUi().alert('Listo: la sala de ' + PROY.nombre + ' ya no muestra el ejercicio, los botones ni el enlace.');
+}
 
 /* ============== limpieza de las columnas de ejercicios ==============
    Por si la hoja arrastra columnas de preguntas que ya no se hacen (de un
@@ -127,6 +199,7 @@ function reiniciarEstado() { guardarEstado_({ ejercicio: 0, ctas: false, enlace:
 
    Pide confirmación: lo que haya en las columnas viejas se pierde. */
 function limpiarEjerciciosViejos() {
+  if (!proyectoDeHojaActiva_()) return;
   var ui = SpreadsheetApp.getUi();
   var sh = hojaAsistentes_();
   var h = encabezados_(sh);
@@ -136,7 +209,7 @@ function limpiarEjerciciosViejos() {
   h.forEach(function (n, i) { if (/^e\d+_/.test(n) && vigentes.indexOf(n) < 0) viejas.push({ nombre: n, col: i + 1 }); });
 
   if (!viejas.length && !faltan.length) { ui.alert('Nada que limpiar: de los ejercicios la hoja guarda sólo ' + vigentes.join(', ') + '.'); return; }
-  if (!viejas.length) { setup(); ui.alert('No había columnas viejas. Se creó ' + faltan.join(', ') + ' al final de la hoja.'); return; }
+  if (!viejas.length) { setupProyecto_(); ui.alert('No había columnas viejas. Se creó ' + faltan.join(', ') + ' al final de la hoja.'); return; }
 
   // qué va a dónde: cada columna vigente toma el hueco que dejó una vieja
   var libres = viejas.slice(), plan = [], borrar = [], detalle = '';
@@ -172,7 +245,7 @@ function limpiarEjerciciosViejos() {
   // de derecha a izquierda: al borrar una columna, las de su derecha se corren
   borrar.sort(function (a, b) { return b - a; }).forEach(function (c) { sh.deleteColumn(c); });
 
-  setup();  // por si quedara alguna columna de COLUMNAS sin crear
+  setupProyecto_();  // por si quedara alguna columna de COLUMNAS sin crear
   ui.alert('Listo. De los ejercicios la hoja guarda ahora sólo ' + vigentes.join(', ') + '.');
 }
 
@@ -186,6 +259,7 @@ function limpiarEjerciciosViejos() {
    El script escribe cada dato buscando su columna por el encabezado, así que
    no se pierde nada al mover; igual conviene correrlo fuera del directo. */
 function ordenarColumnas() {
+  if (!proyectoDeHojaActiva_()) return;
   var ui = SpreadsheetApp.getUi();
   var sh = hojaAsistentes_();
   var h = encabezados_(sh);
@@ -214,7 +288,7 @@ function ordenarColumnas() {
       if (!i) {
         if (pos > h.length) sh.getRange(1, pos).setValue(nombre);
         else { sh.insertColumnBefore(pos); sh.getRange(1, pos).setValue(nombre); }
-        sh.getRange(1, pos).setFontWeight('bold').setBackground('#fbe6a2');
+        sh.getRange(1, pos).setFontWeight('bold').setBackground(PROY.encabezado);
         h.splice(pos - 1, 0, nombre);
       } else {
         // i > pos siempre: las posiciones anteriores ya quedaron ocupadas
@@ -226,7 +300,7 @@ function ordenarColumnas() {
   } finally {
     if (conLock) lock.releaseLock();
   }
-  setup();  // vuelve a aplicar los formatos (celular como texto, fechas)
+  setupProyecto_();  // vuelve a aplicar los formatos (celular como texto, fechas)
   ui.alert('Listo. Las columnas quedaron en el orden de COLUMNAS.');
 }
 
@@ -236,7 +310,8 @@ function doGet(e) {
   var p = (e && e.parameter) || {};
   var action = p.action || 'ping';
   try {
-    if (action === 'ping') return json_({ ok: true, servicio: 'sala-karanis', hora: ahora_() });
+    usarProyecto_(p.proyecto);
+    if (action === 'ping') return json_({ ok: true, servicio: 'salas-elexa', proyecto: PROY.id, pestanas: HOJAS, hora: ahora_() });
     if (action === 'estado') {
       // la sala manda su número: así se entera, en la misma consulta, si la expulsaron
       var est = leerEstado_();
@@ -261,6 +336,8 @@ function doPost(e) {
   try { d = JSON.parse(e.postData.contents); } catch (err) {
     try { d = JSON.parse((e.parameter && e.parameter.payload) || ''); } catch (err2) { return json_({ ok: false, error: 'JSON inválido' }); }
   }
+  // un proyecto que no está en PROYECTOS no escribe en ninguna pestaña (ni en las de Florentino)
+  try { usarProyecto_(d && d.proyecto); } catch (err) { return json_({ ok: false, error: String(err && err.message || err) }); }
   try {
     var tipo = String(d.tipo || '');
     if (tipo === 'panel') { exigirClave_(d.key); return json_({ ok: true, estado: guardarEstado_(d) }); }
@@ -381,7 +458,7 @@ function respuesta_(numero, d) {
 // Clic en un botón de cierre. accion_final guarda el último clic; acciones_log guarda todos.
 function cta_(numero, d) {
   var accion = String(d.accion || '').toLowerCase();
-  if (['separo', 'agendo', 'dossier'].indexOf(accion) < 0) return { ok: false, error: 'acción inválida' };
+  if (CTA_IDS.indexOf(accion) < 0) return { ok: false, error: 'acción inválida' };
   var sh = hojaAsistentes_(), t = tabla_(sh);
   var row = buscarFila_(sh, t, numero) || crearMinima_(sh, t, numero, d);
   var f = t.leer(row, ['acciones_log']);
@@ -438,7 +515,7 @@ function calendario_(numero, d) {
 function hojaCalendario_(ss) {
   var sc = hoja_(ss, HOJAS.calendario);
   if (sc.getLastRow() === 0) {
-    sc.getRange(1, 1, 1, CAL_COLUMNAS.length).setValues([CAL_COLUMNAS]).setFontWeight('bold').setBackground('#fbe6a2');
+    sc.getRange(1, 1, 1, CAL_COLUMNAS.length).setValues([CAL_COLUMNAS]).setFontWeight('bold').setBackground(PROY.encabezado);
     sc.setFrozenRows(1);
     sc.getRange('C:C').setNumberFormat('@');
     sc.getRange('A:A').setNumberFormat('yyyy-mm-dd hh:mm:ss');
@@ -475,7 +552,7 @@ function pregunta_(numero, d) {
   var row = buscarFila_(sh, t, numero) || crearMinima_(sh, t, numero, d);
   var f = t.leer(row, ['pregunta']);
   t.escribir(row, { pregunta: (f.pregunta ? f.pregunta + ' || ' : '') + texto });
-  try { CacheService.getScriptCache().remove(MURO_CACHE); } catch (e) {}
+  try { CacheService.getScriptCache().remove(muroCache_()); } catch (e) {}
   return { ok: true };
 }
 
@@ -486,11 +563,13 @@ function pregunta_(numero, d) {
    el caché se borra en cuanto entra una pregunta nueva, así el muro no se queda atrás.
    Los mensajes que el moderador borra (columna `estado` = «borrada») no salen. */
 var MURO_MAX = 40, MURO_CACHE = 'muro_preguntas', MURO_CACHE_SEG = 25;
+// cada proyecto guarda su muro aparte: 'muro_preguntas' (Florentino), 'muro_preguntas_KAR'…
+function muroCache_() { return prop_(MURO_CACHE); }
 
 function preguntasPublicas_() {
   var cache = null;
   try { cache = CacheService.getScriptCache(); } catch (e) {}
-  if (cache) { var guardado = cache.get(MURO_CACHE); if (guardado) { try { return JSON.parse(guardado); } catch (e) {} } }
+  if (cache) { var guardado = cache.get(muroCache_()); if (guardado) { try { return JSON.parse(guardado); } catch (e) {} } }
 
   var sp = SpreadsheetApp.getActive().getSheetByName(HOJAS.preguntas);
   var lista = [];
@@ -510,7 +589,7 @@ function preguntasPublicas_() {
       return q;
     });
   }
-  if (cache) { try { cache.put(MURO_CACHE, JSON.stringify(lista), MURO_CACHE_SEG); } catch (e) {} }
+  if (cache) { try { cache.put(muroCache_(), JSON.stringify(lista), MURO_CACHE_SEG); } catch (e) {} }
   return lista;
 }
 
@@ -529,7 +608,8 @@ function nombreCorto_(nombre) {
      se borra —el equipo conserva lo que se escribió— pero desaparece del muro.
      El mensaje se identifica por su fila y se confirma con el número: si alguien
      ordenó o borró filas en la hoja, la fila ya no coincide y no se toca nada.
-   · expulsar / readmitir: la lista vive en la propiedad EXPULSADOS. Al expulsar, sus
+   · expulsar / readmitir: la lista vive en la propiedad EXPULSADOS (EXPULSADOS_KAR en
+     Karanis: expulsar a alguien de una sala no lo saca de las otras). Al expulsar, sus
      mensajes salen del muro; la sala de esa persona se cierra en la siguiente consulta
      del estado (~12 s) y el script rechaza todo lo que vuelva a mandar. Se compara por
      los últimos 10 dígitos, así «+57 300…» y «300…» son la misma persona.
@@ -542,14 +622,14 @@ function esDelModerador_(v) { return String(v).trim().toLowerCase() === NUMERO_M
 
 function leerExpulsados_() {
   var cache = CacheService.getScriptCache();
-  var s = cache.get(EXPULSADOS_CACHE);
-  if (!s) { s = PropertiesService.getScriptProperties().getProperty('EXPULSADOS') || '{}'; cache.put(EXPULSADOS_CACHE, s, 21600); }
+  var s = cache.get(prop_(EXPULSADOS_CACHE));
+  if (!s) { s = PropertiesService.getScriptProperties().getProperty(prop_('EXPULSADOS')) || '{}'; cache.put(prop_(EXPULSADOS_CACHE), s, 21600); }
   try { return JSON.parse(s) || {}; } catch (e) { return {}; }
 }
 function guardarExpulsados_(m) {
   var s = JSON.stringify(m);
-  PropertiesService.getScriptProperties().setProperty('EXPULSADOS', s);
-  CacheService.getScriptCache().put(EXPULSADOS_CACHE, s, 21600);
+  PropertiesService.getScriptProperties().setProperty(prop_('EXPULSADOS'), s);
+  CacheService.getScriptCache().put(prop_(EXPULSADOS_CACHE), s, 21600);
 }
 function claveNumero_(n) { return normalizar_(n).slice(-10); }
 function esExpulsado_(numero) {
@@ -601,18 +681,23 @@ function moderar_(d) {
   } finally {
     if (conLock) lock.releaseLock();
   }
-  try { CacheService.getScriptCache().remove(MURO_CACHE); } catch (e) {}
+  try { CacheService.getScriptCache().remove(muroCache_()); } catch (e) {}
   return { ok: true };
 }
 
 /* ======================= estado del panel =======================
    Tres interruptores: el ejercicio activo, cada botón de cierre y la tarjeta del
-   enlace. `enlace` es lo último que se sumó: si la implementación publicada no lo
-   guarda, el panel lo manda, el script lo descarta y la tarjeta nunca sale en la
-   sala. Para comprobarlo, `…/exec?action=estado` tiene que traer `"enlace"`. */
+   enlace. Cada proyecto tiene el suyo (propiedad ESTADO, ESTADO_KAR…): lo que se
+   prende en el panel de Karanis sólo sale en la sala de Karanis. `enlace` es lo
+   último que se sumó: si la implementación publicada no lo guarda, el panel lo
+   manda, el script lo descarta y la tarjeta nunca sale en la sala. Para
+   comprobarlo, `…/exec?action=estado&proyecto=kar` tiene que traer `"enlace"`. */
 
-// Cada botón de cierre se muestra u oculta por separado: ctas = { separo, agendo, dossier }.
-var CTA_IDS = ['separo', 'agendo', 'dossier'];
+// Cada botón de cierre se muestra u oculta por separado: ctas = { separo, agendo, dossier, youtube }.
+// Son los de todas las salas: dossier sólo lo tiene Florentino y youtube (el canal de Luis) sólo
+// Karanis. Cada sala muestra los suyos e ignora los demás. Un botón nuevo se suma acá: si no,
+// el panel no lo puede prender y sus clics se rechazan.
+var CTA_IDS = ['separo', 'agendo', 'dossier', 'youtube'];
 function normalizarCtas_(v) {
   var o = {};
   CTA_IDS.forEach(function (id) { o[id] = (v && typeof v === 'object') ? !!v[id] : v === true; });
@@ -621,10 +706,10 @@ function normalizarCtas_(v) {
 
 function leerEstado_() {
   var cache = CacheService.getScriptCache();
-  var s = cache.get('ESTADO');
+  var s = cache.get(prop_('ESTADO'));
   if (!s) {
-    s = PropertiesService.getScriptProperties().getProperty('ESTADO') || JSON.stringify({ ejercicio: 0, ctas: normalizarCtas_(false), enlace: false, ejercicio_ts: 0, ctas_ts: 0, enlace_ts: 0 });
-    cache.put('ESTADO', s, 21600);
+    s = PropertiesService.getScriptProperties().getProperty(prop_('ESTADO')) || JSON.stringify({ ejercicio: 0, ctas: normalizarCtas_(false), enlace: false, ejercicio_ts: 0, ctas_ts: 0, enlace_ts: 0 });
+    cache.put(prop_('ESTADO'), s, 21600);
   }
   var e = JSON.parse(s);
   e.ctas = normalizarCtas_(e.ctas);
@@ -633,7 +718,7 @@ function leerEstado_() {
 }
 
 // d.ctas puede ser un booleano (aplica a los tres) o un objeto parcial, p. ej. { separo: true } (cambia solo ese).
-// d.enlace es un booleano: prende o apaga la tarjeta del enlace en todas las salas.
+// d.enlace es un booleano: prende o apaga la tarjeta del enlace en todas las salas del proyecto.
 function guardarEstado_(d) {
   var actual = leerEstado_();
   var ctas = normalizarCtas_(actual.ctas);
@@ -650,8 +735,8 @@ function guardarEstado_(d) {
   nuevo.ctas_ts = (JSON.stringify(ctas) !== JSON.stringify(actual.ctas)) ? Date.now() : (actual.ctas_ts || Date.now());
   nuevo.enlace_ts = (nuevo.enlace !== !!actual.enlace) ? Date.now() : (actual.enlace_ts || Date.now());
   var s = JSON.stringify(nuevo);
-  PropertiesService.getScriptProperties().setProperty('ESTADO', s);
-  CacheService.getScriptCache().put('ESTADO', s, 21600);
+  PropertiesService.getScriptProperties().setProperty(prop_('ESTADO'), s);
+  CacheService.getScriptCache().put(prop_('ESTADO'), s, 21600);
   registrarEvento_('panel', '', nuevo);
   return nuevo;
 }
@@ -665,7 +750,8 @@ function stats_() {
   var rows = last > 1 ? sh.getRange(2, 1, last - 1, t.h.length).getValues() : [];
   var ix = function (n) { return t.h.indexOf(n); };
   var now = Date.now(), activos = 0, movil = 0;
-  var acciones = { separo: 0, agendo: 0, dossier: 0, enlace: 0 };
+  var acciones = { enlace: 0 };
+  CTA_IDS.forEach(function (id) { acciones[id] = 0; });
   var camposEj = t.h.filter(function (n) { return /^e\d+_/.test(n); });
   var respuestas = {}; camposEj.forEach(function (c) { respuestas[c] = 0; });
 
@@ -704,8 +790,10 @@ function stats_() {
 
 // Pestaña "Registrados": pega ahí la hoja del formulario de registro (con una columna de celular).
 // Marca la columna `registrado` de Asistentes: "sí" (coinciden últimos 10 dígitos),
-// "sí (8)" (coinciden últimos 8) o "no" (lead nuevo). Menú: Sala Karanis → Cruzar con registrados.
+// "sí (8)" (coinciden últimos 8) o "no" (lead nuevo). Menú: Salas ELEXA → Cruzar con registrados,
+// desde una pestaña del proyecto. La de registrados lleva el mismo final: «Registrados - kar lanzamiento».
 function cruzarConRegistrados() {
+  if (!proyectoDeHojaActiva_()) return;
   var ss = SpreadsheetApp.getActive();
   var sr = ss.getSheetByName(HOJAS.registrados);
   if (!sr || sr.getLastRow() < 2) { SpreadsheetApp.getUi().alert('Crea la pestaña "' + HOJAS.registrados + '" y pega ahí la lista del formulario de registro (con una columna de celular).'); return; }
@@ -751,16 +839,22 @@ function normalizar_(v) { return String(v === undefined || v === null ? '' : v).
 function limpiar_(s, max) { var t = String(s === undefined || s === null ? '' : s).replace(/\s+/g, ' '), o = ''; for (var i = 0; i < t.length; i++) { var c = t.charCodeAt(i); if (c >= 32 && c !== 127) o += t.charAt(i); } return o.trim().slice(0, max || 500); }
 // 10 -> "J", 19 -> "S": para nombrar las columnas en los avisos como las ve la persona.
 function letra_(col) { var s = ''; while (col > 0) { var r = (col - 1) % 26; s = String.fromCharCode(65 + r) + s; col = Math.floor((col - 1) / 26); } return s; }
-function hoja_(ss, nombre) { return ss.getSheetByName(nombre) || ss.insertSheet(nombre); }
-function hojaAsistentes_() { var ss = SpreadsheetApp.getActive(); var sh = ss.getSheetByName(HOJAS.asistentes); if (!sh || sh.getLastRow() === 0) { setup(); sh = ss.getSheetByName(HOJAS.asistentes); } return sh; }
+// Si la pestaña no existe se crea al final, con el color del proyecto.
+function hoja_(ss, nombre) {
+  var sh = ss.getSheetByName(nombre);
+  if (!sh) { sh = ss.insertSheet(nombre, ss.getNumSheets()); if (PROY && PROY.color) sh.setTabColor(PROY.color); }
+  return sh;
+}
+function hojaAsistentes_() { var ss = SpreadsheetApp.getActive(); var sh = ss.getSheetByName(HOJAS.asistentes); if (!sh || sh.getLastRow() === 0) { setupProyecto_(ss); sh = ss.getSheetByName(HOJAS.asistentes); } return sh; }
 function encabezados_(sh) { var lc = sh.getLastColumn(); return lc ? sh.getRange(1, 1, 1, lc).getValues()[0].map(String) : []; }
 
 // Devuelve el rol de quien entra: 'admin' (PANEL_KEY) o 'moderador' (MOD_KEY, sólo si
-// `conModerador`). Todo lo que no sea moderar el chat exige PANEL_KEY.
+// `conModerador`). Todo lo que no sea moderar el chat exige PANEL_KEY. Son las del
+// proyecto de la petición (PANEL_KEY_KAR en Karanis): la de otro proyecto no sirve.
 function exigirClave_(k, conModerador) {
   var props = PropertiesService.getScriptProperties();
-  var real = props.getProperty('PANEL_KEY') || CLAVE_POR_DEFECTO;
-  var mod = props.getProperty('MOD_KEY') || '';
+  var real = props.getProperty(prop_('PANEL_KEY')) || PROY.clave;
+  var mod = props.getProperty(prop_('MOD_KEY')) || '';
   k = String(k || '');
   if (k && k === real) return 'admin';
   if (conModerador && mod && k === mod) return 'moderador';

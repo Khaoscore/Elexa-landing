@@ -4,14 +4,17 @@
    público, ve la asistencia en vivo y las preguntas. Escribe el estado en el
    Apps Script y cada sala lo lee cada ~12 s.
 
-   Dos claves: PANEL_KEY ve todo; MOD_KEY entra como moderador y sólo ve el
+   La hoja y el Apps Script son los mismos de la sala de Florentino; PROYECTO
+   (src/data/sala.ts) hace que este panel sólo vea y controle la de Karanis.
+
+   Dos claves: PANEL_KEY_KAR ve todo; MOD_KEY_KAR entra como moderador y sólo ve el
    chat, donde puede borrar mensajes del muro y expulsar a una persona (su
    sala se cierra en la siguiente consulta, ~12 s). Las dos moderan, y
    las dos pueden escribir en el muro de la sala con su firma, sin
    registrarse en la sala.
 
    /panel es fácil de adivinar: lo que protege los datos es la clave
-   (PANEL_KEY en las propiedades del script), no que la página no se
+   (PANEL_KEY_KAR en las propiedades del script), no que la página no se
    encuentre. Va con noindex y fuera del sitemap. */
 import '../styles/panel.css';
 import { SALA_CONFIG } from '../data/sala';
@@ -175,17 +178,19 @@ import { SALA_CONFIG } from '../data/sala';
         var $ = function (s) { return document.querySelector(s); };
         var ENDPOINT = String(CFG.ENDPOINT || '').trim();
         var LOCAL = !ENDPOINT;
+        // la hoja es compartida con Florentino: PROYECTO dice qué sala controla este panel
+        var PROYECTO = String(CFG.PROYECTO || '').trim();
         var canal = (LOCAL && 'BroadcastChannel' in window) ? new BroadcastChannel('sala-karanis') : null;
         var key = sessionStorage.getItem('panel_key') || '';
         // 'admin' (PANEL_KEY) o 'moderador' (MOD_KEY): lo dice el Apps Script al leer stats
         var rol = sessionStorage.getItem('panel_rol') || 'admin';
-        var CTA_IDS = ['separo', 'agendo', 'dossier'];
+        var CTA_IDS = ['separo', 'agendo', 'youtube'];
         // marca que el Apps Script pone en la columna del celular a los mensajes escritos desde aquí
         var NUMERO_MOD = 'moderador';
         var CTAS = (CFG.CTAS && CFG.CTAS.length) ? CFG.CTAS : [
           { id: 'separo', titulo: 'Separo mi cupo', destino: 'Pasarela de pago' },
           { id: 'agendo', titulo: 'Quiero agendar mi cita', destino: 'Calendly' },
-          { id: 'dossier', titulo: 'Quiero el dossier completo', destino: 'Formulario de correo' }
+          { id: 'youtube', titulo: 'Ver el directo en YouTube', destino: 'Canal de Luis en YouTube' }
         ];
         function normalizarCtas(v) { var o = {}; CTA_IDS.forEach(function (id) { o[id] = (v && typeof v === 'object') ? !!v[id] : v === true; }); return o; }
         function normalizarEstado(e) { e = e || {}; return { ejercicio: Number(e.ejercicio) || 0, ctas: normalizarCtas(e.ctas), ejercicio_ts: Number(e.ejercicio_ts) || 0, enlace: !!e.enlace }; }
@@ -198,7 +203,14 @@ import { SALA_CONFIG } from '../data/sala';
            lectura, así que al publicar la versión nueva el aviso se apaga solo (sin recargar).
            En modo local el estado sale de localStorage y puede no traer la clave: no cuenta. */
         var scriptSinEnlace = false;
-        function revisarEnlace(est) { if (!LOCAL && est && typeof est === 'object') scriptSinEnlace = est.enlace === undefined; }
+        /* Igual con el botón de YouTube: una implementación anterior devuelve los botones sin
+           `youtube`, descarta el interruptor y el botón nunca sale en la sala. */
+        var scriptSinYoutube = false;
+        function revisarEnlace(est) {
+          if (LOCAL || !est || typeof est !== 'object') return;
+          scriptSinEnlace = est.enlace === undefined;
+          scriptSinYoutube = !!est.ctas && typeof est.ctas === 'object' && est.ctas.youtube === undefined;
+        }
 
         function toast(m) { var t = $('#toast'); t.textContent = m; t.classList.add('is-on'); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('is-on'); }, 2400); }
         function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -209,16 +221,17 @@ import { SALA_CONFIG } from '../data/sala';
         /* ---------- transporte ---------- */
         function get(action) {
           if (LOCAL) return Promise.resolve(localStats());
-          return fetch(ENDPOINT + '?action=' + action + '&key=' + encodeURIComponent(key) + '&t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); });
+          return fetch(ENDPOINT + '?action=' + action + (PROYECTO ? '&proyecto=' + encodeURIComponent(PROYECTO) : '') + '&key=' + encodeURIComponent(key) + '&t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); });
         }
         function post(payload) {
           payload.key = key;
+          if (PROYECTO) payload.proyecto = PROYECTO;
           if (LOCAL) return Promise.resolve({ ok: true });
           return fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=UTF-8' } }).then(function (r) { return r.json(); });
         }
         function localStats() {
           var log = []; try { log = JSON.parse(localStorage.getItem('sala_local_log') || '[]'); } catch (e) {}
-          var nums = {}; var resp = {}; var acc = { separo: 0, agendo: 0, dossier: 0, enlace: 0 }; var preg = []; var mod = leerModLocal(); var cal = {};
+          var nums = {}; var resp = {}; var acc = { separo: 0, agendo: 0, youtube: 0, enlace: 0 }; var preg = []; var mod = leerModLocal(); var cal = {};
           (CFG.EJERCICIOS || []).forEach(function (e) { resp[e.campo] = 0; });
           log.forEach(function (p) {
             // agregar al calendario desde la entrada no es entrar a la sala: cuenta aparte
@@ -281,8 +294,11 @@ import { SALA_CONFIG } from '../data/sala';
             revisarEnlace(j.estado);
             if (j.estado) estado = normalizarEstado(j.estado);
             renderEstado();
+            var tocaYoutube = patch.ctas === true || (patch.ctas && typeof patch.ctas === 'object' && patch.ctas.youtube !== undefined);
             toast(patch.enlace !== undefined && scriptSinEnlace
               ? 'El Apps Script no guarda el enlace: publica una versión nueva'
+              : tocaYoutube && scriptSinYoutube
+              ? 'El Apps Script no guarda el botón de YouTube: publica una versión nueva'
               : 'Estado enviado a la sala');
           }).catch(function () { toast('No se pudo conectar con el endpoint'); });
         }
@@ -291,7 +307,8 @@ import { SALA_CONFIG } from '../data/sala';
           $('#stateEj').textContent = ej ? ('Ejercicio ' + ej.id + ' activo: ' + ej.titulo) : 'Sin ejercicio activo';
           $('#dotEj').classList.toggle('is-on', !!ej);
           var visibles = CTAS.filter(function (c) { return estado.ctas[c.id]; });
-          $('#stateCta').textContent = visibles.length ? 'Botones visibles: ' + visibles.map(function (c) { return c.titulo; }).join(' · ') : 'Botones de cierre ocultos';
+          $('#stateCta').textContent = (visibles.length ? 'Botones visibles: ' + visibles.map(function (c) { return c.titulo; }).join(' · ') : 'Botones de cierre ocultos') +
+            (scriptSinYoutube ? ' · el Apps Script desplegado ignora el botón de YouTube: pega el Code.gs vigente y publica una versión nueva' : '');
           $('#dotCta').classList.toggle('is-on', visibles.length > 0);
           document.querySelectorAll('.ej[data-id]').forEach(function (el) { el.classList.toggle('is-active', Number(el.dataset.id) === Number(estado.ejercicio)); });
           document.querySelectorAll('.ej[data-cta]').forEach(function (el) {
@@ -357,7 +374,7 @@ import { SALA_CONFIG } from '../data/sala';
             var r = j.respuestas || {}, a = j.acciones || {};
             var html = tile(j.entradas || 0, 'Entradas') + tile(j.activos || 0, 'Activos ahora');
             (CFG.EJERCICIOS || []).forEach(function (e) { html += tile(r[e.campo] || 0, 'Resp. ej. ' + e.id); });
-            html += tile(a.separo || 0, 'Clic separo') + tile(a.agendo || 0, 'Clic agendó') + tile(a.dossier || 0, 'Clic dossier');
+            html += tile(a.separo || 0, 'Clic separo') + tile(a.agendo || 0, 'Clic agendó') + tile(a.youtube || 0, 'Clic YouTube');
             if (ENLACE_URL) html += tile(a.enlace || 0, 'Clic enlace');
             // sin la clave, el Apps Script publicado es anterior al registro del calendario
             if (j.calendario !== undefined) html += tile(j.calendario, 'Agregaron al calendario');
@@ -488,7 +505,7 @@ import { SALA_CONFIG } from '../data/sala';
         $('#btnRefresh').addEventListener('click', loop);
         if (canal) canal.onmessage = function () { clearTimeout(timer); timer = setTimeout(loop, 300); };
 
-        $('#loginNote').textContent = LOCAL ? 'Modo local: no hay ENDPOINT en src/data/sala.ts, cualquier clave sirve.' : 'La clave se define en las propiedades del script: PANEL_KEY (todo) o MOD_KEY (sólo moderación del chat).';
+        $('#loginNote').textContent = LOCAL ? 'Modo local: no hay ENDPOINT en src/data/sala.ts, cualquier clave sirve.' : 'La clave se define en las propiedades del script: ' + (PROYECTO ? 'PANEL_KEY_' + PROYECTO.toUpperCase() + ' (todo) o MOD_KEY_' + PROYECTO.toUpperCase() : 'PANEL_KEY (todo) o MOD_KEY') + ' (sólo moderación del chat).';
         if (LOCAL) { try { estado = normalizarEstado(JSON.parse(localStorage.getItem('sala_estado') || '{}')); } catch (e) {} }
         if (key) { entrar(); }
       })();

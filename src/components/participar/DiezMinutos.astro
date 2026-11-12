@@ -15,9 +15,9 @@
    título y la bajada en Body bold (16/20). La banda («Frame 93») arranca
    en la mitad de la foto y el símbolo («simbolo», 581 × 637) va a −96 del
    borde izquierdo y 306 por debajo del de arriba. */
-import { AGENDA_URL, esExterno } from '../../data/site';
+import { CITA_LUIS_URL, esExterno } from '../../data/site';
 
-const externo = esExterno(AGENDA_URL) ? { target: '_blank', rel: 'noopener' } : {};
+const externo = esExterno(CITA_LUIS_URL) ? { target: '_blank', rel: 'noopener' } : {};
 ---
 
 <section class="luis" aria-labelledby="luis-titulo">
@@ -41,7 +41,7 @@ const externo = esExterno(AGENDA_URL) ? { target: '_blank', rel: 'noopener' } : 
     </p>
     <a
       class="btn luis__boton"
-      href={AGENDA_URL ?? undefined}
+      href={CITA_LUIS_URL ?? undefined}
       {...externo}
       data-pixel="Schedule"
       data-pixel-nombre="agendar_reunion"

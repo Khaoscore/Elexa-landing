@@ -29,10 +29,14 @@ export const RADIOGRAFIA_URL = 'https://florentino.elexa.com.co/radiografia';
 /* «Hablemos», el botón de la barra: la conversación por WhatsApp. */
 export const HABLEMOS_URL = WHATSAPP_URL;
 
-/* «Agenda tu cita» (preguntas frecuentes y «10 minutos con Luis» en
-   /como-participar). Florentino y Proyecto e tienen cada uno su Calendly; para
-   la marca general todavía no hay uno, así que por ahora abre el WhatsApp. */
+/* «Agenda tu cita» (barra, preguntas frecuentes y radiografía). Florentino y
+   Proyecto e tienen cada uno su Calendly; para la marca general todavía no hay
+   uno, así que por ahora abre el WhatsApp. */
 export const AGENDA_URL: string | null = WHATSAPP_URL;
+
+/* «Agenda tu cita» de «10 minutos con Luis» (/como-participar): el Calendly
+   de Luis para preguntas sobre los proyectos. */
+export const CITA_LUIS_URL: string | null = 'https://calendly.com/lfpuerto-elexa/q-a-proyectos';
 
 /* «Log in», el botón de la barra: el portal de inversionistas (Agora). */
 export const LOGIN_URL: string | null = 'https://elexa.portal.agorareal.com/#/login?redirectUrl=%2F';

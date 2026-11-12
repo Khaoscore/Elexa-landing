@@ -8,7 +8,7 @@
    Script); acá cambian los textos, los colores y los datos del evento.
 
    ⚠️ Antes de publicar el evento, completar lo que está marcado «POR
-   CONFIRMAR»: fecha, video de YouTube, Calendly de Karanis y ENDPOINT. */
+   CONFIRMAR»: fecha, video de YouTube y Calendly de Karanis. */
 
 import { SITE_URL, WHATSAPP_URL } from './site';
 
@@ -43,17 +43,23 @@ export const SALA_CONFIG = {
      youtu.be) o sólo el ID. Para el evento real, el link del directo: video
      NO LISTADO y con «Permitir insertar» activado. Vacío, la sala muestra
      «Aún no hay video configurado». */
-  YOUTUBE: '',
+  YOUTUBE: 'https://youtube.com/live/_lf964Hj2aI?feature=share',
 
   /* URL del Web App de Google Apps Script (termina en /exec). Vacío = MODO
      LOCAL de prueba: el panel controla la sala dentro del mismo navegador y
      nada se envía a Google.
 
-     POR CONFIRMAR. Karanis necesita su propia hoja: crearla con
-     apps-script/Code.gs (los pasos están al principio de ese archivo) y pegar
-     acá su URL. No usar la URL de la sala de Florentino: escribiría en su
-     hoja y este panel prendería y apagaría cosas también en esa sala. */
-  ENDPOINT: '',
+     Es la misma URL de la sala de Florentino: las salas de Elexa comparten
+     la hoja «Eventos lanzamientos ELEXA» y su script (apps-script/Code.gs).
+     Lo que separa a Karanis es PROYECTO. */
+  ENDPOINT: 'https://script.google.com/macros/s/AKfycbw1pEO-1Lc2YJ2WhOcRegbcW20pr236iZI_946wop9huTNR8VrwaEYdnwAo2szxb5ocAw/exec',
+
+  /* Proyecto en la hoja compartida: la clave de PROYECTOS en
+     apps-script/Code.gs. Con 'kar', la sala escribe en las pestañas «… - kar
+     lanzamiento», el panel pide la clave PANEL_KEY_KAR (o MOD_KEY_KAR) y lo
+     que se prende acá sólo sale en esta sala. Sin PROYECTO, todo iría a las
+     pestañas de Florentino y este panel controlaría su sala. */
+  PROYECTO: 'kar',
 
   /* Nombre del webinar: el antetítulo de la sala (va en mayúsculas por CSS),
      el título de la pestaña y el del evento de Google Calendar. */
@@ -75,9 +81,10 @@ export const SALA_CONFIG = {
   /* Destinos de los botones de cierre. */
   CALENDLY_URL: EVENT_URL,
   PAGO_URL: CUPO_URL,
-  /* Vacío: «Quiero el dossier completo» abre un formulario de un solo campo
-     (correo) dentro de la sala. */
-  DOSSIER_URL: '',
+  /* «Ver el directo en YouTube»: los directos del canal de Luis, donde queda
+     la transmisión para quien no alcanzó a verla completa. Abre en otra
+     pestaña, para no cortar la sala. */
+  CANAL_URL: 'https://www.youtube.com/@luis_inversionista/streams',
   WHATSAPP_URL,
 
   /* Enlace que el presentador muestra u oculta desde el panel durante la
@@ -97,12 +104,14 @@ export const SALA_CONFIG = {
   },
 
   /* Botones de cierre. Desde el panel se muestra u oculta cada uno por
-     separado. El `id` es lo que queda en la hoja (accion_final / acciones_log):
-     el Apps Script sólo acepta separo, agendo y dossier. */
+     separado. El `id` es lo que queda en la hoja (accion_final / acciones_log)
+     y no se cambia: el Apps Script sólo acepta los de CTA_IDS (separo, agendo,
+     youtube y dossier, que es de Florentino). El `titulo` sí se puede cambiar:
+     es el texto del botón en la sala y en el panel. */
   CTAS: [
     { id: 'separo', titulo: 'Separo mi cupo', destino: 'Pasarela de pago' },
     { id: 'agendo', titulo: 'Quiero agendar mi cita', destino: 'Calendly' },
-    { id: 'dossier', titulo: 'Quiero el dossier completo', destino: 'Formulario de correo' },
+    { id: 'youtube', titulo: 'Ver el directo en YouTube', destino: 'Canal de Luis en YouTube' },
   ],
 
   /* Frecuencias en segundos. PING: la señal de «sigo aquí». ESTADO: consulta
