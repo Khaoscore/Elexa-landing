@@ -24,6 +24,8 @@ npm run check    # tipos
 | `/espacios` | Desktop - 4 | espacios en alquiler | en cada pedido |
 | `/espacios/{slug}` | Desktop - 5 | ficha de un espacio | en cada pedido |
 | `/como-participar` | Desktop - 6 | «Cómo hacer parte»: pasos, «10 minutos con Luis», galería | en el build |
+| `/sala` | — | sala del evento virtual de Karanis (ver «La sala del evento virtual») | en el build |
+| `/panel` | — | panel del equipo para la sala (con clave) | en el build |
 
 Las que leen la base de datos se arman en el servidor y el CDN de Vercel las
 guarda 60 s: un cambio en Supabase se ve en **~1 minuto**.
@@ -65,10 +67,14 @@ src/
     ├── radiografia.ts             a dónde van los datos de la radiografía
     ├── equipo.ts                  «Nuestro equipo»
     ├── faq.md                     preguntas frecuentes (texto plano, ver el archivo)
+    ├── sala.ts                    configuración de /sala y /panel (fecha, video, endpoint…)
     └── proyectos.ts  anteriores.ts  espacios.ts   respaldo sin Supabase
+src/styles/sala.css  panel.css     hojas propias de /sala y /panel (no usan global.css)
 public/img/                        assets exportados de Figma
+public/sala-assets/                fotos, logos y tipografía de la sala
 supabase/esquema.sql               tablas, permisos, bucket y datos iniciales
 supabase/sincronizar-hoja.gs       Apps Script de la hoja «Alquiler Elexa» → `propiedades`
+apps-script/Code.gs                Apps Script de la hoja de la sala de Karanis
 ```
 
 ## Base de datos
@@ -81,7 +87,7 @@ mostrarse sin borrarlo); las otras dos las llena cada una su hoja de Google:
 |---|---|---|
 | `proyectos` | «Proyectos abiertos» de la portada y tarjetas grandes de `/proyectos` | nombre, descripcion, imagen, imagen_grande, enlace |
 | `propiedades_elexa` | mapa y tarjetas de `/proyectos`; la llena la hoja «Propiedades Elexa» (no tiene `orden` ni `publicado`: sale todo, por código) | codigo, nombre_del_proyecto, direccion, categoria, **latitud, longitud**, fotos |
-| `propiedades` | `/espacios` y `/espacios/{slug}`; la llena la hoja «Alquiler Elexa» (sale todo, en el orden de la hoja) | id, nombre, barrio, valor, area, parqueadero, ascensor, amenidades, fotos, orden |
+| `propiedades` | `/espacios` y `/espacios/{slug}`; la llena la hoja «Alquiler Elexa» (sale todo, en el orden de la hoja) | id, nombre, barrio, valor, area, amenidades, disponibilidad, fotos, **carpeta**, direccion, latitud, longitud, orden |
 
 Detalles de cada columna, con ejemplos, en los comentarios de
 `supabase/esquema.sql`.
@@ -135,6 +141,14 @@ la ruta en la columna `imagen`, o pegar una URL completa. JPG o WebP de
     `02.jpg`… para elegir el orden). Una foto nueva en
     la carpeta no edita la hoja: aparece en la revisión de cada hora o con
     el menú **Supabase → Sincronizar ahora**.
+  - **Carpeta**: el enlace de la carpeta de Drive del botón **«Descargar
+    carpeta»** de la ficha (todo lo que tenga adentro: fotos, PDF, planos),
+    compartida como «Cualquier persona con el enlace». Si la celda está
+    vacía o no trae un enlace de carpeta de Drive, se usa la carpeta de
+    Fotos; si tampoco hay, la ficha no lleva el botón.
+    «Compartir», al lado, abre el menú de compartir del teléfono o, en el
+    computador, una ventana con WhatsApp, Facebook, X, Telegram y «Copiar
+    enlace».
   - La URL de la ficha es el nombre más el principio del ID; si el nombre
     cambia, la dirección vieja redirige a la nueva.
 - **Si Supabase no responde**, la página sale igual pero sin esa sección (no
@@ -161,6 +175,35 @@ umbrales: da la misma cifra que la de Florentino), pero cada pantalla pregunta
   en local no salga nada, `enviarEnDesarrollo: false` en
   `src/data/radiografia.ts`.
 - Sin JavaScript, el botón lleva a la radiografía de Florentino.
+
+## La sala del evento virtual
+
+`/sala` es la sala del lanzamiento virtual de Karanis y `/panel` su panel de
+control. Vienen de la sala de Florentino (misma lógica: espera con cuenta
+regresiva, acceso con nombre, celular y correo, video, ejercicios, botones de
+cierre, tarjeta de enlace, muro de preguntas y moderación); cambian los
+textos, los colores (azul de la fachada y amarillo del letrero de los renders)
+y las fotos. Son páginas sueltas: no usan `Base.astro` ni `global.css`, llevan
+`noindex` y no van en el sitemap.
+
+- **Todo se configura en `src/data/sala.ts`**: fecha y hora, video de
+  YouTube, endpoint, destinos de los botones, el enlace que se muestra durante
+  el directo y la pregunta del ejercicio.
+- **Antes del evento**, completar lo marcado «POR CONFIRMAR» en ese archivo:
+  fecha, video (no listado y con «Permitir insertar»), Calendly de Karanis y
+  `ENDPOINT`.
+- **`ENDPOINT` vacío = modo local**: la sala y el panel se hablan sólo dentro
+  del mismo navegador (abrir `/sala` y `/panel` en dos pestañas; en el panel
+  sirve cualquier clave) y nada se envía a Google. Para el evento real, crear
+  una hoja nueva con `apps-script/Code.gs` (los pasos están al principio del
+  archivo) y pegar su URL `/exec`. No usar la URL de la sala de Florentino:
+  escribiría en su hoja y este panel controlaría también esa sala.
+- **Claves del panel** (propiedades del script): `PANEL_KEY` ve todo
+  (por defecto `karanis2026`) y `MOD_KEY` sólo modera el chat (por defecto
+  `modkaranis2026`). Cambiarlas antes del evento.
+- La letra Henderson Sans viene del kit de Typekit de Elexa (`nnu5pnp`): si
+  `www.elexa.com.co` no está autorizado en ese kit, sale la fuente del sistema.
+  Duna Slab (títulos y cifras) va en `public/sala-assets/fonts/`.
 
 ## El mapa de proyectos anteriores
 

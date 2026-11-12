@@ -60,4 +60,22 @@ export default defineConfig({
       PUBLIC_MAPBOX_TOKEN: envField.string({ context: 'client', access: 'public', optional: true }),
     },
   },
+
+  /* `npm run build` con `npm run dev` abierto, sin que se estorben:
+     · el build guarda sus dependencias preparadas en su propia carpeta. Si
+       usara la del servidor de desarrollo (node_modules/.vite) le dejaría ahí
+       React de producción, y las islas de React (el mapa de /proyectos)
+       revientan con «_jsxDEV is not a function» hasta borrar esa carpeta;
+     · el servidor de desarrollo no vigila lo que genera el build
+       (.vercel/output y el dist/ viejo): en Windows los archivos que se
+       reescriben quedan bloqueados un instante y se caía con «EBUSY:
+       resource busy or locked». */
+  vite: {
+    cacheDir: process.argv.includes('build') ? 'node_modules/.vite-build' : 'node_modules/.vite',
+    server: {
+      watch: {
+        ignored: ['**/.vercel/**', '**/dist/**'],
+      },
+    },
+  },
 });

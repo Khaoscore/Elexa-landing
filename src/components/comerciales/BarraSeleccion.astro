@@ -1,0 +1,260 @@
+---
+/* La barra de la selección de /comerciales: flota abajo en todas las
+   páginas de /comerciales mientras haya algo seleccionado (ver
+   src/lib/seleccion.ts).
+
+   «3 espacios en tu selección» · «Ver» (la lista con sólo esos) ·
+   «Compartir» (la ventana de Compartir.astro con el enlace de la selección,
+   que se actualiza con cada cambio) · «×» para vaciarla, con «Deshacer»
+   unos segundos por si fue sin querer.
+
+   Mientras se ve, el pie gana alto abajo para que la barra no tape la línea
+   legal. */
+import Compartir from '../Compartir.astro';
+import { SITE_URL } from '../../data/site';
+import { COMERCIALES_URL } from '../../data/comerciales';
+---
+
+<div class="seleccion-barra" data-barra-seleccion data-base={COMERCIALES_URL} data-sitio={SITE_URL} hidden>
+  <div class="seleccion-barra__normal" data-normal>
+    <p class="seleccion-barra__cuenta" aria-live="polite">
+      <span class="seleccion-barra__numero" data-numero>0</span>
+      <span data-etiqueta>espacios en tu selección</span>
+    </p>
+    <a class="seleccion-barra__ver" href={COMERCIALES_URL} data-ver>Ver</a>
+    <Compartir
+      titulo="Selección de espacios"
+      url={`${SITE_URL}${COMERCIALES_URL}`}
+      texto="Mira estos espacios comerciales disponibles para alquilar:"
+      evento="CompartirSeleccion"
+      categoria="comerciales"
+    >
+      <button type="button" class="btn btn--primario seleccion-barra__compartir" data-abrir-compartir aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <path
+            fill="currentColor"
+            d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.61 1.31 2.92 2.92 2.92s2.92-1.31 2.92-2.92-1.31-2.92-2.92-2.92z"
+          ></path>
+        </svg>
+        Compartir
+      </button>
+    </Compartir>
+    <button type="button" class="seleccion-barra__vaciar" data-vaciar aria-label="Vaciar la selección">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"
+        ></path>
+      </svg>
+    </button>
+  </div>
+
+  <div class="seleccion-barra__vaciada" data-vaciada hidden>
+    <p>Selección vaciada.</p>
+    <button type="button" class="seleccion-barra__deshacer" data-deshacer>Deshacer</button>
+  </div>
+</div>
+
+<script>
+  import { alCambiar, alternar, leerSeleccion, rutaSeleccion, vaciarSeleccion } from '../../lib/seleccion';
+
+  const barra = document.querySelector<HTMLElement>('[data-barra-seleccion]');
+
+  if (barra) {
+    const base = barra.dataset.base ?? '/comerciales';
+    const sitio = barra.dataset.sitio ?? location.origin;
+    const normal = barra.querySelector<HTMLElement>('[data-normal]')!;
+    const vaciada = barra.querySelector<HTMLElement>('[data-vaciada]')!;
+    const numero = barra.querySelector<HTMLElement>('[data-numero]')!;
+    const etiqueta = barra.querySelector<HTMLElement>('[data-etiqueta]')!;
+    const ver = barra.querySelector<HTMLAnchorElement>('[data-ver]')!;
+    const compartir = barra.querySelector<HTMLElement>('[data-compartir]')!;
+
+    let respaldo: string[] = [];
+    let espera = 0;
+
+    const pintar = (claves: string[]) => {
+      const n = claves.length;
+      const deshaciendo = !vaciada.hidden;
+      barra.hidden = n === 0 && !deshaciendo;
+      document.documentElement.classList.toggle('con-seleccion', !barra.hidden);
+      if (n === 0) return;
+
+      if (deshaciendo) {
+        clearTimeout(espera);
+        vaciada.hidden = true;
+        normal.hidden = false;
+      }
+      numero.textContent = String(n);
+      etiqueta.textContent = n === 1 ? 'espacio en tu selección' : 'espacios en tu selección';
+      const ruta = rutaSeleccion(base, claves);
+      ver.href = ruta;
+      compartir.dataset.url = `${sitio}${ruta}`;
+      compartir.dataset.detalle = n === 1 ? '1 espacio' : `${n} espacios`;
+      compartir.dataset.texto =
+        n === 1
+          ? 'Mira este espacio comercial disponible para alquilar:'
+          : `Mira estos ${n} espacios comerciales disponibles para alquilar:`;
+    };
+
+    barra.querySelector('[data-vaciar]')!.addEventListener('click', () => {
+      respaldo = leerSeleccion();
+      normal.hidden = true;
+      vaciada.hidden = false;
+      vaciarSeleccion();
+      barra.querySelector<HTMLElement>('[data-deshacer]')!.focus();
+      clearTimeout(espera);
+      espera = window.setTimeout(() => {
+        vaciada.hidden = true;
+        normal.hidden = false;
+        pintar(leerSeleccion());
+      }, 5000);
+    });
+
+    barra.querySelector('[data-deshacer]')!.addEventListener('click', () => {
+      clearTimeout(espera);
+      vaciada.hidden = true;
+      normal.hidden = false;
+      for (const clave of respaldo) alternar(clave);
+    });
+
+    alCambiar(pintar);
+    pintar(leerSeleccion());
+  }
+</script>
+
+<style>
+  .seleccion-barra {
+    position: fixed;
+    bottom: 16px;
+    left: 50%;
+    z-index: 60;
+    width: max-content;
+    max-width: calc(100% - 24px);
+    padding: 8px 8px 8px 20px;
+    border-radius: var(--radius-full);
+    background: var(--brand-500);
+    box-shadow: 0 12px 40px rgba(15, 19, 22, 0.32);
+    color: var(--neutral-100);
+    transform: translateX(-50%);
+    animation: seleccion-entra 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+  .seleccion-barra[hidden],
+  .seleccion-barra [hidden] {
+    display: none !important;
+  }
+  @keyframes seleccion-entra {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 16px);
+    }
+  }
+
+  .seleccion-barra__normal,
+  .seleccion-barra__vaciada {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .seleccion-barra__cuenta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-right: 4px;
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 20px;
+    white-space: nowrap;
+  }
+
+  .seleccion-barra__numero {
+    display: grid;
+    flex: none;
+    place-items: center;
+    min-width: 28px;
+    height: 28px;
+    padding: 0 6px;
+    border-radius: var(--radius-full);
+    background: var(--accent-300);
+    font-size: 14px;
+  }
+
+  .seleccion-barra__ver,
+  .seleccion-barra__deshacer {
+    padding: 8px 4px;
+    border: 0;
+    background: none;
+    color: var(--neutral-100);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 20px;
+    text-decoration: underline;
+    text-underline-offset: 4px;
+    cursor: pointer;
+  }
+
+  .seleccion-barra__compartir {
+    min-height: 40px;
+    padding: 7px 18px;
+    background: var(--neutral-100);
+    color: var(--brand-300);
+    font-size: 16px;
+  }
+  .seleccion-barra__compartir:hover {
+    background: #efe8f6;
+  }
+
+  .seleccion-barra__vaciar {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--neutral-100);
+    cursor: pointer;
+  }
+  .seleccion-barra__vaciar:hover {
+    background: rgba(255, 255, 255, 0.2);
+  }
+
+  .seleccion-barra__vaciada {
+    padding-right: 12px;
+    font-size: 15px;
+  }
+
+  /* Teléfono angosto: sólo el número («3 en tu selección» no cabe con los
+     botones). */
+  @media (max-width: 419px) {
+    .seleccion-barra {
+      padding-left: 12px;
+    }
+    .seleccion-barra__normal {
+      gap: 8px;
+    }
+    .seleccion-barra__cuenta [data-etiqueta] {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+    }
+  }
+
+  /* Con la barra a la vista, el pie crece abajo para que no tape la línea
+     legal. */
+  :global(html.con-seleccion .pie-c) {
+    border-bottom: 80px solid var(--ink-400);
+  }
+
+  @media print {
+    .seleccion-barra {
+      display: none !important;
+    }
+  }
+</style>

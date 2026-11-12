@@ -28,15 +28,21 @@
    la tarjeta, y la foto un poco más adentro. */
 import type { Espacio } from '../../lib/espacios';
 import { estiloMuescas } from '../../lib/formas';
+import { ESPACIOS_URL } from '../../data/site';
 
 interface Props {
   espacio: Espacio;
   /** En la primera fila de la grilla: su foto se pide de entrada, sin
       esperar a que el navegador calcule que está en pantalla. */
   arriba?: boolean;
+  /** Dónde vive la ficha: /espacios, o /comerciales en la versión sin
+      marca. */
+  base?: string;
+  /** Sin foto, una tienda en vez del símbolo de Elexa (/comerciales). */
+  sinMarca?: boolean;
 }
 
-const { espacio, arriba = false } = Astro.props;
+const { espacio, arriba = false, base = ESPACIOS_URL, sinMarca = false } = Astro.props;
 const [portada] = espacio.fotos;
 const valor = [espacio.precio, espacio.precioNota].filter(Boolean).join(' ');
 const resumen = [espacio.area, valor].filter(Boolean).join(' · ');
@@ -48,7 +54,7 @@ const forma = Object.entries(
   .join(';');
 ---
 
-<a class="espacio" href={`/espacios/${espacio.slug}`} data-cursor="ver">
+<a class="espacio" href={`${base}/${espacio.slug}`} data-cursor="ver">
   <span class="espacio__marco muescas" style={forma}>
     {
       portada ? (
@@ -64,7 +70,13 @@ const forma = Object.entries(
           referrerpolicy="no-referrer"
         />
       ) : (
-        <img class="espacio__sin-foto" src="/img/marca/simbolo-claro.svg" alt="" width="29.06" height="32" />
+        <img
+          class="espacio__sin-foto"
+          src={sinMarca ? '/img/comerciales/local.svg' : '/img/marca/simbolo-claro.svg'}
+          alt=""
+          width="29.06"
+          height="32"
+        />
       )
     }
     <span class="espacio__velo muescas__trazo" aria-hidden="true"></span>

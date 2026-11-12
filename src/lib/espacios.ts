@@ -22,6 +22,10 @@
                   Drive (el script convierte el enlace de la carpeta en la
                   lista de sus fotos), cualquier URL de imagen o una ruta del
                   bucket `imagenes`. La primera es la portada.
+   · carpeta      la columna «Carpeta» de la hoja (o, si está vacía, la
+                  carpeta de Drive de Fotos): el botón «Información general» de
+                  la ficha. Sólo cuenta un enlace de carpeta de Drive; vacía
+                  o con otro texto, el botón no sale.
 
    La hoja no tiene slug: la URL es el nombre más el principio del ID
    (`/espacios/rooftop-piso-5-y-6-c3377cda`). Si cambia el nombre, el ID sigue
@@ -73,6 +77,9 @@ export type Espacio = {
       atractivos»). */
   descripcion: string[];
   fotos: Foto[];
+  /** La carpeta de Drive del espacio, para «Información general». Vacío = sin
+      botón. */
+  carpeta: string;
   /** «Disponibilidad inmediata», «Disponible en 2027». Vacío = sin dato. */
   disponibilidad: string;
   /** La lista de la ficha, cada una con su ícono: barrio, área,
@@ -94,6 +101,8 @@ export type FilaPropiedad = {
   latitud?: string | number | null;
   longitud?: string | number | null;
   fotos?: string | null;
+  /** La carpeta de Drive de «Información general» (columna Carpeta de la hoja). */
+  carpeta?: string | null;
   /** La posición de la fila en la hoja. */
   orden?: number | string | null;
 };
@@ -111,8 +120,9 @@ function slugDe(texto: string): string {
 }
 
 /* Del ID, lo que va en la URL: el primer bloque si es un UUID (los que pone
-   el script), si no el ID entero. */
-function claveDe(id: string): string {
+   el script), si no el ID entero. También identifica cada espacio en la
+   selección de /comerciales (?ver=…): no cambia si cambia el nombre. */
+export function claveDe(id: string): string {
   const uuid = id.match(/^([0-9a-f]{8})-[0-9a-f]{4}-/i);
   return uuid ? uuid[1].toLowerCase() : slugDe(id);
 }
@@ -177,7 +187,14 @@ const DRIVE_ARCHIVO = [
   /(?:drive|docs)\.google\.com\/(?:open|uc|thumbnail)\?(?:.*&)?id=([\w-]{20,})/,
   /lh3\.googleusercontent\.com\/d\/([\w-]{20,})/,
 ];
-const DRIVE_CARPETA = /drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\//;
+const DRIVE_CARPETA = /drive\.google\.com\/drive\/(?:u\/\d+\/)?folders\/([\w-]{10,})/;
+
+/* Sólo un enlace de carpeta de Drive llega al botón, y siempre en su forma
+   limpia (sin `/u/0/` ni `?usp=sharing`). */
+function carpetaDe(valor: string | null | undefined): string {
+  const id = limpio(valor).match(DRIVE_CARPETA)?.[1];
+  return id ? `https://drive.google.com/drive/folders/${id}` : '';
+}
 
 function fotoDe(texto: string, nombre: string): Foto | null {
   for (const patron of DRIVE_ARCHIVO) {
@@ -258,6 +275,7 @@ export function aEspacio(fila: FilaPropiedad): Espacio {
     disponibilidad: disponible.frase,
     descripcion: parrafos(fila.amenidades ?? ''),
     fotos: fotosDe(fila.fotos ?? '', nombre),
+    carpeta: carpetaDe(fila.carpeta),
     caracteristicas,
   };
 }
@@ -323,4 +341,18 @@ export async function getEspacio(
     });
   if (!porId) return null;
   return { espacio: porId, exacto: Boolean(exacto), otros: otrosEspacios(porId, espacios, 2) };
+}
+
+/** La selección de /comerciales (?ver=clave1,clave2): los espacios de esas
+    claves que sigan en la hoja, en ese orden y sin repetir. Si Supabase
+    falla lanza el error, como getEspacio. */
+export async function getSeleccion(claves: string[]): Promise<Espacio[]> {
+  const espacios = await leer();
+  const porClave = new Map(espacios.map((e) => [claveDe(e.id), e]));
+  const vistos = new Set<Espacio>();
+  for (const clave of claves) {
+    const espacio = porClave.get(clave.trim().toLowerCase());
+    if (espacio) vistos.add(espacio);
+  }
+  return [...vistos];
 }

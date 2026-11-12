@@ -17,13 +17,21 @@
    Vuelve el cursor del sistema donde el propio hace falta: campos de texto,
    el mapa de Leaflet y lo que lleve data-cursor="nativo". Sólo se enciende
    con un mouse (no con el dedo ni con el lápiz) y nunca en alto contraste;
-   si el script no corre, queda el cursor normal. */
+   si el script no corre, queda el cursor normal.
+
+   `sinMarca` (en /comerciales) deja el disco de «Ver» sin el símbolo. */
+interface Props {
+  sinMarca?: boolean;
+}
+
+const { sinMarca = false } = Astro.props;
 ---
 
 <div class="cursor" aria-hidden="true">
   <div class="cursor__capa cursor__capa--anillo">
     <span class="cursor__disco">
       <span class="cursor__marca">
+        {!sinMarca && (
         <svg class="cursor__simbolo" viewBox="0 0 29.0605 32.001" width="22" height="24.23">
           <path
             d="M28.9114 18.0081L26.9771 17.0197C24.9537 15.9851 23.6965 13.9271 23.6965 11.6482V0.27513C23.6965 0.159733 23.6234 0.0553743 23.5154 0.0162398C23.4074 -0.0228947 23.2854 0.0102191 23.2114 0.0995261C22.8883 0.489868 22.5352 0.862148 22.1622 1.20533C22.1062 1.25751 22.0732 1.33076 22.0732 1.40802V14.4729C22.1282 17.7954 23.9955 20.7977 26.9461 22.3059L28.6614 23.1829C28.7454 23.226 28.8484 23.222 28.9294 23.1718C29.0105 23.1227 29.0605 23.0324 29.0605 22.937V18.2529C29.0605 18.1486 29.0034 18.0553 28.9104 18.0081H28.9114Z"
@@ -44,6 +52,7 @@
             d="M6.9863 14.4731V14.458L6.9873 1.40815C6.9873 1.33088 6.95529 1.25763 6.89828 1.20545C6.52521 0.862274 6.17215 0.489994 5.84909 0.0996521C5.79708 0.0354313 5.71906 0.000310606 5.63905 0.000310606C5.60804 0.000310606 5.57704 0.00532785 5.54603 0.0163658C5.43801 0.0555003 5.365 0.159859 5.365 0.275256V11.6484C5.365 13.9272 4.10776 15.9853 2.08439 17.0198L0.150028 18.0082C0.0580108 18.0554 0 18.1497 0 18.2531V22.9372C0 23.0325 0.0500093 23.1218 0.131024 23.172C0.212039 23.2211 0.314058 23.2251 0.399074 23.183L2.11439 22.306C5.06594 20.7968 6.93229 17.7955 6.9863 14.4731Z"
           />
         </svg>
+        )}
         <span class="cursor__texto">Ver</span>
       </span>
       <svg class="cursor__flechas" viewBox="0 0 40 16" width="30" height="12">

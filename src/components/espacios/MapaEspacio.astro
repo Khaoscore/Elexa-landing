@@ -16,9 +16,11 @@ import type { Coordenadas } from '../../lib/coordenadas';
 interface Props {
   ubicacion: Coordenadas;
   nombre: string;
+  /** En el pin, una tienda en vez del símbolo de Elexa (/comerciales). */
+  sinMarca?: boolean;
 }
 
-const { ubicacion, nombre } = Astro.props;
+const { ubicacion, nombre, sinMarca = false } = Astro.props;
 ---
 
 <div
@@ -27,6 +29,7 @@ const { ubicacion, nombre } = Astro.props;
   data-latitud={ubicacion.latitud}
   data-longitud={ubicacion.longitud}
   data-nombre={nombre}
+  data-sin-marca={sinMarca ? '' : undefined}
   role="region"
   aria-label={`Mapa con la ubicación de ${nombre}`}
 >
@@ -38,10 +41,14 @@ const { ubicacion, nombre } = Astro.props;
 
   /* El pin grande de /proyectos sin el nombre debajo. Mide 86 × 137 y el
      centro del punto morado (43, 117) es el que cae sobre el lugar. */
-  const PIN = `
+  const pin = (sinMarca: boolean) => `
     <span class="pin-espacio">
       <img class="pin-espacio__cuerpo" src="/img/mapa/pin-grande.svg" alt="" width="117" height="143">
-      <img class="pin-espacio__logo" src="/img/mapa/pin-grande-simbolo.svg" alt="" width="44" height="33">
+      ${
+        sinMarca
+          ? '<img class="pin-espacio__local" src="/img/comerciales/local.svg" alt="" width="36" height="36">'
+          : '<img class="pin-espacio__logo" src="/img/mapa/pin-grande-simbolo.svg" alt="" width="44" height="33">'
+      }
       <img class="pin-espacio__punto" src="/img/mapa/punto.svg" alt="" width="40" height="40">
     </span>`;
 
@@ -65,7 +72,7 @@ const { ubicacion, nombre } = Astro.props;
     });
     mapa.ponerPin('espacio', {
       punto,
-      html: PIN,
+      html: pin(lienzo.dataset.sinMarca !== undefined),
       tamano: [86, 137],
       ancla: [43, 117],
       titulo: lienzo.dataset.nombre ?? '',
@@ -139,6 +146,13 @@ const { ubicacion, nombre } = Astro.props;
     left: 21px;
     width: 43.6px;
     height: 32.82px;
+  }
+  /* La tienda de /comerciales, centrada en el círculo morado (42.5, 42.5). */
+  .mapa-espacio :global(.pin-espacio__local) {
+    top: 24.5px;
+    left: 24.5px;
+    width: 36px;
+    height: 36px;
   }
   .mapa-espacio :global(.pin-espacio__punto) {
     top: 97px;

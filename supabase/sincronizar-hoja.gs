@@ -15,13 +15,20 @@
      También se pueden pegar enlaces de fotos sueltas, uno por renglón.
      Una foto nueva en la carpeta no edita la hoja: aparece en la revisión
      de cada hora o con Supabase → Sincronizar ahora.
+   · Carpeta: el enlace de la carpeta de Drive que se descarga con el botón
+     «Descargar carpeta» de la ficha del espacio (todo lo que haya adentro:
+     fotos, PDF, planos). Va a la columna `carpeta`, en su forma limpia.
+     Si la celda está vacía o no trae un enlace de carpeta de Drive, se usa
+     la carpeta de Fotos; si tampoco hay, la ficha no lleva el botón. La
+     columna es opcional: sin ella en la hoja, también se usa la de Fotos.
    · orden: la posición de la fila en la hoja. El sitio muestra los espacios
      en ese orden.
 
    Instalación o actualización:
    1. En Supabase, correr supabase/esquema.sql (agrega las columnas `orden`,
-      `disponibilidad`, `direccion`, `latitud` y `longitud` y deja la tabla de sólo lectura
-      para la clave pública).
+      `disponibilidad`, `direccion`, `latitud`, `longitud` y `carpeta` y deja
+      la tabla de sólo lectura para la clave pública). ANTES del paso 2: si
+      falta la columna `carpeta`, la sincronización falla.
    2. Pegar este archivo en el editor de Apps Script, reemplazando el anterior.
    3. Ejecutar installTriggers a mano: pide permiso para leer Drive (por las
       carpetas de fotos), reinstala los activadores y sincroniza.
@@ -40,7 +47,8 @@ const MAX_FOTOS = 30; // por espacio
 // las tildes y las mayúsculas tampoco). «Características y atractivos» va a
 // `amenidades`, el nombre que tenía la columna antes: es el texto de la
 // sección «Descripción» de la ficha. Latitud y Longitud ubican el mapa;
-// Disponibilidad («Inmediata», «2027») es un pin de la ficha.
+// Disponibilidad («Inmediata», «2027») es un pin de la ficha. Las `opcional`
+// pueden faltar en la hoja sin que se detenga la sincronización.
 const COLUMNS = [
   { header: 'ID', field: 'id' },
   { header: 'Nombre', field: 'nombre' },
@@ -52,7 +60,8 @@ const COLUMNS = [
   { header: 'Fotos', field: 'fotos' },
   { header: 'Dirección', field: 'direccion' },
   { header: 'Latitud', field: 'latitud' },
-  { header: 'Longitud', field: 'longitud' }
+  { header: 'Longitud', field: 'longitud' },
+  { header: 'Carpeta', field: 'carpeta', opcional: true }
 ];
 
 // Las columnas de la hoja más las que calcula el script.
@@ -147,6 +156,14 @@ function fotosDeCarpeta_(id, cache) {
   return cache[id];
 }
 
+// La primera carpeta de Drive de una celda (Carpeta o Fotos), en su forma
+// limpia: el botón «Descargar carpeta» de la ficha. Vacío si no hay carpeta
+// (un texto como «VACANCIAS PAGINA WEB» no cuenta).
+function carpetaDe_(celda) {
+  const m = str_(celda).match(DRIVE_CARPETA);
+  return m ? 'https://drive.google.com/drive/folders/' + m[1] : '';
+}
+
 // La celda de Fotos → una URL por renglón: cada carpeta se cambia por sus
 // fotos y cada enlace de Drive por su URL directa; lo demás queda igual.
 function resolverFotos_(celda, cache) {
@@ -182,7 +199,7 @@ function readSheet_() {
 
   const cols = COLUMNS.map(c => {
     const index = headers.indexOf(normalize_(c.header));
-    if (index === -1) throw new Error(`Falta la columna "${c.header}" en la fila 1 de la hoja.`);
+    if (index === -1 && !c.opcional) throw new Error(`Falta la columna "${c.header}" en la fila 1 de la hoja.`);
     return { index: index, field: c.field };
   });
   const idIndex = cols.find(c => c.field === 'id').index;
@@ -212,8 +229,10 @@ function readSheet_() {
     seen.add(id);
 
     const record = {};
-    cols.forEach(c => { record[c.field] = str_(row[c.index]); });
+    cols.forEach(c => { record[c.field] = c.index === -1 ? '' : str_(row[c.index]); });
     record.id = id;
+    // La columna Carpeta manda; si no trae una carpeta de Drive, la de Fotos.
+    record.carpeta = carpetaDe_(record.carpeta) || carpetaDe_(record.fotos);
     record.fotos = resolverFotos_(record.fotos, carpetas);
     record.orden = records.length + 1;
     records.push(record);
