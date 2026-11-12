@@ -26,6 +26,7 @@
    o el botón «atrás» del teléfono. Abajo a la izquierda de la foto, una
    pastilla con el ícono de ampliar y el contador avisa que se puede abrir. */
 import type { Espacio } from '../../lib/espacios';
+import { partesDelPrecio } from '../../lib/espacios';
 import { estiloMuescas, type Muesca } from '../../lib/formas';
 
 interface Props {
@@ -37,6 +38,11 @@ interface Props {
 const { espacio, sinMarca = false } = Astro.props;
 const { fotos, precio, precioNota, nombre } = espacio;
 const conFlechas = fotos.length > 1;
+
+/* «Desde $70.000/m² + IVA»: «Desde» en un renglón chico arriba y «/m² + IVA»
+   en chico al lado de la cifra, para que quepa en la muesca. */
+const { antes, cifra, unidad } = partesDelPrecio(precio);
+const sufijo = [unidad, precioNota].filter(Boolean).join(' ');
 
 /* Las dos formas van en variables propias y el <style> elige cuál pasa a
    `.muescas` (con `--muescas-mascara` en el style ninguna media query podría
@@ -123,8 +129,9 @@ const textoAlt = (i: number) => (conFlechas ? `${nombre}, foto ${i + 1} de ${fot
 
   {
     precio && (
-      <p class="fotos__precio display">
-        {precio} {precioNota && <span>{precioNota}</span>}
+      <p class:list={['fotos__precio display', { 'fotos__precio--antes': antes }]}>
+        {antes && <span class="fotos__precio-antes">{antes}</span>}
+        {cifra}{sufijo && <span class:list={['fotos__precio-nota', { 'fotos__precio-nota--unidad': unidad }]}>{sufijo}</span>}
       </p>
     )
   }
@@ -406,10 +413,31 @@ const textoAlt = (i: number) => (conFlechas ? `${nombre}, foto ${i + 1} de ${fot
     font-size: 48px;
     line-height: 46px;
   }
-  .fotos__precio span {
+  .fotos__precio-nota {
     display: inline-block;
+    margin-left: 0.3em;
     font-size: 24px;
     line-height: 30px;
+  }
+  /* «/m²» va pegado a la cifra. */
+  .fotos__precio-nota--unidad {
+    margin-left: 2px;
+  }
+
+  /* Con «Desde» arriba, el precio sube para que los dos renglones quepan en
+     la muesca. */
+  .fotos__precio--antes {
+    padding-top: 12px;
+  }
+  .fotos__precio-antes {
+    display: block;
+    margin-bottom: 2px;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 16px;
+    line-height: 20px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
   }
 
   /* También del tamaño de su muesca, por lo mismo. */
@@ -607,9 +635,17 @@ const textoAlt = (i: number) => (conFlechas ? `${nombre}, foto ${i + 1} de ${fot
       font-size: 30px;
       line-height: 34px;
     }
-    .fotos__precio span {
+    .fotos__precio-nota {
       font-size: 16px;
       line-height: 20px;
+    }
+    .fotos__precio--antes {
+      padding-top: 9px;
+    }
+    .fotos__precio-antes {
+      margin-bottom: 0;
+      font-size: 12px;
+      line-height: 16px;
     }
 
     .fotos__flechas {

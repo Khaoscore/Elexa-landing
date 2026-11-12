@@ -137,7 +137,23 @@ function separarValor(valor: string): { precio: string; nota: string } {
     const cifra = precio.replace(/[^\d.,]/g, '');
     precio = /^\d+$/.test(cifra) ? `$${new Intl.NumberFormat('es-CO').format(Number(cifra))}` : `$${cifra}`;
   }
+  /* El precio por metro, siempre igual: «$70.000 m²», «$70.000 x m2» o
+     «$70.000 por metro cuadrado» → «$70.000/m²». */
+  precio = precio.replace(
+    /(\$\s*[\d.,]+)\s*(?:\/|x|por)?\s*(?:m²|mts?2|m2|mts?²|metros?\s+cuadrados?)(?![a-z0-9])/i,
+    '$1/m²',
+  );
   return { precio, nota };
+}
+
+/** El precio de la hoja en partes, para la muesca de la foto de la ficha:
+    «Desde $70.000/m²» → «Desde» (renglón chico de arriba), «$70.000» y
+    «/m²» (en chico, con la nota). Si no tiene esa forma, todo va en `cifra`. */
+export function partesDelPrecio(precio: string): { antes: string; cifra: string; unidad: string } {
+  const partes = precio.match(/^(desde|hasta|a partir de)?\s*(\$\s*[\d.,]+)(\/m²)?$/i);
+  if (!partes) return { antes: '', cifra: precio, unidad: '' };
+  const [, antes = '', cifra, unidad = ''] = partes;
+  return { antes: antes && mayuscula(antes.toLocaleLowerCase('es-CO')), cifra: cifra.replace(/\s+/g, ''), unidad };
 }
 
 function conUnidad(area: string): string {
