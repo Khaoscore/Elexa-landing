@@ -1,0 +1,75 @@
+---
+/* Esqueleto de /comerciales: el de Base.astro (mismas tipografías, hoja
+   global, pixel, entrada de las secciones y cursor), pero sin la marca
+   Elexa: barra y pie propios, el ícono de la tienda en la pestaña, el nombre
+   de src/data/comerciales.ts en la vista previa al compartir y el cursor sin
+   el símbolo. No se indexa (ver src/data/comerciales.ts). */
+import '@fontsource-variable/dm-sans/opsz.css';
+import '@fontsource/roboto/400.css';
+import '@fontsource/roboto/700.css';
+import '@fontsource/roboto-condensed/400.css';
+import '../styles/global.css';
+import Cursor from '../components/Cursor.astro';
+import EntradaSecciones from '../components/EntradaSecciones.astro';
+import MetaPixel from '../components/MetaPixel.astro';
+import BarraComerciales from '../components/comerciales/BarraComerciales.astro';
+import PieComerciales from '../components/comerciales/PieComerciales.astro';
+import BarraSeleccion from '../components/comerciales/BarraSeleccion.astro';
+import { SITE_URL } from '../data/site';
+import { COMERCIALES_NOMBRE } from '../data/comerciales';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Ruta canónica, sin dominio: /comerciales, /comerciales/{slug}. */
+  path: string;
+  /** La foto que muestran WhatsApp y las redes al compartir el enlace. */
+  imagen?: string;
+  /** Servidores de afuera de los que salen las fotos de arriba (ver
+      src/lib/origenes.ts). */
+  conectar?: string[];
+  /** Separación del pie en escritorio y en el teléfono. */
+  separacionPie?: number;
+  separacionPieMovil?: number;
+}
+
+const { title, description, path, imagen, conectar = [], separacionPie, separacionPieMovil } = Astro.props;
+const canonical = new URL(path, SITE_URL).toString();
+const ogImagen = imagen ? new URL(imagen, SITE_URL).toString() : null;
+---
+
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="robots" content="noindex" />
+    <link rel="canonical" href={canonical} />
+    <meta name="theme-color" content="#5f249f" />
+    <link rel="icon" href="/img/comerciales/favicon-32.png" sizes="32x32" type="image/png" />
+    <link rel="icon" href="/img/comerciales/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/img/comerciales/apple-touch-icon.png" />
+    {conectar.map((origen) => <link rel="preconnect" href={origen} />)}
+
+    <meta property="og:type" content="website" />
+    <meta property="og:locale" content="es_CO" />
+    <meta property="og:site_name" content={COMERCIALES_NOMBRE} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {ogImagen && <meta property="og:image" content={ogImagen} />}
+  </head>
+  <body>
+    <MetaPixel />
+    <BarraComerciales />
+    <main>
+      <slot />
+    </main>
+    <PieComerciales separacion={separacionPie} separacionMovil={separacionPieMovil} />
+    <BarraSeleccion />
+    <EntradaSecciones />
+    <Cursor sinMarca />
+  </body>
+</html>

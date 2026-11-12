@@ -1,0 +1,130 @@
+---
+/* /comerciales: los espacios en alquiler de /espacios, sin la marca Elexa,
+   para que los asesores comerciales externos compartan el enlace (ver
+   src/data/comerciales.ts).
+
+   Los mismos espacios, en el mismo orden y con la misma grilla que
+   /espacios; las tarjetas llevan a /comerciales/{slug}. Sin la banda de
+   «Nuestros aliados». Encima de la grilla, los filtros y «Lista / Mapa»; en
+   cada tarjeta, «Seleccionar» (ExplorarEspacios.astro).
+
+   /comerciales?ver=clave1,clave2 es una selección: sólo esos espacios, en
+   ese orden, con un aviso arriba y «Ver todos los espacios». La vista previa
+   al compartirla dice cuántos son y muestra la foto del primero. Si ninguno
+   sigue en la hoja, lo avisa y lleva a la lista completa. */
+export const prerender = false;
+
+import BaseComerciales from '../../layouts/BaseComerciales.astro';
+import EncabezadoEspacios from '../../components/espacios/EncabezadoEspacios.astro';
+import ExplorarEspacios from '../../components/comerciales/ExplorarEspacios.astro';
+import { getEspacios, getSeleccion, type Espacio } from '../../lib/espacios';
+import { origenesDe } from '../../lib/origenes';
+import { COMERCIALES_NOMBRE, COMERCIALES_URL } from '../../data/comerciales';
+
+const claves = (Astro.url.searchParams.get('ver') ?? '')
+  .split(',')
+  .map((clave) => clave.trim())
+  .filter(Boolean)
+  .slice(0, 30);
+const esSeleccion = claves.length > 0;
+
+let espacios: Espacio[] = [];
+if (esSeleccion) {
+  try {
+    espacios = await getSeleccion(claves);
+  } catch (error) {
+    console.error('[comerciales] No se pudo leer la selección:', error);
+  }
+} else {
+  espacios = await getEspacios();
+}
+
+const n = espacios.length;
+const titulo =
+  esSeleccion && n > 0
+  ? n === 1
+    ? `${espacios[0].nombre} — ${COMERCIALES_NOMBRE}`
+    : `${n} espacios comerciales en alquiler`
+  : `${COMERCIALES_NOMBRE} en alquiler en Cali`;
+const descripcion =
+  esSeleccion && n > 0
+    ? espacios.map((e) => [e.nombre, e.barrio].filter(Boolean).join(', ')).join(' · ')
+    : 'Locales, rooftops y terrazas comerciales disponibles para alquilar en Cali y Palmira.';
+
+Astro.response.headers.set('Cache-Control', 'public, s-maxage=60, stale-while-revalidate=600');
+---
+
+<BaseComerciales
+  title={titulo}
+  description={descripcion}
+  path={esSeleccion ? `${COMERCIALES_URL}?ver=${claves.join(',')}` : COMERCIALES_URL}
+  imagen={espacios[0]?.fotos[0]?.jpeg}
+  conectar={origenesDe(espacios.slice(0, 2).map((espacio) => espacio.fotos[0]?.src))}
+>
+  <EncabezadoEspacios sinMarca />
+
+  {
+    esSeleccion && n > 0 && (
+      <div class="seleccion-aviso contenedor">
+        <p>
+          <strong>{n === 1 ? 'Un espacio seleccionado' : `${n} espacios seleccionados`}</strong> de los que están
+          disponibles para alquilar.
+        </p>
+        <a class="btn btn--borde" href={COMERCIALES_URL}>
+          Ver todos los espacios
+        </a>
+      </div>
+    )
+  }
+
+  {
+    n > 0 ? (
+      <ExplorarEspacios espacios={espacios} base={COMERCIALES_URL} esSeleccion={esSeleccion} />
+    ) : esSeleccion ? (
+      <div class="espacios-vacio contenedor">
+        <p>Los espacios de este enlace ya no están disponibles. Puede que ya se hayan alquilado.</p>
+        <a class="btn btn--primario" href={COMERCIALES_URL}>
+          Ver los espacios disponibles
+        </a>
+      </div>
+    ) : (
+      <p class="espacios-vacio contenedor">
+        En este momento no hay espacios disponibles. Vuelve pronto: apenas se abra uno, aparece acá.
+      </p>
+    )
+  }
+</BaseComerciales>
+
+<style>
+  .seleccion-aviso {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md) var(--space-lg);
+    margin-top: 48px;
+    padding: 20px 24px;
+    border-radius: var(--radius-card);
+    background: #f3edf9;
+    color: var(--brand-500);
+  }
+
+  .seleccion-aviso strong {
+    color: var(--brand-300);
+  }
+
+  .espacios-vacio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-lg);
+    margin-top: 48px;
+    text-align: center;
+  }
+
+  @media (max-width: 767px) {
+    .seleccion-aviso .btn {
+      width: 100%;
+    }
+  }
+</style>

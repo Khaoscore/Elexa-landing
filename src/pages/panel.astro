@@ -1,0 +1,497 @@
+---
+/* Panel de control de la sala, para el equipo: activa y oculta los
+   ejercicios, muestra los botones de cierre, prende y apaga el enlace para el
+   público, ve la asistencia en vivo y las preguntas. Escribe el estado en el
+   Apps Script y cada sala lo lee cada ~12 s.
+
+   Dos claves: PANEL_KEY ve todo; MOD_KEY entra como moderador y sólo ve el
+   chat, donde puede borrar mensajes del muro y expulsar a una persona (su
+   sala se cierra en la siguiente consulta, ~12 s). Las dos moderan, y
+   las dos pueden escribir en el muro de la sala con su firma, sin
+   registrarse en la sala.
+
+   /panel es fácil de adivinar: lo que protege los datos es la clave
+   (PANEL_KEY en las propiedades del script), no que la página no se
+   encuentre. Va con noindex y fuera del sitemap. */
+import '../styles/panel.css';
+import { SALA_CONFIG } from '../data/sala';
+---
+
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Panel de control · Sala Karanis</title>
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#18304d" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="https://use.typekit.net/nnu5pnp.css" />
+  </head>
+  <body>
+    <div class="container">
+      <header class="top">
+        <div class="row">
+          <img src="/sala-assets/icons/elexa-logo-ink.svg" alt="Elexa" />
+          <h1 class="top__title">Panel · Sala Karanis</h1>
+          <span class="tag tag--rol" id="rolTag" hidden></span>
+        </div>
+        <div class="row">
+          <a class="btn btn--outline btn--sm" href="/sala" target="_blank" rel="noopener">Abrir la sala</a>
+          <button class="btn btn--sm btn--ink" id="btnLogout" hidden>Salir</button>
+        </div>
+      </header>
+
+      {/* Acceso */}
+      <section class="card" id="login" style="max-width:480px;margin:24px auto 48px">
+        <p class="eyebrow">Acceso</p>
+        <h2 class="card__title">Clave del panel</h2>
+        <form id="loginForm" class="stack" style="margin-top:16px" novalidate>
+          <input
+            class="input"
+            id="key"
+            type="password"
+            autocomplete="current-password"
+            placeholder="Clave del panel o de moderación"
+          />
+          <p class="error" id="loginError" hidden></p>
+          <button class="btn btn--primary" type="submit">Entrar</button>
+          <p class="small muted" id="loginNote"></p>
+        </form>
+      </section>
+
+      <div class="grid" id="app" hidden>
+        <div class="stack solo-admin">
+          <section class="card">
+            <p class="eyebrow">Control en vivo</p>
+            <h2 class="card__title">Ejercicios interactivos</h2>
+            <p class="small muted" style="margin:6px 0 16px">
+              Se activan a mano cuando el presentador lo indique. Solo puede haber uno activo; al activarlo aparece al
+              lado del video en todas las pantallas (tarda hasta ~12 s).
+            </p>
+            <div class="ejs" id="ejs"></div>
+            <div class="row" style="margin-top:12px">
+              <button class="btn btn--outline btn--sm" id="btnNinguno">Ocultar ejercicio</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <p class="eyebrow">Cierre</p>
+            <h2 class="card__title">Botones de cierre</h2>
+            <p class="small muted" style="margin:6px 0 16px">
+              Cada botón se muestra u oculta por separado. Lo previsto es mostrar los tres cuando el presentador lo
+              indique (minuto ~60) y dejarlos hasta que termine.
+            </p>
+            <div class="ejs" id="ctasGrid"></div>
+            <div class="row" style="margin-top:12px">
+              <button class="btn btn--primary btn--sm" id="btnCtasOn">Mostrar los tres</button>
+              <button class="btn btn--outline btn--sm" id="btnCtasOff">Ocultar todos</button>
+            </div>
+          </section>
+
+          <section class="card">
+            <p class="eyebrow">Control en vivo</p>
+            <h2 class="card__title">Enlace para el público</h2>
+            <p class="small muted" style="margin:6px 0 16px">
+              Aparece en la sala como una tarjeta con la dirección a la vista, un botón para abrirla y otro para
+              copiarla. La dirección se define en <b>ENLACE</b>, dentro de src/data/sala.ts.
+            </p>
+            <div class="ejs" id="linkGrid"></div>
+          </section>
+
+          <section class="card">
+            <p class="eyebrow">Estado actual</p>
+            <div class="stack" style="margin-top:8px">
+              <div class="state"><span class="dot" id="dotEj"></span><span id="stateEj">Sin ejercicio activo</span></div>
+              <div class="state">
+                <span class="dot" id="dotCta"></span><span id="stateCta">Botones de cierre ocultos</span>
+              </div>
+              <div class="state"><span class="dot" id="dotLink"></span><span id="stateLink">Enlace oculto</span></div>
+              <p class="small muted" id="stateHora"></p>
+            </div>
+          </section>
+
+          <div class="note" id="localNote" hidden>
+            <b>Modo local de prueba.</b> No hay ENDPOINT en src/data/sala.ts: este panel controla la sala solo dentro de
+            este navegador (abre <a href="/sala" target="_blank">la sala</a> en otra pestaña). Nada se envía a Google
+            Sheets.
+          </div>
+        </div>
+
+        <div class="stack">
+          <section class="card">
+            <div class="row" style="justify-content:space-between">
+              <div>
+                <p class="eyebrow">En tiempo real</p>
+                <h2 class="card__title">Asistencia</h2>
+              </div>
+              <button class="btn btn--outline btn--sm" id="btnRefresh">Actualizar</button>
+            </div>
+            <div class="tiles" style="margin-top:16px" id="tiles"></div>
+            <p class="small muted" style="margin-top:10px" id="statsHora"></p>
+          </section>
+
+          <section class="card">
+            <p class="eyebrow">Para el presentador · Moderación</p>
+            <h2 class="card__title">Preguntas del público</h2>
+            <p class="small muted" style="margin:6px 0 12px">
+              Las más recientes arriba. Cada una firmada con nombre y celular. <b>Borrar</b> la saca del muro de la sala
+              (queda en la hoja y se puede restaurar); <b>Expulsar</b> cierra la sala de esa persona y oculta todos sus
+              mensajes.
+            </p>
+            <form class="stack mod-form" id="modForm" novalidate>
+              <textarea
+                class="input"
+                id="modTexto"
+                rows="2"
+                maxlength="500"
+                placeholder="Escribe un mensaje para toda la sala…"></textarea>
+              <div class="row">
+                <input class="input mod-form__firma" id="modFirma" maxlength="60" placeholder="Firma" aria-label="Firma" />
+                <button class="btn btn--primary btn--sm" type="submit" id="modEnviar">Publicar en el muro</button>
+              </div>
+            </form>
+            <div class="qs" id="qs"><p class="muted small">Sin preguntas todavía.</p></div>
+          </section>
+
+          <section class="card">
+            <p class="eyebrow">Moderación</p>
+            <h2 class="card__title">Personas expulsadas</h2>
+            <p class="small muted" style="margin:6px 0 12px">
+              No pueden volver a entrar con ese celular. Al readmitirlas, su sala se abre sola (sus mensajes siguen
+              ocultos: se restauran uno por uno).
+            </p>
+            <div class="qs" id="expulsados"><p class="muted small">Nadie expulsado.</p></div>
+          </section>
+        </div>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+
+    <script is:inline define:vars={{ CFG: SALA_CONFIG }}>
+      (function () {
+        'use strict';
+        var $ = function (s) { return document.querySelector(s); };
+        var ENDPOINT = String(CFG.ENDPOINT || '').trim();
+        var LOCAL = !ENDPOINT;
+        var canal = (LOCAL && 'BroadcastChannel' in window) ? new BroadcastChannel('sala-karanis') : null;
+        var key = sessionStorage.getItem('panel_key') || '';
+        // 'admin' (PANEL_KEY) o 'moderador' (MOD_KEY): lo dice el Apps Script al leer stats
+        var rol = sessionStorage.getItem('panel_rol') || 'admin';
+        var CTA_IDS = ['separo', 'agendo', 'dossier'];
+        // marca que el Apps Script pone en la columna del celular a los mensajes escritos desde aquí
+        var NUMERO_MOD = 'moderador';
+        var CTAS = (CFG.CTAS && CFG.CTAS.length) ? CFG.CTAS : [
+          { id: 'separo', titulo: 'Separo mi cupo', destino: 'Pasarela de pago' },
+          { id: 'agendo', titulo: 'Quiero agendar mi cita', destino: 'Calendly' },
+          { id: 'dossier', titulo: 'Quiero el dossier completo', destino: 'Formulario de correo' }
+        ];
+        function normalizarCtas(v) { var o = {}; CTA_IDS.forEach(function (id) { o[id] = (v && typeof v === 'object') ? !!v[id] : v === true; }); return o; }
+        function normalizarEstado(e) { e = e || {}; return { ejercicio: Number(e.ejercicio) || 0, ctas: normalizarCtas(e.ctas), ejercicio_ts: Number(e.ejercicio_ts) || 0, enlace: !!e.enlace }; }
+        var ENLACE = CFG.ENLACE || {};
+        var ENLACE_URL = String(ENLACE.url || '').trim();
+        var estado = normalizarEstado(null);
+        var timer = null;
+        /* Se prende si el Apps Script devuelve un estado sin `enlace`: esa implementación
+           es anterior al interruptor y el enlace nunca llega a la sala. Se revisa en cada
+           lectura, así que al publicar la versión nueva el aviso se apaga solo (sin recargar).
+           En modo local el estado sale de localStorage y puede no traer la clave: no cuenta. */
+        var scriptSinEnlace = false;
+        function revisarEnlace(est) { if (!LOCAL && est && typeof est === 'object') scriptSinEnlace = est.enlace === undefined; }
+
+        function toast(m) { var t = $('#toast'); t.textContent = m; t.classList.add('is-on'); clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('is-on'); }, 2400); }
+        function pad(n) { return (n < 10 ? '0' : '') + n; }
+        function hora() { var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()); }
+        // ts_cliente se guarda en ISO (UTC): para mostrarlo hay que pasarlo a la hora del navegador.
+        function horaLocal(iso) { var d = new Date(iso); return isNaN(d.getTime()) ? '' : pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+
+        /* ---------- transporte ---------- */
+        function get(action) {
+          if (LOCAL) return Promise.resolve(localStats());
+          return fetch(ENDPOINT + '?action=' + action + '&key=' + encodeURIComponent(key) + '&t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); });
+        }
+        function post(payload) {
+          payload.key = key;
+          if (LOCAL) return Promise.resolve({ ok: true });
+          return fetch(ENDPOINT, { method: 'POST', body: JSON.stringify(payload), headers: { 'Content-Type': 'text/plain;charset=UTF-8' } }).then(function (r) { return r.json(); });
+        }
+        function localStats() {
+          var log = []; try { log = JSON.parse(localStorage.getItem('sala_local_log') || '[]'); } catch (e) {}
+          var nums = {}; var resp = {}; var acc = { separo: 0, agendo: 0, dossier: 0, enlace: 0 }; var preg = []; var mod = leerModLocal(); var cal = {};
+          (CFG.EJERCICIOS || []).forEach(function (e) { resp[e.campo] = 0; });
+          log.forEach(function (p) {
+            // agregar al calendario desde la entrada no es entrar a la sala: cuenta aparte
+            if (p.tipo === 'calendario') { cal[p.numero] = true; return; }
+            if (p.numero) nums[p.numero] = true;
+            if (p.tipo === 'respuesta' && !p.omitido) resp[p.campo] = (resp[p.campo] || 0) + 1;
+            if (p.tipo === 'cta' && acc[p.accion] !== undefined) acc[p.accion]++;
+            if (p.tipo === 'enlace') acc.enlace++;
+            // en modo local el mensaje se identifica por su hora de envío (no hay fila de hoja)
+            if (p.tipo === 'pregunta') preg.push({ fila: p.ts_cliente, ts: horaLocal(p.ts_cliente), nombre: p.nombre, numero: p.numero, texto: p.texto, borrada: !!mod.borradas[p.ts_cliente], expulsado: !!mod.expulsados[p.numero], mod: p.numero === NUMERO_MOD });
+          });
+          var est = {}; try { est = JSON.parse(localStorage.getItem('sala_estado') || '{}'); } catch (e) {}
+          var exp = Object.keys(mod.expulsados).map(function (n) { return { numero: n, nombre: mod.expulsados[n].nombre, ts: mod.expulsados[n].ts }; });
+          return { ok: true, rol: 'admin', entradas: Object.keys(nums).length, activos: Object.keys(nums).length, movil: 0, respuestas: resp, acciones: acc, calendario: Object.keys(cal).length, preguntas: preg.reverse(), expulsados: exp, estado: est, hora: hora(), local: true };
+        }
+        // Moderación en modo local: la sala de este navegador lee `sala_moderacion`.
+        function leerModLocal() {
+          var m = {}; try { m = JSON.parse(localStorage.getItem('sala_moderacion') || '{}') || {}; } catch (e) {}
+          return { borradas: m.borradas || {}, expulsados: m.expulsados || {} };
+        }
+        function moderarLocal(p) {
+          if (p.accion === 'publicar') {
+            // mismo registro que deja la sala al preguntar, así el muro local lo muestra
+            var lg = []; try { lg = JSON.parse(localStorage.getItem('sala_local_log') || '[]'); } catch (e) {}
+            lg.push({ tipo: 'pregunta', numero: NUMERO_MOD, nombre: p.nombre, texto: p.texto, ts_cliente: new Date().toISOString() });
+            try { localStorage.setItem('sala_local_log', JSON.stringify(lg)); } catch (e) {}
+            if (canal) canal.postMessage({ tipo: 'moderacion' });
+            return;
+          }
+          var m = leerModLocal();
+          if (p.accion === 'borrar') m.borradas[p.fila] = true;
+          if (p.accion === 'restaurar') delete m.borradas[p.fila];
+          if (p.accion === 'expulsar') {
+            m.expulsados[p.numero] = { nombre: p.nombre || '', ts: hora() };
+            var log = []; try { log = JSON.parse(localStorage.getItem('sala_local_log') || '[]'); } catch (e) {}
+            log.forEach(function (x) { if (x.tipo === 'pregunta' && x.numero === p.numero) m.borradas[x.ts_cliente] = true; });
+          }
+          if (p.accion === 'readmitir') delete m.expulsados[p.numero];
+          try { localStorage.setItem('sala_moderacion', JSON.stringify(m)); } catch (e) {}
+          if (canal) canal.postMessage({ tipo: 'moderacion' });
+        }
+
+        /* ---------- estado ---------- */
+        function setEstado(patch) {
+          if (LOCAL) {
+            var nuevo = Object.assign({}, estado, patch);
+            if (patch.ctas !== undefined) {
+              nuevo.ctas = Object.assign({}, estado.ctas);
+              if (patch.ctas && typeof patch.ctas === 'object') { CTA_IDS.forEach(function (id) { if (patch.ctas[id] !== undefined) nuevo.ctas[id] = !!patch.ctas[id]; }); }
+              else { CTA_IDS.forEach(function (id) { nuevo.ctas[id] = !!patch.ctas; }); }
+            }
+            if (patch.ejercicio !== undefined && patch.ejercicio !== estado.ejercicio) nuevo.ejercicio_ts = Date.now();
+            estado = nuevo;
+            try { localStorage.setItem('sala_estado', JSON.stringify(estado)); } catch (e) {}
+            if (canal) canal.postMessage({ tipo: 'estado', estado: estado });
+            renderEstado(); toast('Estado actualizado (local)'); return;
+          }
+          post(Object.assign({ tipo: 'panel' }, patch)).then(function (j) {
+            if (!j || j.ok === false) { toast('Error: ' + (j && j.error || 'sin respuesta')); return; }
+            revisarEnlace(j.estado);
+            if (j.estado) estado = normalizarEstado(j.estado);
+            renderEstado();
+            toast(patch.enlace !== undefined && scriptSinEnlace
+              ? 'El Apps Script no guarda el enlace: publica una versión nueva'
+              : 'Estado enviado a la sala');
+          }).catch(function () { toast('No se pudo conectar con el endpoint'); });
+        }
+        function renderEstado() {
+          var ej = (CFG.EJERCICIOS || []).filter(function (e) { return Number(e.id) === Number(estado.ejercicio); })[0];
+          $('#stateEj').textContent = ej ? ('Ejercicio ' + ej.id + ' activo: ' + ej.titulo) : 'Sin ejercicio activo';
+          $('#dotEj').classList.toggle('is-on', !!ej);
+          var visibles = CTAS.filter(function (c) { return estado.ctas[c.id]; });
+          $('#stateCta').textContent = visibles.length ? 'Botones visibles: ' + visibles.map(function (c) { return c.titulo; }).join(' · ') : 'Botones de cierre ocultos';
+          $('#dotCta').classList.toggle('is-on', visibles.length > 0);
+          document.querySelectorAll('.ej[data-id]').forEach(function (el) { el.classList.toggle('is-active', Number(el.dataset.id) === Number(estado.ejercicio)); });
+          document.querySelectorAll('.ej[data-cta]').forEach(function (el) {
+            var on = !!estado.ctas[el.dataset.cta]; el.classList.toggle('is-active', on);
+            var b = el.querySelector('button'); b.textContent = on ? 'Ocultar' : 'Mostrar'; b.className = on ? 'btn btn--outline btn--sm' : 'btn btn--ink btn--sm';
+          });
+          $('#btnCtasOn').classList.toggle('is-active', visibles.length === CTAS.length);
+          var enlaceOn = !!estado.enlace && !!ENLACE_URL;
+          $('#stateLink').textContent = !ENLACE_URL ? 'Enlace sin configurar (falta ENLACE.url en src/data/sala.ts)'
+            : scriptSinEnlace ? 'El Apps Script desplegado ignora el enlace: pega el Code.gs vigente y publica una versión nueva'
+            : (enlaceOn ? 'Enlace visible: ' + ENLACE_URL : 'Enlace oculto');
+          $('#dotLink').classList.toggle('is-on', enlaceOn);
+          var fila = document.querySelector('#linkGrid .ej');
+          if (fila) {
+            fila.classList.toggle('is-active', enlaceOn);
+            var b = fila.querySelector('button');
+            if (b && ENLACE_URL) { b.textContent = estado.enlace ? 'Ocultar' : 'Mostrar'; b.className = estado.enlace ? 'btn btn--outline btn--sm' : 'btn btn--ink btn--sm'; }
+          }
+          $('#stateHora').textContent = 'Última lectura: ' + hora();
+        }
+        function renderEjercicios() {
+          var box = $('#ejs'); box.innerHTML = '';
+          (CFG.EJERCICIOS || []).forEach(function (e) {
+            var d = document.createElement('div'); d.className = 'ej'; d.dataset.id = e.id;
+            var n = document.createElement('div'); n.className = 'ej__n'; n.textContent = pad(e.id);
+            var t = document.createElement('div'); t.className = 'ej__t'; t.textContent = e.titulo;
+            var b = document.createElement('button'); b.className = 'btn btn--ink btn--sm'; b.textContent = 'Activar';
+            b.addEventListener('click', function () { setEstado({ ejercicio: e.id }); });
+            d.appendChild(n); d.appendChild(t); d.appendChild(b); box.appendChild(d);
+          });
+        }
+        function renderLinkGrid() {
+          var box = $('#linkGrid'); box.innerHTML = '';
+          var d = document.createElement('div'); d.className = 'ej';
+          var t = document.createElement('div'); t.className = 'ej__t';
+          var h = document.createElement('div'); h.className = 'ej__h'; h.textContent = ENLACE.titulo || 'Enlace';
+          var dd = document.createElement('div'); dd.className = 'ej__d';
+          dd.textContent = ENLACE_URL || 'Sin dirección: escribe ENLACE.url en src/data/sala.ts y recarga';
+          t.appendChild(h); t.appendChild(dd);
+          var b = document.createElement('button'); b.className = 'btn btn--ink btn--sm'; b.textContent = 'Mostrar';
+          if (!ENLACE_URL) { b.disabled = true; b.textContent = 'Sin enlace'; }
+          else b.addEventListener('click', function () { setEstado({ enlace: !estado.enlace }); });
+          d.appendChild(t); d.appendChild(b); box.appendChild(d);
+        }
+        function renderCtasGrid() {
+          var box = $('#ctasGrid'); box.innerHTML = '';
+          CTAS.forEach(function (c, i) {
+            var d = document.createElement('div'); d.className = 'ej'; d.dataset.cta = c.id;
+            var t = document.createElement('div'); t.className = 'ej__t';
+            var h = document.createElement('div'); h.className = 'ej__h'; h.textContent = c.titulo; t.appendChild(h);
+            if (c.destino) { var dd = document.createElement('div'); dd.className = 'ej__d'; dd.textContent = c.destino; t.appendChild(dd); }
+            var b = document.createElement('button'); b.className = 'btn btn--ink btn--sm'; b.textContent = 'Mostrar';
+            b.addEventListener('click', function () { var p = {}; p[c.id] = !estado.ctas[c.id]; setEstado({ ctas: p }); });
+            d.appendChild(t); d.appendChild(b); box.appendChild(d);
+          });
+        }
+
+        /* ---------- stats ---------- */
+        function tile(v, l) { return '<div class="tile"><div class="tile__v">' + v + '</div><div class="tile__l">' + l + '</div></div>'; }
+        function cargarStats() {
+          return get('stats').then(function (j) {
+            if (!j || j.ok === false) { throw new Error(j && j.error || 'sin respuesta'); }
+            var r = j.respuestas || {}, a = j.acciones || {};
+            var html = tile(j.entradas || 0, 'Entradas') + tile(j.activos || 0, 'Activos ahora');
+            (CFG.EJERCICIOS || []).forEach(function (e) { html += tile(r[e.campo] || 0, 'Resp. ej. ' + e.id); });
+            html += tile(a.separo || 0, 'Clic separo') + tile(a.agendo || 0, 'Clic agendó') + tile(a.dossier || 0, 'Clic dossier');
+            if (ENLACE_URL) html += tile(a.enlace || 0, 'Clic enlace');
+            // sin la clave, el Apps Script publicado es anterior al registro del calendario
+            if (j.calendario !== undefined) html += tile(j.calendario, 'Agregaron al calendario');
+            if (j.movil !== undefined && !j.local) html += tile(j.movil, 'Desde móvil');
+            $('#tiles').innerHTML = html;
+            $('#statsHora').textContent = 'Actualizado ' + hora() + (j.local ? ' · modo local' : '');
+            if (j.estado) { revisarEnlace(j.estado); estado = normalizarEstado(j.estado); renderEstado(); }
+            if (j.rol) aplicarRol(j.rol);
+            renderPreguntas(j.preguntas || []);
+            renderExpulsados(j.expulsados || []);
+            return j;
+          });
+        }
+
+        /* ---------- moderación ---------- */
+        function boton(texto, clase, alClic) {
+          var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn--xs ' + clase; b.textContent = texto;
+          b.addEventListener('click', function () { alClic(b); });
+          return b;
+        }
+        function etiqueta(texto) { var s = document.createElement('span'); s.className = 'tag'; s.textContent = texto; return s; }
+        function renderPreguntas(lista) {
+          var qs = $('#qs'); qs.innerHTML = '';
+          if (!lista.length) { qs.innerHTML = '<p class="muted small">Sin preguntas todavía.</p>'; return; }
+          lista.forEach(function (q) {
+            var d = document.createElement('div'); d.className = 'q' + (q.mod ? ' q--mod' : '') + (q.borrada ? ' q--borrada' : '');
+            var m = document.createElement('div'); m.className = 'q__meta';
+            var b = document.createElement('b'); b.textContent = q.nombre || 'Sin nombre';
+            m.appendChild(b); m.appendChild(document.createTextNode(' · ' + (q.mod ? '' : (q.numero || '') + ' · ') + (q.ts || '')));
+            if (q.mod) m.appendChild(etiqueta('Equipo'));
+            if (q.borrada) m.appendChild(etiqueta('Borrada'));
+            if (q.expulsado) m.appendChild(etiqueta('Expulsado'));
+            var t = document.createElement('div'); t.className = 'q__t'; t.textContent = q.texto || '';
+            d.appendChild(m); d.appendChild(t);
+            // sin fila no hay cómo señalar el mensaje: pasa con un Apps Script anterior a la moderación
+            if (q.fila) {
+              var acts = document.createElement('div'); acts.className = 'q__acts';
+              acts.appendChild(q.borrada
+                ? boton('Restaurar', 'btn--outline', function (el) { moderar({ accion: 'restaurar', fila: q.fila, numero: q.numero }, el); })
+                : boton('Borrar', 'btn--outline', function (el) { moderar({ accion: 'borrar', fila: q.fila, numero: q.numero }, el); }));
+              if (!q.expulsado && !q.mod) acts.appendChild(boton('Expulsar', 'btn--ink', function (el) { expulsar(q.numero, q.nombre, el); }));
+              d.appendChild(acts);
+            }
+            qs.appendChild(d);
+          });
+        }
+        function renderExpulsados(lista) {
+          var box = $('#expulsados'); box.innerHTML = '';
+          if (!lista.length) { box.innerHTML = '<p class="muted small">Nadie expulsado.</p>'; return; }
+          lista.forEach(function (x) {
+            var d = document.createElement('div'); d.className = 'q q--fila';
+            var m = document.createElement('div'); m.className = 'q__meta';
+            var b = document.createElement('b'); b.textContent = x.nombre || 'Sin nombre';
+            m.appendChild(b); m.appendChild(document.createTextNode(' · ' + x.numero + (x.ts ? ' · desde ' + x.ts : '')));
+            d.appendChild(m);
+            d.appendChild(boton('Readmitir', 'btn--outline', function (el) {
+              if (!confirm('¿Readmitir a ' + (x.nombre || x.numero) + '? Su sala se vuelve a abrir.')) return;
+              moderar({ accion: 'readmitir', numero: x.numero }, el);
+            }));
+            box.appendChild(d);
+          });
+        }
+        function expulsar(numero, nombre, el) {
+          if (!confirm('¿Expulsar a ' + (nombre || 'esta persona') + ' (' + numero + ')?\n\nSe cierra su sala en unos segundos, no puede volver a entrar con ese celular y todos sus mensajes salen del muro.')) return;
+          moderar({ accion: 'expulsar', numero: numero, nombre: nombre }, el);
+        }
+        var AVISOS_MOD = { borrar: 'Mensaje borrado del muro', restaurar: 'Mensaje restaurado', expulsar: 'Persona expulsada', readmitir: 'Persona readmitida', publicar: 'Mensaje publicado en el muro' };
+        // devuelve true/false para que quien llama sepa si limpiar el formulario
+        function moderar(p, el) {
+          if (el) el.disabled = true;
+          if (LOCAL) { moderarLocal(p); toast(AVISOS_MOD[p.accion] + ' (local)'); if (el) el.disabled = false; loop(); return Promise.resolve(true); }
+          return post(Object.assign({ tipo: 'moderar' }, p)).then(function (j) {
+            // los botones de cada mensaje quedan apagados hasta que la lista se vuelva a pintar
+            if (el && (p.accion === 'publicar' || !j || j.ok === false)) el.disabled = false;
+            if (!j || j.ok === false) {
+              var err = j && j.error || 'sin respuesta';
+              toast(/desconocid/.test(err) ? 'El Apps Script no tiene esta función: publica una versión nueva' : 'Error: ' + err);
+              return false;
+            }
+            toast(AVISOS_MOD[p.accion]); loop(); return true;
+          }).catch(function () { if (el) el.disabled = false; toast('No se pudo conectar con el endpoint'); return false; });
+        }
+
+        /* ---------- mensaje del equipo al muro ---------- */
+        $('#modFirma').value = localStorage.getItem('panel_firma') || 'Moderador';
+        function publicar() {
+          var texto = $('#modTexto').value.trim(), firma = $('#modFirma').value.trim() || 'Moderador';
+          if (!texto) { $('#modTexto').focus(); return; }
+          try { localStorage.setItem('panel_firma', firma); } catch (e) {}
+          moderar({ accion: 'publicar', texto: texto, nombre: firma }, $('#modEnviar')).then(function (ok) { if (ok) $('#modTexto').value = ''; });
+        }
+        $('#modForm').addEventListener('submit', function (ev) { ev.preventDefault(); publicar(); });
+        // Ctrl/Cmd + Enter publica sin soltar el teclado
+        $('#modTexto').addEventListener('keydown', function (ev) { if (ev.key === 'Enter' && (ev.ctrlKey || ev.metaKey)) { ev.preventDefault(); publicar(); } });
+        // El moderador sólo ve el chat: los controles del directo se esconden (y el Apps Script
+        // tampoco los aceptaría con MOD_KEY).
+        function aplicarRol(r) {
+          rol = r === 'moderador' ? 'moderador' : 'admin';
+          sessionStorage.setItem('panel_rol', rol);
+          $('#app').classList.toggle('is-mod', rol === 'moderador');
+          $('#rolTag').hidden = rol !== 'moderador';
+          $('#rolTag').textContent = 'Moderador';
+        }
+        function loop() { clearTimeout(timer); cargarStats().catch(function (e) { $('#statsHora').textContent = 'Error al leer: ' + e.message; }); timer = setTimeout(loop, 10000); }
+
+        /* ---------- acceso ---------- */
+        function entrar() {
+          $('#login').hidden = true; $('#app').hidden = false; $('#btnLogout').hidden = false;
+          $('#localNote').hidden = !LOCAL;
+          aplicarRol(rol);
+          renderEjercicios(); renderCtasGrid(); renderLinkGrid(); renderEstado(); loop();
+        }
+        $('#loginForm').addEventListener('submit', function (ev) {
+          ev.preventDefault();
+          key = $('#key').value.trim();
+          if (LOCAL) { sessionStorage.setItem('panel_key', key || 'local'); entrar(); return; }
+          if (!key) { $('#loginError').textContent = 'Escribe la clave.'; $('#loginError').hidden = false; return; }
+          $('#loginError').hidden = true;
+          get('stats').then(function (j) {
+            if (!j || j.ok === false) { $('#loginError').textContent = 'Clave incorrecta o endpoint sin desplegar (' + (j && j.error || 'sin respuesta') + ').'; $('#loginError').hidden = false; return; }
+            sessionStorage.setItem('panel_key', key); rol = j.rol || 'admin'; entrar();
+          }).catch(function () { $('#loginError').textContent = 'No se pudo conectar con el endpoint. Revisa ENDPOINT en src/data/sala.ts.'; $('#loginError').hidden = false; });
+        });
+        $('#btnLogout').addEventListener('click', function () { sessionStorage.removeItem('panel_key'); sessionStorage.removeItem('panel_rol'); location.reload(); });
+        $('#btnNinguno').addEventListener('click', function () { setEstado({ ejercicio: 0 }); });
+        $('#btnCtasOn').addEventListener('click', function () { setEstado({ ctas: true }); });
+        $('#btnCtasOff').addEventListener('click', function () { setEstado({ ctas: false }); });
+        $('#btnRefresh').addEventListener('click', loop);
+        if (canal) canal.onmessage = function () { clearTimeout(timer); timer = setTimeout(loop, 300); };
+
+        $('#loginNote').textContent = LOCAL ? 'Modo local: no hay ENDPOINT en src/data/sala.ts, cualquier clave sirve.' : 'La clave se define en las propiedades del script: PANEL_KEY (todo) o MOD_KEY (sólo moderación del chat).';
+        if (LOCAL) { try { estado = normalizarEstado(JSON.parse(localStorage.getItem('sala_estado') || '{}')); } catch (e) {} }
+        if (key) { entrar(); }
+      })();
+    </script>
+  </body>
+</html>

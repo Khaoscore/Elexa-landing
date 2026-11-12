@@ -1,0 +1,766 @@
+---
+/* La lista de /comerciales con sus herramientas: filtros, «Lista / Mapa»,
+   las tarjetas con «Seleccionar» y el mapa con todos los espacios.
+
+   · Filtros: barrio, disponibilidad, área y precio (los rangos salen de
+     src/lib/filtros.ts y viajan en los data- de cada tarjeta). Se aplican en
+     el navegador al momento y quedan en la dirección (?barrio=…&area=…), así
+     que al volver de una ficha siguen puestos. Sin JavaScript se ve la lista
+     entera y los filtros no salen.
+   · Mapa: un pin por espacio con su precio; al tocarlo sale una tarjeta con
+     la foto, los datos, «Ver ficha» y «Seleccionar». El mapa (src/lib/mapa.ts)
+     se arma recién la primera vez que se abre: cada arranque de Mapbox cuenta
+     en la cuenta. Muestra los mismos espacios que dejan los filtros.
+   · Seleccionar: ver BotonSeleccion.astro y src/lib/seleccion.ts.
+
+   Se pinta como varios bloques sueltos dentro de <main> (no envueltos) para
+   que la entrada de las secciones (EntradaSecciones.astro) siga animando
+   cada tarjeta por su cuenta. */
+import TarjetaEspacio from '../espacios/TarjetaEspacio.astro';
+import BotonSeleccion from './BotonSeleccion.astro';
+import { claveDe, type Espacio } from '../../lib/espacios';
+import {
+  OPCIONES_AREA,
+  OPCIONES_DISPONIBILIDAD,
+  OPCIONES_PRECIO,
+  disponibilidadDe,
+  precioCorto,
+  rangoArea,
+  rangoATexto,
+  rangoPrecio,
+} from '../../lib/filtros';
+
+interface Props {
+  espacios: Espacio[];
+  /** /comerciales. */
+  base: string;
+  /** Es una selección (?ver=…): no se limpia la selección guardada con
+      esta lista, que no es la completa. */
+  esSeleccion?: boolean;
+}
+
+const { espacios, base, esSeleccion = false } = Astro.props;
+
+/* La primera fila: dos tarjetas en escritorio, que se ven sin bajar. */
+const PRIMERA_FILA = 2;
+
+const barrios = [...new Set(espacios.map((e) => e.barrio).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'es'));
+
+const puntos = espacios.flatMap((e) =>
+  e.ubicacion
+    ? [
+        {
+          clave: claveDe(e.id),
+          nombre: e.nombre,
+          barrio: e.barrio,
+          resumen: [e.area, [e.precio, e.precioNota].filter(Boolean).join(' ')].filter(Boolean).join(' · '),
+          precio: precioCorto(e.precio),
+          foto: e.fotos[0]?.src ?? '',
+          href: `${base}/${e.slug}`,
+          latitud: e.ubicacion.latitud,
+          longitud: e.ubicacion.longitud,
+        },
+      ]
+    : [],
+);
+
+const claves = espacios.map((e) => claveDe(e.id));
+---
+
+<div class="explorar contenedor" data-explorar data-claves={esSeleccion ? '' : claves.join(',')} hidden>
+  <form class="explorar__filtros" data-filtros aria-label="Filtrar espacios" onsubmit="return false">
+    <label class="filtro">
+      <span class="sr-only">Barrio</span>
+      <select name="barrio">
+        <option value="">Barrio</option>
+        {barrios.map((barrio) => <option value={barrio}>{barrio}</option>)}
+      </select>
+    </label>
+    <label class="filtro">
+      <span class="sr-only">Disponibilidad</span>
+      <select name="disponibilidad">
+        <option value="">Disponibilidad</option>
+        {OPCIONES_DISPONIBILIDAD.map((o) => <option value={o.id}>{o.nombre}</option>)}
+      </select>
+    </label>
+    <label class="filtro">
+      <span class="sr-only">Área</span>
+      <select name="area">
+        <option value="">Área</option>
+        {OPCIONES_AREA.map((o) => <option value={o.id} data-rango={rangoATexto(o.rango)}>{o.nombre}</option>)}
+      </select>
+    </label>
+    <label class="filtro">
+      <span class="sr-only">Precio al mes</span>
+      <select name="precio">
+        <option value="">Precio</option>
+        {OPCIONES_PRECIO.map((o) => <option value={o.id} data-rango={rangoATexto(o.rango)}>{o.nombre}</option>)}
+      </select>
+    </label>
+  </form>
+
+  <div class="explorar__vistas" role="group" aria-label="Ver los espacios como">
+    <button type="button" data-vista="lista" aria-pressed="true">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path fill="currentColor" d="M4 11h5V5H4v6zm0 7h5v-6H4v6zm6 0h5v-6h-5v6zm6 0h5v-6h-5v6zm-6-7h5V5h-5v6zm6-6v6h5V5h-5z"></path>
+      </svg>
+      Lista
+    </button>
+    <button type="button" data-vista="mapa" aria-pressed="false">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+        <path
+          fill="currentColor"
+          d="m20.5 3-.16.03L15 5.1 9 3 3.36 4.9c-.21.07-.36.25-.36.48V20.5c0 .28.22.5.5.5l.16-.03L9 18.9l6 2.1 5.64-1.9c.21-.07.36-.25.36-.48V3.5c0-.28-.22-.5-.5-.5zM15 19l-6-2.11V5l6 2.11V19z"
+        ></path>
+      </svg>
+      Mapa
+    </button>
+  </div>
+
+  <p class="explorar__cuenta" aria-live="polite">
+    <span data-cuenta>{espacios.length === 1 ? '1 espacio' : `${espacios.length} espacios`}</span>
+    <button type="button" class="explorar__limpiar" data-limpiar hidden>Limpiar filtros</button>
+  </p>
+</div>
+
+<ul class="espacios contenedor" role="list" data-lista>
+  {
+    espacios.map((espacio, i) => (
+      <li
+        data-espacio
+        data-clave={claveDe(espacio.id)}
+        data-barrio={espacio.barrio}
+        data-disponibilidad={disponibilidadDe(espacio)}
+        data-area={rangoATexto(rangoArea(espacio.area))}
+        data-precio={rangoATexto(rangoPrecio(espacio))}
+      >
+        <TarjetaEspacio espacio={espacio} arriba={i < PRIMERA_FILA} base={base} sinMarca />
+        <BotonSeleccion clave={claveDe(espacio.id)} nombre={espacio.nombre} />
+      </li>
+    ))
+  }
+</ul>
+
+<div class="sin-resultados contenedor" data-sin-resultados hidden>
+  <p>Ningún espacio coincide con esos filtros.</p>
+  <button type="button" class="btn btn--borde" data-limpiar>Limpiar filtros</button>
+</div>
+
+<section class="explorar-mapa contenedor" data-mapa aria-label="Mapa de los espacios" hidden>
+  <div class="explorar-mapa__lienzo" data-lienzo></div>
+  <p class="explorar-mapa__aviso" data-aviso-mapa hidden></p>
+
+  <div class="explorar-mapa__ficha" data-ficha hidden>
+    <button type="button" class="explorar-mapa__cerrar" data-cerrar-ficha aria-label="Cerrar">
+      <img src="/img/iconos/close.svg" alt="" width="20" height="20" />
+    </button>
+    <a class="explorar-mapa__foto" data-ficha-enlace tabindex="-1" aria-hidden="true">
+      <img data-ficha-foto alt="" referrerpolicy="no-referrer" />
+    </a>
+    <div class="explorar-mapa__datos">
+      <p class="explorar-mapa__nombre display" data-ficha-nombre></p>
+      <p class="explorar-mapa__resumen" data-ficha-resumen></p>
+      <p class="explorar-mapa__barrio" data-ficha-barrio></p>
+      <div class="explorar-mapa__acciones">
+        <a class="btn btn--primario" data-ficha-enlace>Ver ficha</a>
+        <BotonSeleccion clave="" nombre="" variante="pildora" />
+      </div>
+    </div>
+  </div>
+
+  <script is:inline type="application/json" data-puntos set:html={JSON.stringify(puntos).replace(/</g, '\\u003c')} />
+</section>
+
+<script>
+  import { activarBotones, depurar, pintarBotones } from '../../lib/seleccion';
+  import type { Mapa } from '../../lib/mapa';
+
+  type Punto = {
+    clave: string;
+    nombre: string;
+    barrio: string;
+    resumen: string;
+    precio: string;
+    foto: string;
+    href: string;
+    latitud: number;
+    longitud: number;
+  };
+
+  const raiz = document.querySelector<HTMLElement>('[data-explorar]');
+
+  if (raiz) {
+    raiz.hidden = false;
+    activarBotones();
+    if (raiz.dataset.claves) depurar(raiz.dataset.claves.split(','));
+
+    const formulario = raiz.querySelector<HTMLFormElement>('[data-filtros]')!;
+    const selects = [...formulario.querySelectorAll('select')];
+    const cuenta = raiz.querySelector<HTMLElement>('[data-cuenta]')!;
+    const limpiadores = document.querySelectorAll<HTMLButtonElement>('[data-limpiar]');
+    const lista = document.querySelector<HTMLElement>('[data-lista]')!;
+    const items = [...lista.querySelectorAll<HTMLElement>('[data-espacio]')];
+    const sinResultados = document.querySelector<HTMLElement>('[data-sin-resultados]')!;
+    const botonesVista = [...raiz.querySelectorAll<HTMLButtonElement>('[data-vista]')];
+
+    const seccionMapa = document.querySelector<HTMLElement>('[data-mapa]')!;
+    const lienzo = seccionMapa.querySelector<HTMLElement>('[data-lienzo]')!;
+    const avisoMapa = seccionMapa.querySelector<HTMLElement>('[data-aviso-mapa]')!;
+    const ficha = seccionMapa.querySelector<HTMLElement>('[data-ficha]')!;
+    const puntos: Punto[] = JSON.parse(seccionMapa.querySelector('[data-puntos]')?.textContent || '[]');
+
+    /* ---------- Filtros ---------- */
+
+    type Rango = [number, number];
+    const leerRango = (texto = ''): Rango | null => {
+      if (!texto) return null;
+      const [minimo, maximo] = texto.split('-');
+      return [Number(minimo), maximo ? Number(maximo) : Infinity];
+    };
+    const tocan = (a: Rango, b: Rango) => a[0] <= b[1] && a[1] >= b[0];
+
+    const valor = (nombre: string) => formulario.querySelector<HTMLSelectElement>(`[name="${nombre}"]`)!;
+    const rangoElegido = (nombre: string) =>
+      leerRango(valor(nombre).selectedOptions[0]?.dataset.rango);
+
+    const pasa = (item: HTMLElement) => {
+      const barrio = valor('barrio').value;
+      const disponibilidad = valor('disponibilidad').value;
+      if (barrio && item.dataset.barrio !== barrio) return false;
+      if (disponibilidad && item.dataset.disponibilidad !== disponibilidad) return false;
+      for (const nombre of ['area', 'precio']) {
+        const elegido = rangoElegido(nombre);
+        if (!elegido) continue;
+        const propio = leerRango(item.dataset[nombre]);
+        if (!propio || !tocan(propio, elegido)) return false;
+      }
+      return true;
+    };
+
+    let vista: 'lista' | 'mapa' = 'lista';
+    let visibles = new Set<string>();
+
+    function aplicar() {
+      visibles = new Set();
+      for (const item of items) {
+        const ok = pasa(item);
+        item.hidden = !ok;
+        if (ok) visibles.add(item.dataset.clave ?? '');
+      }
+
+      const filtrando = selects.some((s) => s.value);
+      for (const s of selects) s.classList.toggle('filtro--activo', Boolean(s.value));
+      const total = items.length;
+      const n = visibles.size;
+      const plural = (k: number) => (k === 1 ? 'espacio' : 'espacios');
+      let texto = filtrando ? `${n} de ${total} ${plural(total)}` : `${total} ${plural(total)}`;
+      if (vista === 'mapa') {
+        const sinUbicacion = n - puntos.filter((p) => visibles.has(p.clave)).length;
+        if (sinUbicacion > 0) texto += ` · ${sinUbicacion} sin ubicación en el mapa`;
+      }
+      cuenta.textContent = texto;
+      for (const boton of limpiadores) boton.hidden = !filtrando;
+      sinResultados.hidden = n > 0 || total === 0;
+
+      /* En la dirección, para volver a encontrarlos al regresar. */
+      const url = new URL(location.href);
+      for (const s of selects) {
+        if (s.value) url.searchParams.set(s.name, s.value);
+        else url.searchParams.delete(s.name);
+      }
+      if (vista === 'mapa') url.searchParams.set('vista', 'mapa');
+      else url.searchParams.delete('vista');
+      history.replaceState(history.state, '', url);
+
+      if (mapa) pintarPines(true);
+    }
+
+    function limpiar() {
+      for (const s of selects) s.value = '';
+      aplicar();
+    }
+
+    /* Lo que venga en la dirección, si es una opción que existe. */
+    const params = new URLSearchParams(location.search);
+    for (const s of selects) {
+      const pedido = params.get(s.name);
+      if (pedido && [...s.options].some((o) => o.value === pedido)) s.value = pedido;
+    }
+
+    formulario.addEventListener('change', aplicar);
+    for (const boton of limpiadores) boton.addEventListener('click', limpiar);
+
+    /* ---------- Lista / Mapa ---------- */
+
+    let mapa: Mapa | null = null;
+    let armando: Promise<void> | null = null;
+    let elegido = '';
+
+    function cambiarVista(nueva: 'lista' | 'mapa') {
+      vista = nueva;
+      for (const boton of botonesVista) boton.setAttribute('aria-pressed', String(boton.dataset.vista === nueva));
+      lista.hidden = nueva === 'mapa';
+      seccionMapa.hidden = nueva === 'lista';
+      aplicar();
+      if (nueva === 'mapa') armarMapa();
+    }
+
+    for (const boton of botonesVista) {
+      boton.addEventListener('click', () => cambiarVista(boton.dataset.vista as 'lista' | 'mapa'));
+    }
+
+    /* ---------- El mapa ---------- */
+
+    const escapar = (texto: string) =>
+      texto.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+    const htmlPin = (punto: Punto, activo: boolean) =>
+      `<span class="pin-precio${activo ? ' pin-precio--activo' : ''}">${
+        punto.precio
+          ? escapar(punto.precio)
+          : '<img src="/img/comerciales/local-morado.svg" alt="" width="18" height="18">'
+      }</span>`;
+
+    function pintarPines(encuadrar: boolean) {
+      if (!mapa) return;
+      const enMapa = puntos.filter((p) => visibles.has(p.clave));
+      for (const punto of puntos) {
+        if (!visibles.has(punto.clave)) {
+          mapa.quitarPin(punto.clave);
+          continue;
+        }
+        mapa.ponerPin(punto.clave, pinDe(punto, punto.clave === elegido));
+      }
+      if (elegido && !visibles.has(elegido)) cerrarFicha();
+      avisoMapa.hidden = enMapa.length > 0;
+      avisoMapa.textContent = enMapa.length ? '' : 'Ninguno de estos espacios tiene ubicación en el mapa.';
+      if (encuadrar && enMapa.length) {
+        const borde = lienzo.clientWidth < 600 ? 48 : 96;
+        mapa.encuadrar(enMapa, { arriba: borde, abajo: borde, izquierda: borde, derecha: borde }, 15.5);
+      }
+    }
+
+    function armarMapa() {
+      if (mapa || armando || !puntos.length) {
+        if (!puntos.length) {
+          avisoMapa.hidden = false;
+          avisoMapa.textContent = 'Ninguno de estos espacios tiene ubicación en el mapa.';
+        }
+        return;
+      }
+      armando = (async () => {
+        const { crearMapa } = await import('../../lib/mapa');
+        const centro = {
+          latitud: puntos.reduce((s, p) => s + p.latitud, 0) / puntos.length,
+          longitud: puntos.reduce((s, p) => s + p.longitud, 0) / puntos.length,
+        };
+        /* Casi desde arriba: con muchos pines, inclinado los de atrás se
+           amontonan. */
+        mapa = await crearMapa(lienzo, { centro, zoom: 12, inclinacion: 15, giro: 0, pantallaCompleta: true });
+        pintarPines(true);
+      })();
+    }
+
+    /* ---------- La tarjeta flotante del mapa ---------- */
+
+    function mostrarFicha(punto: Punto) {
+      const anterior = elegido;
+      elegido = punto.clave;
+      ficha.querySelector<HTMLElement>('[data-ficha-nombre]')!.textContent = punto.nombre;
+      ficha.querySelector<HTMLElement>('[data-ficha-resumen]')!.textContent = punto.resumen;
+      ficha.querySelector<HTMLElement>('[data-ficha-barrio]')!.textContent = punto.barrio;
+      for (const enlace of ficha.querySelectorAll<HTMLAnchorElement>('[data-ficha-enlace]')) enlace.href = punto.href;
+      const foto = ficha.querySelector<HTMLImageElement>('[data-ficha-foto]')!;
+      foto.hidden = !punto.foto;
+      if (punto.foto) foto.src = punto.foto.replace(/=w\d+(-rw)?$/, '=w640-rw');
+      const seleccionar = ficha.querySelector<HTMLElement>('[data-seleccionar]')!;
+      seleccionar.dataset.seleccionar = punto.clave;
+      seleccionar.dataset.textoNo = 'Seleccionar';
+      seleccionar.dataset.textoSi = 'Seleccionado';
+      seleccionar.setAttribute('aria-label', `Agregar «${punto.nombre}» a mi selección`);
+      seleccionar.hidden = false;
+      pintarBotones(ficha);
+      ficha.hidden = false;
+      // El pin elegido, morado y encima; el anterior vuelve a blanco.
+      if (anterior && anterior !== elegido) {
+        const p = puntos.find((x) => x.clave === anterior);
+        if (p && visibles.has(p.clave)) mapa?.ponerPin(p.clave, pinDe(p, false));
+      }
+      mapa?.ponerPin(punto.clave, pinDe(punto, true));
+    }
+
+    const pinDe = (punto: Punto, activo: boolean) => ({
+      punto,
+      html: htmlPin(punto, activo),
+      tamano: [120, 46] as [number, number],
+      ancla: [60, 44] as [number, number],
+      titulo: punto.nombre,
+      clase: 'pin-precio-caja',
+      encima: activo,
+      alClic: () => mostrarFicha(punto),
+    });
+
+    function cerrarFicha() {
+      const anterior = puntos.find((p) => p.clave === elegido);
+      elegido = '';
+      ficha.hidden = true;
+      if (anterior && visibles.has(anterior.clave)) mapa?.ponerPin(anterior.clave, pinDe(anterior, false));
+    }
+
+    ficha.querySelector('[data-cerrar-ficha]')!.addEventListener('click', cerrarFicha);
+    document.addEventListener('keydown', (tecla) => {
+      if (tecla.key === 'Escape' && !ficha.hidden) cerrarFicha();
+    });
+
+    /* ---------- Arranque ---------- */
+    if (params.get('vista') === 'mapa') cambiarVista('mapa');
+    else aplicar();
+  }
+</script>
+
+<style>
+  [hidden] {
+    display: none !important;
+  }
+
+  /* ---------- Herramientas ---------- */
+  .explorar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 16px;
+    margin-top: 56px;
+  }
+
+  .explorar__filtros {
+    display: grid;
+    flex: 1 1 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .filtro {
+    display: block;
+    min-width: 0;
+  }
+
+  .filtro select {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 40px 12px 18px;
+    border: 1px solid var(--neutral-300);
+    border-radius: var(--radius-full);
+    background: var(--neutral-100)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='20' height='20'%3E%3Cpath fill='%235f249f' d='M7.41 8.59 12 13.17l4.59-4.58L18 10l-6 6-6-6z'/%3E%3C/svg%3E")
+      no-repeat right 14px center;
+    color: var(--brand-500);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 22px;
+    text-overflow: ellipsis;
+    cursor: pointer;
+    appearance: none;
+    transition:
+      border-color 0.2s ease,
+      background-color 0.2s ease;
+  }
+  .filtro select:hover {
+    border-color: var(--brand-300);
+  }
+  @media (max-width: 767px) {
+    .filtro select {
+      padding: 12px 32px 12px 14px;
+      background-position: right 8px center;
+      font-size: 14px;
+    }
+  }
+  .filtro select.filtro--activo {
+    border-color: var(--brand-300);
+    background-color: #f3edf9;
+    color: var(--brand-300);
+  }
+
+  .explorar__vistas {
+    display: flex;
+    flex: 1 1 100%;
+    padding: 4px;
+    border-radius: var(--radius-full);
+    background: var(--neutral-200);
+  }
+  .explorar__vistas button {
+    display: inline-flex;
+    flex: 1;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 40px;
+    padding: 8px 18px;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: none;
+    color: var(--ink-300);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 15px;
+    cursor: pointer;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
+  }
+  .explorar__vistas button[aria-pressed='true'] {
+    background: var(--neutral-100);
+    box-shadow: 0 1px 4px rgba(29, 11, 48, 0.12);
+    color: var(--brand-300);
+  }
+
+  .explorar__cuenta {
+    display: flex;
+    flex: 1 1 100%;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px 16px;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--ink-300);
+  }
+
+  .explorar__limpiar {
+    padding: 4px 0;
+    border: 0;
+    background: none;
+    color: var(--brand-300);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 15px;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    cursor: pointer;
+  }
+
+  /* ---------- La grilla (la de /espacios) ---------- */
+  .espacios {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 32px 20px;
+    margin-top: 32px;
+  }
+  .espacios li {
+    position: relative;
+  }
+
+  .sin-resultados {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    margin-top: 48px;
+    text-align: center;
+  }
+
+  /* ---------- El mapa ---------- */
+  .explorar-mapa {
+    position: relative;
+    margin-top: 24px;
+  }
+
+  /* z-index 0 encierra las capas del mapa (Leaflet llega a 1000). */
+  .explorar-mapa__lienzo {
+    position: relative;
+    z-index: 0;
+    height: min(72vh, 760px);
+    min-height: 460px;
+    border-radius: var(--radius-panel);
+    overflow: hidden;
+    background: #ece8f1;
+    font-family: var(--font-body);
+  }
+
+  .explorar-mapa__aviso {
+    margin-top: 12px;
+    color: var(--ink-300);
+  }
+
+  .explorar-mapa__ficha {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    z-index: 1;
+    display: flex;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    background: var(--neutral-100);
+    box-shadow: 0 12px 40px rgba(15, 19, 22, 0.24);
+  }
+
+  .explorar-mapa__foto {
+    flex: none;
+    width: 112px;
+    background: var(--neutral-200);
+  }
+  .explorar-mapa__foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .explorar-mapa__datos {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+    padding: 14px 16px 16px;
+  }
+
+  .explorar-mapa__nombre {
+    padding-right: 32px;
+    font-size: 18px;
+    line-height: 22px;
+    color: var(--brand-500);
+  }
+
+  .explorar-mapa__resumen,
+  .explorar-mapa__barrio {
+    font-size: 14px;
+    line-height: 18px;
+    color: var(--ink-300);
+  }
+
+  .explorar-mapa__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
+  }
+  .explorar-mapa__acciones :global(.btn) {
+    flex: 1 1 auto;
+    min-height: 40px;
+    padding: 7px 16px;
+    font-size: 15px;
+  }
+  /* En la tarjeta blanca, la píldora necesita borde para verse. */
+  .explorar-mapa__acciones :global(.btn--pildora) {
+    border-color: var(--neutral-300);
+    box-shadow: none;
+  }
+
+  .explorar-mapa__cerrar {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.9);
+    cursor: pointer;
+  }
+  .explorar-mapa__cerrar:hover {
+    background: var(--neutral-200);
+  }
+
+  /* Los pines los arma la biblioteca del mapa en el navegador: estilos
+     globales. Una pastilla con el precio y una punta que cae sobre el lugar;
+     el elegido, morado. */
+  .explorar-mapa :global(.pin-precio-caja) {
+    background: none;
+    border: 0;
+    cursor: pointer;
+  }
+  .explorar-mapa :global(.pin-precio) {
+    position: absolute;
+    bottom: 8px;
+    left: 50%;
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    padding: 6px 12px;
+    border-radius: var(--radius-full);
+    background: var(--neutral-100);
+    box-shadow: 0 2px 8px rgba(15, 19, 22, 0.28);
+    color: var(--brand-500);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 14px;
+    line-height: 20px;
+    white-space: nowrap;
+    transform: translateX(-50%);
+    transition:
+      background-color 0.15s ease,
+      color 0.15s ease,
+      transform 0.15s ease;
+  }
+  .explorar-mapa :global(.pin-precio::after) {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    border: 7px solid transparent;
+    border-top-color: var(--neutral-100);
+    border-bottom: 0;
+    transform: translateX(-50%);
+  }
+  .explorar-mapa :global(.pin-precio-caja:hover .pin-precio) {
+    transform: translateX(-50%) scale(1.08);
+  }
+  .explorar-mapa :global(.pin-precio--activo) {
+    background: var(--brand-300);
+    color: var(--neutral-100);
+  }
+  .explorar-mapa :global(.pin-precio--activo::after) {
+    border-top-color: var(--brand-300);
+  }
+  .explorar-mapa :global(.pin-precio img) {
+    display: block;
+  }
+
+  /* ---------- Tableta ---------- */
+  @media (min-width: 768px) {
+    .explorar {
+      margin-top: 48px;
+    }
+
+    .explorar__filtros {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+
+    .espacios {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    .explorar-mapa__ficha {
+      right: auto;
+      width: 400px;
+      left: 24px;
+      bottom: 24px;
+    }
+    .explorar-mapa__foto {
+      width: 140px;
+    }
+  }
+
+  /* ---------- Escritorio: filtros y «Lista / Mapa» en una fila ---------- */
+  @media (min-width: 1240px) {
+    .explorar {
+      margin-top: 80px;
+    }
+
+    .explorar__filtros {
+      flex: 1 1 0;
+    }
+
+    .explorar__vistas {
+      flex: none;
+    }
+
+    .espacios {
+      row-gap: 73px;
+      margin-top: 40px;
+    }
+  }
+</style>

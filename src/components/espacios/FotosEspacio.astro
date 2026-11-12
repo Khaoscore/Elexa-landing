@@ -30,9 +30,11 @@ import { estiloMuescas, type Muesca } from '../../lib/formas';
 
 interface Props {
   espacio: Espacio;
+  /** Sin fotos, una tienda en vez del símbolo de Elexa (/comerciales). */
+  sinMarca?: boolean;
 }
 
-const { espacio } = Astro.props;
+const { espacio, sinMarca = false } = Astro.props;
 const { fotos, precio, precioNota, nombre } = espacio;
 const conFlechas = fotos.length > 1;
 
@@ -92,7 +94,13 @@ const textoAlt = (i: number) => (conFlechas ? `${nombre}, foto ${i + 1} de ${fot
           ))}
         </ul>
       ) : (
-        <img class="fotos__sin-foto" src="/img/marca/simbolo-morado.svg" alt="" width="22" height="24.23" />
+        <img
+          class="fotos__sin-foto"
+          src={sinMarca ? '/img/comerciales/local-morado.svg' : '/img/marca/simbolo-morado.svg'}
+          alt=""
+          width="22"
+          height="24.23"
+        />
       )
     }
     <span class="muescas__trazo" aria-hidden="true"></span>

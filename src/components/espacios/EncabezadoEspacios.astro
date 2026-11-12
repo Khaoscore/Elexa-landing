@@ -9,9 +9,11 @@ import EncabezadoPagina from '../EncabezadoPagina.astro';
 
 interface Props {
   nivel?: 'h1' | 'p';
+  /** /comerciales: el párrafo no nombra a Elexa. */
+  sinMarca?: boolean;
 }
 
-const { nivel } = Astro.props;
+const { nivel, sinMarca = false } = Astro.props;
 ---
 
 <EncabezadoPagina nivel={nivel}>
@@ -19,9 +21,13 @@ const { nivel } = Astro.props;
     Espacios <span class="acento--magenta">disponibles</span><br />para alquilar
   </span>
   <Fragment slot="texto">
-    Espacios comerciales en proyectos desarrollados por Elexa Real Estate, disponibles para arrendar. <strong
-      >Ubicaciones estratégicas en Cali, diseñadas para comercio, oficinas y operación.</strong
-    > Si buscas un espacio para su negocio, explora las opciones disponibles.
+    {
+      sinMarca
+        ? 'Locales, terrazas y espacios comerciales disponibles para arrendar.'
+        : 'Espacios comerciales en proyectos desarrollados por Elexa Real Estate, disponibles para arrendar.'
+    }{' '}
+    <strong>Ubicaciones estratégicas en Cali, diseñadas para comercio, oficinas y operación.</strong> Si buscas un
+    espacio para {sinMarca ? 'tu' : 'su'} negocio, explora las opciones disponibles.
   </Fragment>
 </EncabezadoPagina>
 

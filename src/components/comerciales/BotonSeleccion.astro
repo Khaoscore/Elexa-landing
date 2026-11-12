@@ -1,0 +1,122 @@
+---
+/* «Seleccionar»: agrega un espacio a la selección de /comerciales, o lo
+   saca (ver src/lib/seleccion.ts). Dos formas:
+   · tarjeta  la pastilla sobre la esquina de arriba a la derecha de cada
+              tarjeta de la lista (va al lado del enlace, no adentro: un
+              botón no puede ir dentro de un enlace);
+   · pildora  la píldora blanca de la tarjeta de la ficha.
+
+   Sin JavaScript no sale (no serviría). Los estilos son globales: la
+   tarjeta flotante del mapa arma el mismo botón en el navegador
+   (ExplorarEspacios.astro). */
+interface Props {
+  clave: string;
+  nombre: string;
+  variante?: 'tarjeta' | 'pildora';
+}
+
+const { clave, nombre, variante = 'tarjeta' } = Astro.props;
+const textos =
+  variante === 'tarjeta'
+    ? { no: 'Seleccionar', si: 'Seleccionado' }
+    : { no: 'Agregar a mi selección', si: 'En tu selección' };
+---
+
+<button
+  type="button"
+  class:list={['seleccion-boton', `seleccion-boton--${variante}`, { 'btn btn--pildora': variante === 'pildora' }]}
+  data-seleccionar={clave}
+  data-texto-no={textos.no}
+  data-texto-si={textos.si}
+  aria-pressed="false"
+  aria-label={`Agregar «${nombre}» a mi selección`}
+  hidden
+>
+  <svg class="seleccion-boton__mas" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    <path fill="currentColor" d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"></path>
+  </svg>
+  <svg class="seleccion-boton__listo" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true">
+    <path fill="currentColor" d="M9 16.17 4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"></path>
+  </svg>
+  <span data-seleccion-texto>{textos.no}</span>
+</button>
+
+<script>
+  import { activarBotones } from '../../lib/seleccion';
+
+  for (const boton of document.querySelectorAll<HTMLElement>('.seleccion-boton[hidden]')) boton.hidden = false;
+  activarBotones();
+</script>
+
+<style is:global>
+  .seleccion-boton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    cursor: pointer;
+  }
+  .seleccion-boton[hidden] {
+    display: none;
+  }
+  .seleccion-boton svg {
+    flex: none;
+  }
+  .seleccion-boton__listo,
+  .seleccion-boton[aria-pressed='true'] .seleccion-boton__mas {
+    display: none;
+  }
+  .seleccion-boton[aria-pressed='true'] .seleccion-boton__listo {
+    display: block;
+  }
+
+  /* ---------- Sobre la tarjeta de la lista ---------- */
+  .seleccion-boton--tarjeta {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    z-index: 2;
+    min-height: 40px;
+    padding: 8px 16px 8px 12px;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.94);
+    box-shadow: 0 2px 10px rgba(15, 19, 22, 0.18);
+    color: var(--brand-500);
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 20px;
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease,
+      transform 0.2s ease;
+  }
+  .seleccion-boton--tarjeta:hover {
+    transform: translateY(-1px);
+  }
+  .seleccion-boton--tarjeta[aria-pressed='true'] {
+    background: var(--brand-300);
+    color: var(--neutral-100);
+  }
+
+  /* ---------- En la tarjeta de la ficha ---------- */
+  .seleccion-boton--pildora[aria-pressed='true'] {
+    background: var(--brand-300);
+    color: var(--neutral-100);
+  }
+  .seleccion-boton--pildora[aria-pressed='true']:hover {
+    background: var(--brand-300-hover);
+    color: var(--neutral-100);
+  }
+
+  @media (max-width: 767px) {
+    .seleccion-boton--tarjeta {
+      top: 12px;
+      right: 12px;
+      min-height: 36px;
+      padding: 6px 14px 6px 10px;
+      font-size: 14px;
+    }
+  }
+</style>

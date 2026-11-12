@@ -312,6 +312,25 @@ button {
   background: var(--brand-300-tint);
 }
 
+/* Píldora blanca para las acciones de apoyo sobre fondos grises (la tarjeta
+   de la ficha de un espacio): se ve como botón sin competir con el relleno
+   ni el borde. No viene de Figma. */
+.btn--pildora {
+  padding-inline: 19px;
+  background: var(--neutral-100);
+  box-shadow: 0 1px 3px rgba(29, 11, 48, 0.08);
+  color: var(--brand-300);
+  font-size: 18px;
+  transition:
+    color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.btn--pildora:hover {
+  color: var(--brand-300-hover);
+  box-shadow: 0 2px 8px rgba(29, 11, 48, 0.14);
+}
+
 /* Un enlace sin destino todavía (ver src/data/site.ts) se ve igual pero no
    reacciona. */
 a.btn:not([href]) {

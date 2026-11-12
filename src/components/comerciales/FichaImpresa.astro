@@ -1,0 +1,323 @@
+---
+/* La ficha de /comerciales lista para imprimir o guardar como PDF («Ficha
+   en PDF» de MaterialCompartir.astro, o Ctrl + P): una hoja A4 con el
+   nombre, el lugar, el precio, la foto de portada y hasta cuatro más, los
+   datos, la descripción, el mapa y el enlace a la ficha. Sin contacto ni
+   marca Elexa.
+
+   En pantalla no se ve. Al imprimir es lo único que sale: lo demás de la
+   página (barra, ficha, pie, ventanas) se esconde. Va como hijo directo de
+   <main> (la pone src/pages/comerciales/[slug].astro).
+
+   Las fotos y el mapa no se piden al abrir la ficha (data-src): recién al
+   tocar «Ficha en PDF», que espera a que carguen antes de abrir la ventana
+   de imprimir. El mapa es una imagen fija de Mapbox (Static Images API, con
+   el mismo token público de los mapas); sin token, o si no carga, la hoja
+   sale sin mapa.
+
+   Al imprimir, el título de la pestaña pasa a ser el nombre del espacio: es
+   el nombre que el navegador le propone al PDF. */
+import { PUBLIC_MAPBOX_TOKEN } from 'astro:env/client';
+import type { Espacio } from '../../lib/espacios';
+import { COMERCIALES_NOMBRE } from '../../data/comerciales';
+
+interface Props {
+  espacio: Espacio;
+  /** La dirección pública de la ficha, con dominio. */
+  url: string;
+}
+
+const { espacio, url } = Astro.props;
+const [portada, ...resto] = espacio.fotos;
+const otras = resto.slice(0, 4);
+const lugar = [espacio.barrio, espacio.direccion].filter(Boolean).join(' · ');
+
+const mapa =
+  PUBLIC_MAPBOX_TOKEN && espacio.ubicacion
+    ? (() => {
+        const { latitud, longitud } = espacio.ubicacion;
+        const punto = `${longitud},${latitud}`;
+        return `https://api.mapbox.com/styles/v1/mapbox/streets-v12/static/pin-l+981e97(${punto})/${punto},15.5,0/900x360@2x?access_token=${PUBLIC_MAPBOX_TOKEN}`;
+      })()
+    : '';
+
+const enlaceVisible = url.replace(/^https?:\/\//, '');
+---
+
+<div class="impresa" data-impresa data-archivo={`${espacio.nombre} — ficha`} aria-hidden="true">
+  <header class="impresa__cabecera">
+    <span class="impresa__marca">
+      <img src="/img/comerciales/local-morado.svg" alt="" width="18" height="18" />
+      {COMERCIALES_NOMBRE}
+    </span>
+    <span>Ficha del espacio</span>
+  </header>
+
+  <h1 class="impresa__nombre">{espacio.nombre}</h1>
+  {lugar && <p class="impresa__lugar">{lugar}</p>}
+  {
+    espacio.precio && (
+      <p class="impresa__precio">
+        {espacio.precio} {espacio.precioNota && <span>{espacio.precioNota}</span>}
+      </p>
+    )
+  }
+
+  {portada && <img class="impresa__portada" data-src={portada.jpeg} referrerpolicy="no-referrer" alt="" />}
+  {
+    otras.length > 0 && (
+      <div class="impresa__fotos">
+        {otras.map((foto) => (
+          <img data-src={foto.jpeg} referrerpolicy="no-referrer" alt="" />
+        ))}
+      </div>
+    )
+  }
+
+  {
+    espacio.caracteristicas.length > 0 && (
+      <dl class="impresa__datos">
+        {espacio.caracteristicas.map((c) => (
+          <div>
+            <dt>{c.etiqueta}</dt>
+            <dd>{c.texto}</dd>
+          </div>
+        ))}
+      </dl>
+    )
+  }
+
+  {
+    espacio.descripcion.length > 0 && (
+      <section class="impresa__seccion">
+        <h2>Descripción</h2>
+        {espacio.descripcion.map((parrafo) => (
+          <p>{parrafo}</p>
+        ))}
+      </section>
+    )
+  }
+
+  {
+    mapa && (
+      <section class="impresa__seccion" data-mapa-impreso>
+        <h2>Ubicación</h2>
+        <img class="impresa__mapa" data-src={mapa} alt="" />
+      </section>
+    )
+  }
+
+  <p class="impresa__enlace">Más fotos y detalles: <strong>{enlaceVisible}</strong></p>
+</div>
+
+<script>
+  const hoja = document.querySelector<HTMLElement>('[data-impresa]');
+
+  if (hoja) {
+    /* Pide las fotos y el mapa y espera a que lleguen (máximo 8 s). */
+    const preparar = () =>
+      Promise.all(
+        [...hoja.querySelectorAll<HTMLImageElement>('img[data-src]')].map(
+          (imagen) =>
+            new Promise<void>((listo) => {
+              const fin = () => listo();
+              imagen.addEventListener('load', fin, { once: true });
+              imagen.addEventListener(
+                'error',
+                () => {
+                  // Sin mapa (token que no deja este dominio): la hoja sin esa parte.
+                  imagen.closest('[data-mapa-impreso]')?.remove();
+                  imagen.remove();
+                  fin();
+                },
+                { once: true },
+              );
+              window.setTimeout(fin, 8000);
+              imagen.src = imagen.dataset.src ?? '';
+              delete imagen.dataset.src;
+            }),
+        ),
+      );
+
+    let tituloOriginal = document.title;
+    const ponerTitulo = () => {
+      tituloOriginal = document.title;
+      document.title = hoja.dataset.archivo ?? document.title;
+    };
+    const quitarTitulo = () => (document.title = tituloOriginal);
+
+    for (const boton of document.querySelectorAll<HTMLButtonElement>('[data-imprimir]')) {
+      boton.addEventListener('click', async () => {
+        const titulo = boton.querySelector<HTMLElement>('[data-titulo]');
+        const original = titulo?.textContent ?? '';
+        boton.disabled = true;
+        if (titulo) titulo.textContent = 'Preparando la ficha…';
+        await preparar();
+        boton.disabled = false;
+        if (titulo) titulo.textContent = original;
+        window.print();
+      });
+    }
+
+    /* Con Ctrl + P también: pide lo que falte (puede no alcanzar a llegar). */
+    window.addEventListener('beforeprint', () => {
+      preparar();
+      ponerTitulo();
+    });
+    window.addEventListener('afterprint', quitarTitulo);
+  }
+</script>
+
+<style>
+  .impresa {
+    display: none;
+  }
+
+  @media print {
+    @page {
+      size: A4;
+      margin: 12mm 14mm 14mm;
+    }
+
+    /* Sólo la hoja: lo demás de la página se esconde. */
+    :global(body > :not(main)),
+    :global(main > :not(.impresa)) {
+      display: none !important;
+    }
+    :global(body) {
+      background: #fff !important;
+    }
+
+    .impresa {
+      display: block;
+      color: #1d0b30;
+      font-family: var(--font-body);
+      font-size: 10.5pt;
+      line-height: 1.45;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    .impresa__cabecera {
+      display: flex;
+      justify-content: space-between;
+      padding-bottom: 3mm;
+      border-bottom: 0.4mm solid #981e97;
+      color: #5f249f;
+      font-weight: 700;
+      font-size: 9pt;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .impresa__marca {
+      display: inline-flex;
+      align-items: center;
+      gap: 2mm;
+    }
+
+    .impresa__nombre {
+      margin-top: 6mm;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-variation-settings: 'opsz' 14;
+      font-size: 24pt;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .impresa__lugar {
+      margin-top: 1.5mm;
+      color: #333f48;
+      font-size: 11pt;
+    }
+
+    .impresa__precio {
+      margin-top: 3mm;
+      color: #981e97;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 20pt;
+      line-height: 1.2;
+    }
+    .impresa__precio span {
+      font-family: var(--font-body);
+      font-weight: 700;
+      font-size: 11pt;
+    }
+
+    .impresa__portada {
+      display: block;
+      width: 100%;
+      height: 74mm;
+      margin-top: 4mm;
+      border-radius: 3mm;
+      object-fit: cover;
+    }
+
+    .impresa__fotos {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2.5mm;
+      margin-top: 2.5mm;
+    }
+    .impresa__fotos img {
+      width: 100%;
+      height: 24mm;
+      border-radius: 2mm;
+      object-fit: cover;
+    }
+
+    .impresa__datos {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2.5mm 8mm;
+      margin-top: 5mm;
+      break-inside: avoid;
+    }
+    .impresa__datos dt {
+      color: #333f48;
+      font-size: 8.5pt;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .impresa__datos dd {
+      margin: 0;
+      font-weight: 700;
+      font-size: 11.5pt;
+    }
+
+    .impresa__seccion {
+      margin-top: 5mm;
+      break-inside: avoid;
+    }
+    .impresa__seccion h2 {
+      margin-bottom: 2mm;
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: 13pt;
+    }
+    .impresa__seccion p + p {
+      margin-top: 1.5mm;
+    }
+
+    .impresa__mapa {
+      display: block;
+      width: 100%;
+      height: 52mm;
+      border-radius: 3mm;
+      object-fit: cover;
+    }
+
+    .impresa__enlace {
+      margin-top: 5mm;
+      padding-top: 3mm;
+      border-top: 0.3mm solid #d9d9d6;
+      color: #333f48;
+      font-size: 9.5pt;
+      overflow-wrap: anywhere;
+    }
+    .impresa__enlace strong {
+      color: #5f249f;
+    }
+  }
+</style>

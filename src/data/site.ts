@@ -9,15 +9,18 @@
 export const SITE_URL = 'https://www.elexa.com.co';
 export const SITE_NAME = 'Elexa Real Estate Investments';
 
-/* Los mismos destinos que usan las landings de Florentino y Proyecto e. */
+/* Los mismos destinos que usan las landings de Florentino y Proyecto e: el
+   WhatsApp de Luis (333 430 7840), el de «Hablemos», «Agenda tu cita» y el
+   pie. */
 export const WHATSAPP_URL = 'https://wa.link/avoqut';
 
-/* El número al que lleva ese enlace (333 430 7840). Con él se arman los
-   enlaces que abren la conversación con un mensaje ya escrito, como «Me
-   interesa este espacio» en la ficha de cada espacio en alquiler. */
-export const WHATSAPP_NUMERO = '573334307840';
-export const whatsappConMensaje = (mensaje: string) =>
-  `https://wa.me/${WHATSAPP_NUMERO}?text=${encodeURIComponent(mensaje)}`;
+/* La línea de alquiler (324 584 1936), distinta de la de Luis: «Me interesa
+   este espacio» en la ficha de cada espacio en alquiler (/espacios). Abre la
+   conversación con un mensaje ya escrito. Con indicativo y sin «+».
+   /comerciales no lleva contactos (ver src/data/comerciales.ts). */
+export const ALQUILER_WHATSAPP = '573245841936';
+export const whatsappAlquiler = (mensaje: string) =>
+  `https://wa.me/${ALQUILER_WHATSAPP}?text=${encodeURIComponent(mensaje)}`;
 export const INSTAGRAM_URL = 'https://www.instagram.com/luis_inversionista/';
 /* La radiografía ahora vive dentro del sitio (sección «Libertad»); esta URL
    queda de respaldo para quien no tenga JavaScript. */

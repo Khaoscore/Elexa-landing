@@ -1,0 +1,424 @@
+---
+/* «Material para compartir», en la ficha de /comerciales: lo que el asesor
+   le manda al cliente con su propio contacto.
+
+   · Copiar texto: nombre, lugar, área, precio, disponibilidad, la
+     descripción y el enlace, con el formato de WhatsApp (*negrita* y
+     emojis), listo para pegar.
+   · Ficha en PDF: abre la ventana de imprimir con la hoja de
+     FichaImpresa.astro; ahí se elige «Guardar como PDF».
+   · Imagen para historias: 1080 × 1920, dibujada en el navegador
+     (src/lib/historia.ts). Se ve antes en una ventana con «Descargar» y, en
+     el teléfono, «Compartir» (va directo a WhatsApp o Instagram).
+
+   Pixel de Meta: un evento propio, MaterialComercial, con content_name
+   copiar_texto, ficha_pdf o imagen_historia (ver MetaPixel.astro).
+
+   Sin JavaScript no hace nada: la sección no sale. */
+import type { Espacio } from '../../lib/espacios';
+
+interface Props {
+  espacio: Espacio;
+  /** La dirección pública de la ficha, con dominio. */
+  url: string;
+}
+
+const { espacio, url } = Astro.props;
+const valor = [espacio.precio, espacio.precioNota].filter(Boolean).join(' ');
+const lugar = [espacio.barrio, espacio.direccion].filter(Boolean).join(' · ');
+
+/* El texto para WhatsApp. */
+const texto = [
+  `*${espacio.nombre}*`,
+  lugar && `📍 ${lugar}`,
+  espacio.area && `📐 ${espacio.area}`,
+  valor && `💰 ${valor}`,
+  espacio.disponibilidad && `🗓️ ${espacio.disponibilidad}`,
+  espacio.descripcion.length ? `\n${espacio.descripcion.join('\n')}` : '',
+  `\nFotos y ubicación: ${url}`,
+]
+  .filter(Boolean)
+  .join('\n');
+
+/* La foto para dibujar: en Drive, un tamaño que no pida ninguna <img> de la
+   página (la del navegador vendría sin el permiso para dibujarla). */
+const portada = espacio.fotos[0]?.src ?? '';
+const fotoHistoria = /lh3\.googleusercontent\.com\/d\//.test(portada)
+  ? portada.replace(/=w\d+(-rw)?$/, '=w1440')
+  : portada;
+---
+
+<section class="material" aria-labelledby="titulo-material" data-material hidden>
+  <div class="material__cabecera">
+    <h2 id="titulo-material" class="display t-h3">Material para compartir</h2>
+    <p>Para mandarle este espacio a un cliente con tu propio contacto.</p>
+  </div>
+
+  <ul class="material__lista" role="list">
+    <li>
+      <button type="button" class="herramienta" data-copiar-texto={texto}>
+        <span class="herramienta__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26">
+            <path
+              fill="currentColor"
+              d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h11c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2zm0 16H8V7h11v14z"
+            ></path>
+          </svg>
+        </span>
+        <span class="herramienta__texto">
+          <span class="herramienta__titulo" data-titulo>Copiar texto</span>
+          <span class="herramienta__detalle">Nombre, precio, área y enlace, listo para pegar en WhatsApp.</span>
+        </span>
+      </button>
+    </li>
+    <li>
+      <button type="button" class="herramienta" data-imprimir>
+        <span class="herramienta__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26">
+            <path
+              fill="currentColor"
+              d="M20 2H8c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-8.5 7.5c0 .83-.67 1.5-1.5 1.5H9v2H7.5V7H10c.83 0 1.5.67 1.5 1.5v1zm5 2c0 .83-.67 1.5-1.5 1.5h-2.5V7H15c.83 0 1.5.67 1.5 1.5v3zm4-3H19v1h1.5V11H19v2h-1.5V7h3v1.5zM9 9.5h1v-1H9v1zM4 6H2v14c0 1.1.9 2 2 2h14v-2H4V6zm10 5.5h1v-3h-1v3z"
+            ></path>
+          </svg>
+        </span>
+        <span class="herramienta__texto">
+          <span class="herramienta__titulo" data-titulo>Ficha en PDF</span>
+          <span class="herramienta__detalle">Fotos y datos en una hoja. Al imprimir, elige «Guardar como PDF».</span>
+        </span>
+      </button>
+    </li>
+    <li>
+      <button
+        type="button"
+        class="herramienta"
+        data-historia
+        data-nombre={espacio.nombre}
+        data-barrio={espacio.barrio}
+        data-direccion={espacio.direccion}
+        data-area={espacio.area}
+        data-precio={espacio.precio}
+        data-nota={espacio.precioNota}
+        data-disponibilidad={espacio.disponibilidad}
+        data-foto={fotoHistoria}
+        data-archivo={`${espacio.slug}-historia.jpg`}
+        aria-haspopup="dialog"
+      >
+        <span class="herramienta__icono" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="26" height="26">
+            <path
+              fill="currentColor"
+              d="M17 1.01 7 1c-1.1 0-2 .9-2 2v18c0 1.1.9 2 2 2h10c1.1 0 2-.9 2-2V3c0-1.1-.9-1.99-2-1.99zM17 19H7V5h10v14zm-4.2-5.76v1.75L16 12l-3.2-2.98v1.7c-3.11.43-4.35 2.56-4.8 4.7 1.11-1.5 2.58-2.18 4.8-2.18z"
+            ></path>
+          </svg>
+        </span>
+        <span class="herramienta__texto">
+          <span class="herramienta__titulo" data-titulo>Imagen para historias</span>
+          <span class="herramienta__detalle">Vertical, para el estado de WhatsApp o Instagram.</span>
+        </span>
+      </button>
+    </li>
+  </ul>
+  <p class="sr-only" role="status" aria-live="polite" data-estado></p>
+
+  <dialog class="historia" aria-labelledby="titulo-historia" data-ventana-historia data-cursor="nativo">
+    <div class="historia__caja">
+      <div class="historia__cabecera">
+        <p class="historia__titulo" id="titulo-historia">Imagen para historias</p>
+        <button type="button" class="historia__cerrar" data-cerrar aria-label="Cerrar">
+          <img src="/img/iconos/close.svg" alt="" width="24" height="24" />
+        </button>
+      </div>
+      <div class="historia__vista">
+        <img data-vista alt="Vista previa de la imagen para historias" />
+      </div>
+      <div class="historia__acciones">
+        <a class="btn btn--primario" data-descargar download>Descargar imagen</a>
+        <button type="button" class="btn btn--borde" data-compartir-imagen hidden>Compartir</button>
+      </div>
+    </div>
+  </dialog>
+</section>
+
+<script>
+  import { dibujarHistoria } from '../../lib/historia';
+  import { copiar, reportarPropio } from '../../lib/navegador';
+
+  const seccion = document.querySelector<HTMLElement>('[data-material]');
+
+  if (seccion) {
+    seccion.hidden = false;
+    const estado = seccion.querySelector<HTMLElement>('[data-estado]')!;
+    const reportar = (nombre: string) => reportarPropio('MaterialComercial', nombre, 'comerciales');
+
+    /* El título del botón cambia un momento para confirmar. */
+    const confirmar = (boton: HTMLElement, texto: string) => {
+      const titulo = boton.querySelector<HTMLElement>('[data-titulo]')!;
+      const original = titulo.dataset.original ?? titulo.textContent ?? '';
+      titulo.dataset.original = original;
+      titulo.textContent = texto;
+      estado.textContent = texto;
+      window.setTimeout(() => (titulo.textContent = original), 2500);
+    };
+
+    /* ---------- Copiar texto ---------- */
+    const botonCopiar = seccion.querySelector<HTMLButtonElement>('[data-copiar-texto]')!;
+    botonCopiar.addEventListener('click', async () => {
+      const ok = await copiar(botonCopiar.dataset.copiarTexto ?? '');
+      if (ok) reportar('copiar_texto');
+      confirmar(botonCopiar, ok ? '¡Texto copiado!' : 'No se pudo copiar');
+    });
+
+    /* ---------- Ficha en PDF: la imprime FichaImpresa.astro ---------- */
+    seccion.querySelector('[data-imprimir]')!.addEventListener('click', () => reportar('ficha_pdf'));
+
+    /* ---------- Imagen para historias ---------- */
+    const botonHistoria = seccion.querySelector<HTMLButtonElement>('[data-historia]')!;
+    const ventana = seccion.querySelector<HTMLDialogElement>('[data-ventana-historia]')!;
+    const vista = ventana.querySelector<HTMLImageElement>('[data-vista]')!;
+    const descargar = ventana.querySelector<HTMLAnchorElement>('[data-descargar]')!;
+    const compartir = ventana.querySelector<HTMLButtonElement>('[data-compartir-imagen]')!;
+    let archivo: File | null = null;
+    let direccion = '';
+
+    botonHistoria.addEventListener('click', async () => {
+      const d = botonHistoria.dataset;
+      if (!archivo) {
+        botonHistoria.disabled = true;
+        const titulo = botonHistoria.querySelector<HTMLElement>('[data-titulo]')!;
+        const original = titulo.textContent;
+        titulo.textContent = 'Preparando la imagen…';
+        try {
+          const blob = await dibujarHistoria({
+            nombre: d.nombre ?? '',
+            barrio: d.barrio ?? '',
+            direccion: d.direccion ?? '',
+            area: d.area ?? '',
+            precio: d.precio ?? '',
+            nota: d.nota ?? '',
+            disponibilidad: d.disponibilidad ?? '',
+            foto: d.foto ?? '',
+          });
+          archivo = new File([blob], d.archivo ?? 'historia.jpg', { type: 'image/jpeg' });
+          direccion = URL.createObjectURL(blob);
+        } catch (error) {
+          console.error('[historia]', error);
+          titulo.textContent = original;
+          botonHistoria.disabled = false;
+          confirmar(botonHistoria, 'No se pudo armar la imagen');
+          return;
+        }
+        titulo.textContent = original;
+        botonHistoria.disabled = false;
+        vista.src = direccion;
+        descargar.href = direccion;
+        descargar.download = archivo.name;
+        compartir.hidden = !(navigator.canShare?.({ files: [archivo] }) ?? false);
+      }
+      reportar('imagen_historia');
+      ventana.showModal();
+    });
+
+    compartir.addEventListener('click', async () => {
+      if (!archivo) return;
+      try {
+        await navigator.share({ files: [archivo] });
+      } catch {
+        /* Cerró el menú o el navegador no pudo: queda «Descargar». */
+      }
+    });
+
+    ventana.querySelector('[data-cerrar]')!.addEventListener('click', () => ventana.close());
+    ventana.addEventListener('click', (clic) => {
+      if (clic.target === ventana) ventana.close();
+    });
+  }
+</script>
+
+<style>
+  .material[hidden] {
+    display: none;
+  }
+
+  .material {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 16px;
+  }
+
+  .material__cabecera {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    color: var(--brand-500);
+  }
+  .material__cabecera p {
+    color: var(--ink-300);
+  }
+
+  .material__lista {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .herramienta {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    width: 100%;
+    height: 100%;
+    padding: 18px 20px;
+    border: 1px solid var(--neutral-300);
+    border-radius: var(--radius-card);
+    background: var(--neutral-100);
+    color: var(--brand-500);
+    font-family: var(--font-body);
+    text-align: left;
+    cursor: pointer;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      transform 0.2s ease;
+  }
+  .herramienta:hover {
+    border-color: var(--brand-300);
+    box-shadow: 0 6px 20px rgba(29, 11, 48, 0.1);
+    transform: translateY(-2px);
+  }
+  .herramienta:disabled {
+    cursor: progress;
+    opacity: 0.7;
+    transform: none;
+  }
+
+  .herramienta__icono {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--radius-full);
+    background: var(--accent-300);
+    color: var(--neutral-100);
+  }
+
+  .herramienta__texto {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 0;
+  }
+
+  .herramienta__titulo {
+    font-weight: 700;
+    font-size: 18px;
+    line-height: 22px;
+    color: var(--brand-300);
+  }
+
+  .herramienta__detalle {
+    font-size: 14px;
+    line-height: 19px;
+    color: var(--ink-300);
+  }
+
+  /* ---------- La vista previa de la imagen ---------- */
+  .historia {
+    width: min(460px, 100% - 32px);
+    max-width: none;
+    max-height: calc(100dvh - 32px);
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-panel);
+    background: var(--neutral-100);
+    color: var(--brand-500);
+    box-shadow: 0 24px 64px rgba(15, 19, 22, 0.24);
+  }
+  .historia::backdrop {
+    background: rgba(29, 11, 48, 0.6);
+  }
+
+  .historia__caja {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 20px;
+  }
+
+  .historia__cabecera {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  .historia__titulo {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 22px;
+    line-height: 28px;
+  }
+
+  .historia__cerrar {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    margin: -8px -8px -8px 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-full);
+    background: transparent;
+    cursor: pointer;
+  }
+  .historia__cerrar:hover {
+    background: var(--neutral-200);
+  }
+
+  .historia__vista {
+    display: grid;
+    place-items: center;
+    border-radius: var(--radius-card);
+    background: var(--neutral-200);
+  }
+  .historia__vista img {
+    width: auto;
+    max-width: 100%;
+    height: min(60dvh, 560px);
+    border-radius: 12px;
+    aspect-ratio: 9 / 16;
+    object-fit: contain;
+  }
+
+  .historia__acciones {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .historia__acciones .btn {
+    flex: 1 1 auto;
+  }
+  .historia__acciones [hidden] {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .material__lista {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .herramienta {
+      flex-direction: column;
+      align-items: flex-start;
+      padding: 24px;
+    }
+  }
+
+  @media (min-width: 1240px) {
+    .material {
+      margin-top: 0;
+    }
+  }
+</style>

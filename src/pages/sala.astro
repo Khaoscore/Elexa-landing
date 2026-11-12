@@ -1,0 +1,1079 @@
+---
+/* Sala del lanzamiento virtual: pantalla de espera con cuenta regresiva,
+   acceso con nombre y celular, reproductor, ejercicios, botones de cierre,
+   una tarjeta de enlace y el muro de preguntas en vivo. Lo que aparece en
+   cada momento lo decide el panel (/panel) y los datos van a la hoja de
+   Google a través del Apps Script.
+
+   El video va dentro de #stage y el botón de pantalla completa agranda ese
+   contenedor, no el iframe: así el ejercicio, los botones de cierre y el
+   enlace se mudan al muelle y quedan sobre el video en vez de desaparecer.
+
+   Página suelta, sin layout: tiene su propia barra (con el estado de la
+   transmisión y la persona que entró), su propio pie y una hoja aparte.
+   La configuración vive en data/sala.ts y llega al script con define:vars;
+   el script es el de la versión estática, sin cambios de lógica.
+
+   Viene de la sala de Florentino, con los textos y los colores de Karanis.
+   No usa el layout ni global.css del sitio: tiene su propia hoja
+   (styles/sala.css). Las imágenes y tipografías van en public/sala-assets/. */
+import '../styles/sala.css';
+import { SALA_CONFIG, INSTAGRAM_URL, KHAOS_URL, PRIVACIDAD_URL, legalPages } from '../data/sala';
+
+/* «Lista 0 abierta», «Lanzamiento virtual»…: cambia con cada webinar. */
+const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
+---
+
+<!doctype html>
+<html lang="es-CO">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Sala · {NOMBRE} · Karanis | Elexa Real Estate</title>
+    <meta
+      name="description"
+      content={`Sala de transmisión de ${NOMBRE} · Karanis, el street mall con marcas ancla de la Calle 14 en Cali. Un proyecto de Elexa Real Estate.`}
+    />
+    <meta name="robots" content="noindex, nofollow" />
+    <meta name="theme-color" content="#f2f1ec" />
+    <link rel="icon" href="/favicon.ico" sizes="32x32" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="preconnect" href="https://use.typekit.net" crossorigin />
+    <link rel="stylesheet" href="https://use.typekit.net/nnu5pnp.css" />
+    <link rel="preload" as="font" type="font/otf" href="/sala-assets/fonts/Dunaslab-Black.otf" crossorigin />
+  </head>
+  <body>
+    <header class="navbar">
+      <div class="container">
+        <nav class="nav" aria-label="Principal">
+          <a class="nav__logo" href="/" target="_blank" rel="noopener" aria-label="Elexa Real Estate">
+            <img src="/sala-assets/icons/elexa-logo-ink.svg" alt="Elexa" width="298" height="74" />
+          </a>
+          <div class="nav__right">
+            <span class="badge" id="liveBadge">
+              <span class="badge__dot" hidden></span>
+              <span class="badge__long" id="liveBadgeText">{NOMBRE}</span>
+              <span class="badge__short" id="liveBadgeShort">Karanis</span>
+            </span>
+            <span class="chip" id="userChip" hidden>
+              <span id="userChipName"></span>
+              <button type="button" class="link" id="btnSalir">cambiar</button>
+            </span>
+          </div>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      {/* Pantalla de espera y acceso */}
+      <section class="gate" id="gate" aria-labelledby="gate-title">
+        <div class="gate__bg" aria-hidden="true">
+          <picture>
+            <source media="(max-width:767.98px)" srcset="/sala-assets/images/hero-mobile.webp" />
+            <img src="/sala-assets/images/hero-desktop.webp" alt="" fetchpriority="high" />
+          </picture>
+        </div>
+        <div class="container gate__inner">
+          <div class="gate__copy">
+            <p class="eyebrow">{NOMBRE}</p>
+            <h1 id="gate-title" class="sr-only">Karanis · {NOMBRE}</h1>
+            <img class="gate__wordmark" src="/sala-assets/icons/karanis-hero.svg" alt="Karanis" width="672" height="91" />
+            <p class="tagline gate__tagline">Un activo con marcas ancla que trabaja para ti.</p>
+            <p class="gate__dates" id="fechaTexto"></p>
+            <div class="countdown" id="countdownGate" aria-live="polite"></div>
+            <div class="gate__cal">
+              <a class="btn btn--ink" id="btnGcal" href="#" target="_blank" rel="noopener">Agregar a Google Calendar</a>
+              <p class="error gate__cal-aviso" id="gcalAviso" role="alert" hidden>
+                Primero completa tu nombre, celular y correo en el formulario para agregar el evento a tu calendario.
+              </p>
+            </div>
+          </div>
+
+          <form class="card gate__card" id="gateForm" novalidate>
+            <h2 class="card__title">Entra a la sala</h2>
+            <div class="stack">
+              <div class="field">
+                <label for="nombre">Tu nombre</label>
+                <input
+                  class="input"
+                  id="nombre"
+                  name="nombre"
+                  type="text"
+                  autocomplete="name"
+                  placeholder="Nombre y apellido"
+                  required
+                  maxlength="80"
+                />
+              </div>
+              <div class="field">
+                <label for="numero"> Tu Celular</label>
+                <input
+                  class="input"
+                  id="numero"
+                  name="numero"
+                  type="tel"
+                  inputmode="tel"
+                  autocomplete="tel"
+                  placeholder="300 123 4567"
+                  required
+                />
+                <p class="hint" id="numeroHint">Se registrará como: <strong>—</strong></p>
+              </div>
+              <div class="field">
+                <label for="correo">Tu correo</label>
+                <input
+                  class="input"
+                  id="correo"
+                  name="correo"
+                  type="email"
+                  inputmode="email"
+                  autocomplete="email"
+                  placeholder="tucorreo@ejemplo.com"
+                  required
+                  maxlength="120"
+                />
+              </div>
+              <p class="error" id="gateError" hidden></p>
+              <button class="btn btn--primary btn--block" type="submit" id="btnEntrar">Entrar a la sala</button>
+              {
+                /* Todo lo que sale de la sala abre en otra pestaña, también la
+                   landing y los legales: un clic no debería cortarle el directo
+                   a nadie. */
+              }
+              <p class="gate__note">
+                Al entrar aceptas la{' '}
+                <a href={PRIVACIDAD_URL} target="_blank" rel="noopener">política de privacidad</a>{' '}
+                de Elexa. ¿Problemas para entrar?{' '}
+                <a id="linkWa" href={SALA_CONFIG.WHATSAPP_URL} target="_blank" rel="noopener">Escríbenos por WhatsApp</a>.
+              </p>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      {/* Sala */}
+      <section class="room" id="room" hidden aria-labelledby="room-title">
+        <div class="container room__grid">
+          <div class="room__main">
+            <div class="stage" id="stage">
+              <div class="player" id="player">
+                <div class="player__placeholder" id="playerPlaceholder"><p>Cargando transmisión…</p></div>
+              </div>
+              {
+                /* En pantalla completa, el ejercicio y los botones de cierre se mudan al
+                   muelle: quedan sobre el video. */
+              }
+              <div class="stage__panel" id="fsPanel">
+                <div class="stage__tools">
+                  <button class="btn btn--sm btn--ghost stage__tool" id="fsWall" type="button" aria-pressed="false">
+                    <span id="fsWallTexto">Ver preguntas</span>
+                  </button>
+                  <button class="btn btn--sm btn--ghost stage__tool" id="fsExit" type="button">
+                    <span class="fs-largo">Salir de pantalla completa</span><span class="fs-corto">Salir</span>
+                  </button>
+                </div>
+                <div class="stage__dock" id="fsDock" hidden></div>
+              </div>
+              <div class="stage__bar">
+                <p class="stage__hint" id="fsHint" hidden>
+                  Los ejercicios y los botones siguen apareciendo sobre el video.
+                </p>
+                <button class="btn btn--sm btn--ghost" id="fsBtn" type="button" hidden aria-expanded="false">
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="14"
+                    height="14"
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2.4"
+                    stroke-linecap="round"
+                  >
+                    <path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" />
+                  </svg>
+                  Pantalla completa
+                </button>
+              </div>
+            </div>
+            <div class="room__head">
+              <p class="eyebrow">{NOMBRE} · Elexa Real Estate</p>
+              <h1 class="display room__title" id="room-title">Karanis</h1>
+              <p class="room__lede">
+                El street mall que ya tiene de inquilinos marcas como Dollarcity, D1 y la multinacional de gimnasios
+                Fitness24Seven. Locales comerciales a nivel de calle, pensados para generar renta, en la{' '}
+                <span style="white-space:nowrap">Calle 14 # 53-07</span> de Cali. Las marcas ancla firmaron antes de la obra, con contratos de más de 5 años.
+              </p>
+            </div>
+            <div class="numbers" aria-label="Karanis en números">
+              <div class="number">
+                <p class="number__pre">Desde</p>
+                <p class="number__value">$100M</p>
+                <p class="number__label">Ticket de entrada</p>
+              </div>
+              <div class="number">
+                <p class="number__pre">Hasta</p>
+                <p class="number__value">9,4%</p>
+                <p class="number__label">Flujo estimado primer año</p>
+              </div>
+              <div class="number">
+                <p class="number__pre">Hasta</p>
+                <p class="number__value">4 meses</p>
+                <p class="number__label">Para completar tu aporte</p>
+              </div>
+              <div class="number">
+                <p class="number__pre">Ya firmadas</p>
+                <p class="number__value">3 marcas</p>
+                <p class="number__label">Dollarcity, D1 y Fitness24Seven</p>
+              </div>
+            </div>
+          </div>
+
+          <aside class="room__side" aria-label="Interacción">
+            {/* Ejercicio interactivo (lo activa el panel de control) */}
+            <div class="card card--exercise" id="exercise" hidden aria-live="polite"></div>
+
+            {/* Botones de cierre (los activa el panel de control) */}
+            <div class="card card--ctas" id="ctas" hidden aria-live="polite">
+              <p class="eyebrow">Es el momento</p>
+              <h2 class="card__title">¿Qué quieres hacer ahora?</h2>
+              <div class="ctas" style="margin-top:16px">
+                <a class="btn btn--primary" id="ctaSeparo" data-accion="separo" href="#" target="_blank" rel="noopener">
+                  Separo mi cupo
+                </a>
+                <a class="btn btn--ink" id="ctaAgendo" data-accion="agendo" href="#" target="_blank" rel="noopener">
+                  Quiero agendar mi cita
+                </a>
+                <a class="btn btn--outline" id="ctaDossier" data-accion="dossier" href="#" target="_blank" rel="noopener">
+                  Quiero el dossier completo
+                </a>
+              </div>
+              <form id="dossierForm" hidden style="margin-top:16px" novalidate>
+                <div class="field">
+                  <label for="dossierEmail" style="color:var(--aura-3)">¿A qué correo te lo enviamos?</label>
+                  <input
+                    class="input"
+                    id="dossierEmail"
+                    type="email"
+                    inputmode="email"
+                    autocomplete="email"
+                    placeholder="tucorreo@ejemplo.com"
+                    required
+                  />
+                </div>
+                <div class="actions" style="margin-top:12px">
+                  <button class="btn btn--primary btn--sm" type="submit">Enviar</button>
+                  <p class="hint" id="dossierMsg"></p>
+                </div>
+              </form>
+            </div>
+
+            {/* Enlace que el panel muestra u oculta (ENLACE en data/sala.ts) */}
+            <div class="card card--link" id="linkCard" hidden aria-live="polite">
+              <p class="eyebrow">Enlace</p>
+              <h2 class="card__title" id="linkTitulo"></h2>
+              <p class="small" id="linkDesc" hidden></p>
+              <p class="link__url" id="linkUrl"></p>
+              <div class="link__acciones">
+                <a class="btn btn--primary btn--sm" id="linkAbrir" href="#" target="_blank" rel="noopener">Abrir enlace</a>
+                <button class="btn btn--outline btn--sm" id="linkCopiar" type="button">Copiar</button>
+              </div>
+            </div>
+
+            {/* Preguntas al presentador */}
+            <div class="card" id="questions">
+              <p class="eyebrow">Preguntas en vivo<span id="wallConteo"></span></p>
+              <h2 class="card__title">Pregúntale a Luis</h2>
+              {
+                /* Muro público: lo que está preguntando la gente, que el Apps Script
+                   devuelve con action=preguntas. */
+              }
+              <div class="wall" id="wall" hidden aria-live="polite" aria-label="Preguntas del público">
+                <p class="wall__vacio" id="wallVacio">Todavía nadie ha preguntado. Puedes ser el primero.</p>
+                <ul class="wall__lista" id="wallLista"></ul>
+              </div>
+              <form id="questionForm" class="stack" style="margin-top:12px" novalidate>
+                <div class="field">
+                  <label for="pregunta" class="sr-only">Tu pregunta</label>
+                  <textarea
+                    class="input"
+                    id="pregunta"
+                    placeholder="Escribe tu pregunta. Quedará firmada con tu nombre."
+                    maxlength="500"
+                    rows="3"></textarea>
+                </div>
+                <div class="actions">
+                  <button class="btn btn--ink btn--sm" type="submit">Enviar pregunta</button>
+                  <span class="hint small" id="questionMsg"></span>
+                </div>
+              </form>
+              <ul class="mine" id="myQuestions" style="margin-top:12px"></ul>
+            </div>
+
+            {/* Espera y calendario (sólo antes de empezar) */}
+            <div class="card" id="waitCard">
+              <p class="eyebrow" id="waitEyebrow">Empezamos en</p>
+              <div class="countdown countdown--sm" id="countdownRoom" style="margin-top:8px"></div>
+              <p class="small" style="margin-top:12px" id="waitText"></p>
+              <div class="gate__cal" style="margin-top:12px">
+                <a class="btn btn--ink btn--sm" id="btnGcal2" href="#" target="_blank" rel="noopener">Agregar a Google Calendar</a>
+              </div>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      {
+        /* Persona expulsada desde el panel (moderación). Se queda aquí hasta que la
+           readmitan: la sala sigue consultando el estado y se abre sola. */
+      }
+      <section class="expelled" id="expelled" hidden aria-labelledby="expelled-title">
+        <div class="container">
+          <div class="card expelled__card" role="alert">
+            <p class="eyebrow">{NOMBRE} · Karanis</p>
+            <h1 class="card__title" id="expelled-title">Ya no tienes acceso a esta sala</h1>
+            <p class="small">
+              El equipo de moderación retiró tu acceso a la transmisión. Si crees que es un error, escríbenos por
+              WhatsApp.
+            </p>
+            <div>
+              <a class="btn btn--ink btn--sm" href={SALA_CONFIG.WHATSAPP_URL} target="_blank" rel="noopener">
+                Escribir por WhatsApp
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <div class="container footer__main">
+        <img class="footer__logo" src="/sala-assets/icons/elexa-logo-color.svg" alt="Elexa Real Estate" width="298" height="74" />
+        <p class="footer__note">Karanis es una forma más simple de tener finca raíz que renta.</p>
+        <div class="footer__social">
+          <a id="footWa" href={SALA_CONFIG.WHATSAPP_URL} target="_blank" rel="noopener" aria-label="WhatsApp">
+            <img src="/sala-assets/icons/Whatsapp.svg" alt="" />
+          </a>
+          <a href={INSTAGRAM_URL} target="_blank" rel="noopener" aria-label="Instagram">
+            <img src="/sala-assets/icons/Instagram.svg" alt="" />
+          </a>
+        </div>
+      </div>
+      <div class="footer__legal">
+        <p>
+          © 2026 Elexa. Todos los derechos reservados · Powered by{' '}
+          <a class="footer__credit" href={KHAOS_URL} target="_blank" rel="noopener">Khaos Core</a>
+        </p>
+        <ul>
+          {
+            legalPages.map((page) => (
+              <li>
+                <a href={page.href} target="_blank" rel="noopener">
+                  {page.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <script is:inline define:vars={{ CFG: SALA_CONFIG }}>
+      (function () {
+        'use strict';
+        var $ = function (s, r) { return (r || document).querySelector(s); };
+        var LS = {
+          get: function (k, d) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : d; } catch (e) { return d; } },
+          set: function (k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+          del: function (k) { try { localStorage.removeItem(k); } catch (e) {} }
+        };
+
+        /* ---------------- utilidades ---------------- */
+        function normalizarNumero(v) { return String(v || '').replace(/\D+/g, ''); }
+        // Muestra el número normalizado (solo dígitos) de forma legible: "+57 300 123 4567" o "300 123 4567".
+        function formatearNumero(n) {
+          if (n.length <= 10) return n.replace(/^(\d{3})(\d{3})(\d{1,4})$/, '$1 $2 $3');
+          return '+' + n.slice(0, n.length - 10) + ' ' + n.slice(-10).replace(/^(\d{3})(\d{3})(\d{4})$/, '$1 $2 $3');
+        }
+        function dispositivo() {
+          var ua = navigator.userAgent || '';
+          var tactil = (navigator.maxTouchPoints || 0) > 1 && window.matchMedia('(pointer:coarse)').matches;
+          return (/Mobi|Android|iPhone|iPad|iPod/i.test(ua) || tactil) ? 'movil' : 'escritorio';
+        }
+        function utmSource() { var p = new URLSearchParams(location.search); return p.get('utm_source') || p.get('src') || ''; }
+        function youtubeId(v) {
+          if (!v) return '';
+          var m = String(v).match(/(?:v=|youtu\.be\/|\/live\/|\/embed\/|\/shorts\/)([\w-]{11})/);
+          return m ? m[1] : String(v).trim();
+        }
+        function ahoraISO() { return new Date().toISOString(); }
+        function pad(n) { return (n < 10 ? '0' : '') + n; }
+        function horaCorta(d) { d = d || new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+        // ts_cliente se guarda en ISO (UTC): para mostrarlo hay que pasarlo a la hora del navegador.
+        function horaLocal(iso) { var d = new Date(iso); return isNaN(d.getTime()) ? '' : horaCorta(d); }
+        function toast(msg, ms) {
+          var t = $('#toast'); t.textContent = msg; t.classList.add('is-on');
+          clearTimeout(toast._t); toast._t = setTimeout(function () { t.classList.remove('is-on'); }, ms || 2600);
+        }
+        function conParam(url, clave, valor) {
+          if (!url) return '#';
+          return url + (url.indexOf('?') > -1 ? '&' : '?') + clave + '=' + encodeURIComponent(valor);
+        }
+
+        /* ---------------- transporte ---------------- */
+        var ENDPOINT = String(CFG.ENDPOINT || '').trim();
+        var LOCAL = !ENDPOINT;
+        var canal = (LOCAL && 'BroadcastChannel' in window) ? new BroadcastChannel('sala-karanis') : null;
+        var user = LS.get('sala_user', null);
+
+        function base(payload) {
+          payload.ts_cliente = ahoraISO();
+          if (user) { if (!payload.numero) payload.numero = user.numero; if (!payload.nombre) payload.nombre = user.nombre; }
+          return payload;
+        }
+        function encolar(payload) { var cola = LS.get('sala_cola', []); cola.push(payload); LS.set('sala_cola', cola.slice(-200)); }
+        function vaciarCola() {
+          var cola = LS.get('sala_cola', []); if (!cola.length || LOCAL) return;
+          LS.set('sala_cola', []);
+          cola.forEach(function (p) { p.reenvio = true; enviar(p); });
+        }
+        // beacon=true: fuego y olvido (sobrevive al cierre de la pestaña). Si no, fetch con keepalive + cola de reintento.
+        function enviar(payload, opts) {
+          opts = opts || {};
+          base(payload);
+          var body = JSON.stringify(payload);
+          if (LOCAL) {
+            var log = LS.get('sala_local_log', []); log.push(payload); LS.set('sala_local_log', log.slice(-500));
+            if (canal) canal.postMessage({ tipo: 'evento', payload: payload });
+            if (window.console) console.debug('[sala · modo local]', payload);
+            return Promise.resolve({ ok: true, local: true });
+          }
+          if (opts.beacon && navigator.sendBeacon) {
+            try { if (navigator.sendBeacon(ENDPOINT, body)) return Promise.resolve({ ok: true, beacon: true }); } catch (e) {}
+          }
+          return fetch(ENDPOINT, { method: 'POST', body: body, keepalive: true, headers: { 'Content-Type': 'text/plain;charset=UTF-8' } })
+            .then(function (r) { return r.json(); })
+            .then(function (j) {
+              if (j && j.expulsado) { expulsar(); return j; }
+              if (!j || j.ok === false) { if (window.console) console.warn('[sala] endpoint respondió', j); }
+              return j || { ok: false };
+            })
+            .catch(function (err) { if (window.console) console.warn('[sala] envío falló, se reintenta luego', err); encolar(payload); return { ok: false, encolado: true }; });
+        }
+        // Con el número, la misma consulta del estado dice si el panel expulsó a esta persona.
+        // Si este navegador ya fue expulsado, se pregunta siempre por ese número: entrar con
+        // otro no cuenta como readmisión.
+        function numeroActual() { return String(LS.get('sala_expulsado', '') || '') || (user && user.numero) || ''; }
+        function leerEstado() {
+          var n = numeroActual();
+          if (LOCAL) {
+            var e = LS.get('sala_estado', { ejercicio: 0, ctas: false, ejercicio_ts: 0 });
+            e.expulsado = !!(n && modLocal().expulsados[n]);
+            return Promise.resolve(e);
+          }
+          return fetch(ENDPOINT + '?action=estado' + (n ? '&numero=' + encodeURIComponent(n) : '') + '&t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); });
+        }
+        // Moderación en modo local: la escribe el panel de este mismo navegador.
+        function modLocal() { var m = LS.get('sala_moderacion', {}) || {}; return { borradas: m.borradas || {}, expulsados: m.expulsados || {} }; }
+
+        /* ---------------- fechas / cuenta regresiva ---------------- */
+        var EVENTOS = (CFG.EVENTOS || []).map(function (s) { return new Date(s).getTime(); }).filter(function (t) { return !isNaN(t); }).sort(function (a, b) { return a - b; });
+        var DUR = (Number(CFG.DURACION_MIN) || 90) * 60000;
+        function momento() {
+          var now = Date.now();
+          for (var i = 0; i < EVENTOS.length; i++) {
+            if (now < EVENTOS[i]) return { fase: 'antes', inicio: EVENTOS[i], idx: i };
+            if (now <= EVENTOS[i] + DUR) return { fase: 'envivo', inicio: EVENTOS[i], idx: i };
+          }
+          return { fase: 'despues', inicio: EVENTOS[EVENTOS.length - 1] || now, idx: EVENTOS.length - 1 };
+        }
+        function celdas(ms) {
+          var s = Math.max(0, Math.floor(ms / 1000));
+          var d = Math.floor(s / 86400), h = Math.floor(s % 86400 / 3600), m = Math.floor(s % 3600 / 60), sec = s % 60;
+          var partes = [[d, 'días'], [h, 'horas'], [m, 'min'], [sec, 'seg']];
+          if (d === 0) partes.shift();
+          return partes.map(function (p) { return '<div class="countdown__cell"><div class="countdown__num">' + pad(p[0]) + '</div><div class="countdown__lbl">' + p[1] + '</div></div>'; }).join('');
+        }
+        function fechaLarga(ts) {
+          try { return new Date(ts).toLocaleString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', hour: 'numeric', minute: '2-digit', timeZone: 'America/Bogota' }); } catch (e) { return ''; }
+        }
+        function fechaCorta(ts) {
+          try { return new Date(ts).toLocaleString('es-CO', { day: 'numeric', month: 'short', timeZone: 'America/Bogota' }).replace('.', ''); } catch (e) { return ''; }
+        }
+        function renderTiempo() {
+          var m = momento();
+          var badge = $('#liveBadge'), dot = badge.querySelector('.badge__dot'), txt = $('#liveBadgeText'), corto = $('#liveBadgeShort');
+          var cGate = $('#countdownGate'), cRoom = $('#countdownRoom');
+          if (m.fase === 'envivo') {
+            badge.classList.add('badge--live'); dot.hidden = false; txt.textContent = 'En vivo'; corto.textContent = 'En vivo';
+            cGate.innerHTML = '<p class="countdown__live">Estamos en vivo</p>';
+            $('#waitCard').hidden = true;
+          } else if (m.fase === 'antes') {
+            badge.classList.remove('badge--live'); dot.hidden = true;
+            txt.textContent = etiquetaDia(m.idx) + cap(fechaLarga(m.inicio).replace(/,.*?(\d)/, ', $1'));
+            corto.textContent = etiquetaDia(m.idx) + fechaCorta(m.inicio);
+            var html = celdas(m.inicio - Date.now());
+            cGate.innerHTML = html; cRoom.innerHTML = html;
+            $('#waitCard').hidden = false;
+            $('#waitText').textContent = etiquetaDia(m.idx, ': ') + cap(fechaLarga(m.inicio)) + ' (hora Colombia). Puedes dejar esta pestaña abierta; la transmisión aparece aquí mismo.';
+          } else {
+            badge.classList.remove('badge--live'); dot.hidden = true; txt.textContent = 'Transmisión finalizada'; corto.textContent = 'Finalizó';
+            cGate.innerHTML = '<p class="countdown__live" style="color:var(--color-secondary)">Gracias por acompañarnos</p>';
+            $('#waitCard').hidden = true;
+          }
+        }
+
+        /* ---------------- calendario (Google Calendar) ---------------- */
+        function fmtCal(d) { return d.toISOString().replace(/[-:]/g, '').replace(/\.\d{3}/, ''); }
+        // "Día N · " solo cuando hay más de una transmisión configurada.
+        function etiquetaDia(idx, sep) { return EVENTOS.length > 1 ? 'Día ' + (idx + 1) + (sep || ' · ') : ''; }
+        function cap(s) { return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+        function linkGcal() {
+          var m = momento(); var t = m.inicio || (EVENTOS[0] || Date.now());
+          var p = new URLSearchParams({
+            action: 'TEMPLATE',
+            text: (CFG.EVENTO_NOMBRE || 'Lanzamiento virtual') + ' · Karanis' + (EVENTOS.length > 1 ? ' · Día ' + ((m.idx >= 0 ? m.idx : 0) + 1) : ''),
+            dates: fmtCal(new Date(t)) + '/' + fmtCal(new Date(t + DUR)),
+            details: 'Entra a la sala con el celular con el que te registraste: ' + (CFG.SALA_URL || location.href),
+            location: CFG.SALA_URL || location.href,
+            ctz: 'America/Bogota'
+          });
+          return 'https://calendar.google.com/calendar/render?' + p.toString();
+        }
+
+        /* ---------------- gate ---------------- */
+        var inNombre = $('#nombre'), inNumero = $('#numero'), inCorreo = $('#correo'), hint = $('#numeroHint strong'), gateError = $('#gateError');
+        inNumero.addEventListener('input', function () {
+          var n = normalizarNumero(inNumero.value);
+          hint.textContent = n ? formatearNumero(n) : '—';
+        });
+        // Lee y valida el formulario de entrada. Si algo falta, muestra el aviso, deja el foco en
+        // ese campo (salvo con `sinFoco`) y devuelve null. `sinNombre` es el aviso cuando falta el
+        // nombre: cambia según se esté entrando a la sala o agregando el evento al calendario.
+        function leerGate(sinNombre, sinFoco) {
+          var nombre = inNombre.value.trim().replace(/\s+/g, ' ');
+          var numero = normalizarNumero(inNumero.value);
+          var correo = inCorreo.value.trim().toLowerCase();
+          gateError.hidden = true;
+          var falla = nombre.length < 2 ? [inNombre, sinNombre]
+            : (numero.length < 7 || numero.length > 15) ? [inNumero, 'Revisa el número: debe tener entre 7 y 15 dígitos.']
+            : !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(correo) ? [inCorreo, 'Revisa el correo.']
+            : null;
+          if (falla) { gateError.textContent = falla[1]; gateError.hidden = false; if (!sinFoco) falla[0].focus(); return null; }
+          return { nombre: nombre, numero: numero, correo: correo };
+        }
+        $('#gateForm').addEventListener('submit', function (ev) {
+          ev.preventDefault();
+          var datos = leerGate('Escribe tu nombre para entrar.');
+          if (!datos) return;
+          var btn = $('#btnEntrar'); btn.disabled = true; btn.textContent = 'Entrando…';
+          user = { nombre: datos.nombre, numero: datos.numero, correo: datos.correo, desde: ahoraISO() };
+          LS.set('sala_user', user);
+          // si ya la expulsaron desde este navegador, cambiar de número no le abre la sala
+          if (LS.get('sala_expulsado', null)) { expulsar(); return; }
+          registrarEntrada();
+          mostrarSala();
+        });
+        function registrarEntrada() {
+          enviar({ tipo: 'entrada', nombre: user.nombre, numero: user.numero, correo: user.correo || '', dispositivo: dispositivo(), utm_source: utmSource(), navegador: (navigator.userAgent || '').slice(0, 200), url: location.href.slice(0, 300) });
+        }
+        /* Quién agrega el evento a su calendario. Google no avisa quién lo guarda: lo que queda
+           en la hoja (pestaña Calendario) es quién pulsó el botón. En la entrada todavía no se
+           sabe quién es, así que el botón toma los datos del formulario y, si faltan, los pide
+           antes de abrir Google Calendar. Quedan guardados en el navegador para que el día del
+           directo el formulario ya venga lleno. */
+        function registrarCalendario(p, origen) {
+          enviar({ tipo: 'calendario', origen: origen, nombre: p.nombre, numero: p.numero, correo: p.correo || '' }, { beacon: true });
+        }
+        // Si faltan datos, el aviso sale debajo del botón, que es donde está mirando la persona.
+        // El formulario marca el campo que falta. Cuando el formulario no queda al lado del botón
+        // (tablet y celular) no se mueve el foco: saltaría la pantalla y se perdería el aviso.
+        var gcalAviso = $('#gcalAviso');
+        $('#btnGcal').addEventListener('click', function (ev) {
+          var lejos = window.matchMedia('(max-width:1023.98px)').matches;
+          var datos = leerGate('Escribe tu nombre.', lejos);
+          gcalAviso.hidden = !!datos;
+          if (!datos) { ev.preventDefault(); return; }
+          LS.set('sala_datos', datos);
+          registrarCalendario(datos, 'entrada');
+        });
+        $('#btnGcal2').addEventListener('click', function () { if (user) registrarCalendario(user, 'sala'); });
+        (function rellenarGate() {
+          var d = LS.get('sala_datos', null);
+          if (!d || user) return;
+          inNombre.value = d.nombre || ''; inCorreo.value = d.correo || '';
+          if (d.numero) { inNumero.value = formatearNumero(d.numero); hint.textContent = formatearNumero(d.numero); }
+        })();
+
+        $('#btnSalir').addEventListener('click', function () {
+          ping();
+          LS.del('sala_user'); LS.del('sala_respuestas'); LS.del('sala_omitidos'); LS.del('sala_preguntas'); LS.del('sala_datos');
+          location.href = location.pathname + location.search;
+        });
+
+        /* ---------------- sala ---------------- */
+        // Cada botón de cierre tiene su propio interruptor. Un valor booleano (versiones anteriores) aplica a los tres.
+        var CTA_IDS = ['separo', 'agendo', 'dossier'];
+        function normalizarCtas(v) {
+          var o = {};
+          CTA_IDS.forEach(function (id) { o[id] = (v && typeof v === 'object') ? !!v[id] : v === true; });
+          return o;
+        }
+        var estado = { ejercicio: 0, ctas: normalizarCtas(false), ejercicio_ts: 0, enlace: false };
+        var fallosEstado = 0, iniciada = false, estadoCorriendo = false, expulsado = false;
+
+        function mostrarSala() {
+          if (iniciada) return; iniciada = true;
+          $('#gate').hidden = true; $('#room').hidden = false;
+          $('#userChip').hidden = false; $('#userChipName').textContent = 'Hola, ' + user.nombre.split(' ')[0];
+          $('.nav__right').classList.add('has-user');
+          window.scrollTo(0, 0);
+          // reproductor
+          var id = youtubeId(CFG.YOUTUBE);
+          if (id) {
+            var f = document.createElement('iframe');
+            // fs=0 y un "allow" sin fullscreen: el reproductor no puede irse solo a pantalla
+            // completa (ahí no se vería ninguna tarjeta). Se usa el botón propio de la sala.
+            f.src = 'https://www.youtube-nocookie.com/embed/' + id + '?autoplay=1&rel=0&modestbranding=1&playsinline=1&iv_load_policy=3&fs=0';
+            f.title = 'Transmisión en vivo · Karanis';
+            f.allow = 'autoplay; encrypted-media; picture-in-picture';
+            f.referrerPolicy = 'strict-origin-when-cross-origin';
+            $('#playerPlaceholder').hidden = true;
+            $('#player').appendChild(f);
+            $('#fsBtn').hidden = false; $('#fsHint').hidden = false;
+          } else {
+            $('#playerPlaceholder').innerHTML = '<p>Aún no hay video configurado.<br><span class="small">Edita YOUTUBE en src/data/sala.ts</span></p>';
+          }
+          // botones de cierre con identificador de la persona
+          $('#ctaSeparo').href = conParam(CFG.PAGO_URL, 'ref', user.numero);
+          $('#ctaAgendo').href = conParam(conParam(conParam(CFG.CALENDLY_URL, 'name', user.nombre), 'utm_source', 'sala_karanis'), 'utm_content', user.numero);
+          if (CFG.DOSSIER_URL) { $('#ctaDossier').href = conParam(CFG.DOSSIER_URL, 'ref', user.numero); }
+          else { $('#ctaDossier').href = '#'; $('#ctaDossier').removeAttribute('target'); }
+          (CFG.CTAS || []).forEach(function (c) { var el = document.querySelector('[data-accion="' + c.id + '"]'); if (el && c.titulo) el.textContent = c.titulo; });
+          prepararEnlace();
+          renderMisPreguntas();
+          vaciarCola();
+          loopEstado();
+          loopMuro();
+          setInterval(ping, (Number(CFG.PING_SEG) || 60) * 1000);
+        }
+
+        /* ---------------- pantalla completa ----------------
+           Lleva a pantalla completa el contenedor #stage (no el iframe): así el ejercicio y los
+           botones de cierre, que son hijos suyos, quedan flotando sobre el video. Son las mismas
+           tarjetas del costado —se mudan y regresan—, así que siguen obedeciendo al panel: aparecen
+           cuando se activan y se van cuando se desactivan, sin duplicar nada.
+           En iPhone (sin API de pantalla completa para elementos) se usa una versión "a la CSS". */
+        var stage = $('#stage'), dock = $('#fsDock');
+        var fsActivo = false, fsPseudo = false;
+
+        function elemFS() { return document.fullscreenElement || document.webkitFullscreenElement || null; }
+        // Mueve una tarjeta al muelle y la devuelve después. Deja una marca invisible en su sitio
+        // original, así vuelve siempre al mismo lugar de la columna lateral.
+        function fsLlevar(sel, alDock) {
+          var el = $(sel);
+          if (alDock) {
+            if (!el.__marca) { el.__marca = document.createComment(sel); el.parentNode.insertBefore(el.__marca, el); }
+            (sel === '#toast' ? stage : dock).appendChild(el);
+          } else if (el.__marca && el.__marca.parentNode) {
+            el.__marca.parentNode.insertBefore(el, el.__marca);
+          }
+        }
+        function fsPintar(on) {
+          if (on === fsActivo) return;
+          fsActivo = on;
+          dock.hidden = !on;
+          ['#exercise', '#ctas', '#linkCard', '#toast'].forEach(function (sel) { fsLlevar(sel, on); });
+          fsLlevar('#questions', on && muroAbierto);
+          stage.classList.toggle('is-fs', on);
+          document.body.classList.toggle('sala-fs', on);
+          $('#fsBtn').setAttribute('aria-expanded', on ? 'true' : 'false');
+        }
+        function fsAlaCss() { fsPseudo = true; fsPintar(true); }
+        function fsEntrar() {
+          var pedir = null;
+          if (stage.requestFullscreen && document.fullscreenEnabled) pedir = stage.requestFullscreen;
+          else if (stage.webkitRequestFullscreen && document.webkitFullscreenEnabled) pedir = stage.webkitRequestFullscreen;
+          if (pedir) {
+            try {
+              var p = pedir.call(stage, { navigationUI: 'hide' });
+              if (p && p.catch) p.catch(fsAlaCss);
+              return;
+            } catch (e) {}
+          }
+          fsAlaCss();
+        }
+        function fsSalir() {
+          if (fsPseudo) { fsPseudo = false; fsPintar(false); return; }
+          var cerrar = document.exitFullscreen || document.webkitExitFullscreen;
+          if (cerrar && elemFS()) { try { cerrar.call(document); return; } catch (e) {} }
+          fsPintar(false);
+        }
+        function fsSincronizar() { if (elemFS() === stage) fsPintar(true); else if (!fsPseudo) fsPintar(false); }
+        document.addEventListener('fullscreenchange', fsSincronizar);
+        document.addEventListener('webkitfullscreenchange', fsSincronizar);
+        document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && fsPseudo) fsSalir(); });
+        $('#fsBtn').addEventListener('click', function () { if (fsActivo) fsSalir(); else fsEntrar(); });
+        $('#fsExit').addEventListener('click', fsSalir);
+        $('#fsWall').addEventListener('click', function () { muroEnFS(!muroAbierto); });
+        // si un botón de cierre abre otra página, primero se sale de pantalla completa
+        dock.addEventListener('click', function (ev) {
+          var a = ev.target && ev.target.closest ? ev.target.closest('a[data-accion][target="_blank"]') : null;
+          if (fsActivo && a) fsSalir();
+        });
+
+        /* ---------------- expulsión (moderación desde el panel) ----------------
+           Se cierra la sala: sin video, sin muro, sin señales. La marca queda en el navegador,
+           así recargar o entrar con otro número no la abre. La consulta del estado sigue
+           corriendo: si el panel la readmite, se borra la marca y la sala se abre sola. */
+        function expulsar() {
+          if (expulsado) return;
+          expulsado = true;
+          LS.set('sala_expulsado', numeroActual() || '1');
+          if (fsActivo) fsSalir();
+          var f = $('#player iframe'); if (f) f.parentNode.removeChild(f);
+          $('#gate').hidden = true; $('#room').hidden = true; $('#expelled').hidden = false;
+          $('#userChip').hidden = true; $('.nav__right').classList.remove('has-user');
+          window.scrollTo(0, 0);
+          if (!estadoCorriendo) loopEstado();
+        }
+
+        // señal de "sigo aquí": cada 60 s, al ocultar la pestaña y al cerrarla
+        function ping() { if (!user || expulsado) return; enviar({ tipo: 'ping', numero: user.numero }, { beacon: true }); }
+        document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && iniciada) ping(); });
+        window.addEventListener('pagehide', function () { if (iniciada) ping(); });
+
+        function loopEstado() {
+          estadoCorriendo = true;
+          leerEstado().then(function (e) { fallosEstado = 0; if (e && e.ok !== false) aplicarEstado(e); })
+            .catch(function () { fallosEstado++; })
+            .then(function () {
+              var baseMs = (Number(CFG.ESTADO_SEG) || 12) * 1000;
+              var espera = Math.min(baseMs * Math.pow(1.5, fallosEstado), 60000) + Math.random() * 2000;
+              setTimeout(loopEstado, espera);
+            });
+        }
+        // modo local: el panel de este navegador avisa cuando cambia el estado o la moderación
+        function releerLocal() { leerEstado().then(aplicarEstado); if (iniciada && !expulsado) refrescarMuro(); }
+        if (canal) canal.onmessage = function (m) {
+          if (m.data && m.data.tipo === 'estado') aplicarEstado(m.data.estado);
+          if (m.data && m.data.tipo === 'moderacion') releerLocal();
+        };
+        window.addEventListener('storage', function (ev) {
+          if (LOCAL && ev.key === 'sala_estado') aplicarEstado(LS.get('sala_estado', estado));
+          if (LOCAL && ev.key === 'sala_moderacion') releerLocal();
+        });
+
+        function aplicarEstado(e) {
+          // `expulsado` sólo viene cuando la consulta lleva número; si no viene, no se toca
+          if (e.expulsado === true) { expulsar(); return; }
+          if (expulsado) {
+            if (e.expulsado === false) { LS.del('sala_expulsado'); location.reload(); }
+            return;
+          }
+          var nuevo = { ejercicio: Number(e.ejercicio) || 0, ctas: normalizarCtas(e.ctas), ejercicio_ts: Number(e.ejercicio_ts) || 0, enlace: !!e.enlace };
+          var cambioEj = nuevo.ejercicio !== estado.ejercicio || nuevo.ejercicio_ts !== estado.ejercicio_ts;
+          var nuevosCtas = CTA_IDS.filter(function (id) { return nuevo.ctas[id] && !estado.ctas[id]; });
+          var cambioCta = JSON.stringify(nuevo.ctas) !== JSON.stringify(estado.ctas);
+          var cambioEnlace = nuevo.enlace !== estado.enlace;
+          estado = nuevo;
+          if (cambioEj) renderEjercicio(true);
+          if (cambioCta) renderCtas(nuevosCtas);
+          if (cambioEnlace) renderEnlace(true);
+        }
+
+        /* ---------------- ejercicios ---------------- */
+        function ejercicioPorId(id) { return (CFG.EJERCICIOS || []).filter(function (x) { return Number(x.id) === id; })[0]; }
+        function renderEjercicio(anunciar) {
+          var card = $('#exercise');
+          var ej = ejercicioPorId(estado.ejercicio);
+          var omitidos = LS.get('sala_omitidos', {});
+          if (!ej || omitidos[ej.id] === estado.ejercicio_ts) { card.hidden = true; card.innerHTML = ''; return; }
+          construirEjercicio(ej, card);
+          card.hidden = false;
+          if (anunciar) {
+            toast('Nuevo ejercicio: ' + ej.titulo);
+            if (navigator.vibrate && navigator.userActivation && navigator.userActivation.hasBeenActive) { try { navigator.vibrate(60); } catch (e) {} }
+            if (fsActivo) dock.scrollTop = 0;
+            else if (window.matchMedia('(max-width:1023.98px)').matches) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+        function construirEjercicio(ej, card) {
+          var respuestas = LS.get('sala_respuestas', {});
+          var total = (CFG.EJERCICIOS || []).length;
+          var pos = (CFG.EJERCICIOS || []).indexOf(ej) + 1;
+          card.innerHTML = '';
+          var eyebrow = document.createElement('p'); eyebrow.className = 'eyebrow';
+          // con una sola pregunta configurada, el contador sobra ("Ejercicio 1 de 1")
+          eyebrow.innerHTML = '<span class="badge__dot" style="background:var(--color-primary)"></span> Ejercicio' + (total > 1 ? ' ' + pos + ' de ' + total : '');
+          var h = document.createElement('h2'); h.className = 'card__title'; h.textContent = ej.titulo;
+          card.appendChild(eyebrow); card.appendChild(h);
+          var cuerpo = document.createElement('div'); cuerpo.style.marginTop = '16px'; card.appendChild(cuerpo);
+
+          if (respuestas[ej.campo] !== undefined) { pintarGracias(ej, cuerpo, respuestas[ej.campo]); return; }
+
+          var form = document.createElement('form'); form.className = 'stack'; form.noValidate = true; cuerpo.appendChild(form);
+          var valor = '';
+          // Opción "Otro" (ej.otro en src/data/sala.ts): al elegirla se abre un campo corto para precisar.
+          var etiquetaOtro = typeof ej.otro === 'string' ? ej.otro : 'Otro';
+          var maxOtro = Number(ej.otro_max) > 0 ? Number(ej.otro_max) : 80;
+          var cajaOtro = null, campoOtro = null;
+          if (ej.tipo === 'texto') {
+            var ta = document.createElement('textarea'); ta.className = 'input'; ta.rows = 3; ta.maxLength = 1000; ta.placeholder = ej.placeholder || 'Escribe tu respuesta…'; ta.setAttribute('aria-label', ej.titulo);
+            form.appendChild(ta);
+            ta.addEventListener('input', function () { valor = ta.value.trim(); });
+          } else {
+            var box = document.createElement('div'); box.className = 'choices'; box.setAttribute('role', 'radiogroup'); box.setAttribute('aria-label', ej.titulo);
+            var opciones = (ej.opciones || []).slice();
+            if (ej.otro) opciones.push(etiquetaOtro);
+            opciones.forEach(function (op) {
+              var b = document.createElement('button'); b.type = 'button'; b.className = 'choice'; b.setAttribute('role', 'radio'); b.setAttribute('aria-checked', 'false');
+              b.innerHTML = '<span class="choice__dot"></span>'; b.appendChild(document.createTextNode(op));
+              b.addEventListener('click', function () {
+                box.querySelectorAll('.choice').forEach(function (x) { x.setAttribute('aria-checked', 'false'); });
+                b.setAttribute('aria-checked', 'true'); valor = op; err.hidden = true;
+                if (cajaOtro) {
+                  cajaOtro.hidden = op !== etiquetaOtro;
+                  if (op === etiquetaOtro) campoOtro.focus();
+                }
+              });
+              box.appendChild(b);
+            });
+            form.appendChild(box);
+
+            if (ej.otro) {
+              cajaOtro = document.createElement('div'); cajaOtro.className = 'otro'; cajaOtro.hidden = true;
+              campoOtro = document.createElement('textarea');
+              campoOtro.className = 'input'; campoOtro.rows = 2; campoOtro.maxLength = maxOtro;
+              campoOtro.placeholder = ej.otro_placeholder || '¿Cuál? En pocas palabras…';
+              campoOtro.setAttribute('aria-label', etiquetaOtro + ': ' + ej.titulo);
+              var cuenta = document.createElement('p'); cuenta.className = 'otro__cuenta';
+              // err se crea más abajo: al llamar a pintarCuenta la primera vez todavía no existe.
+              var pintarCuenta = function () { cuenta.textContent = campoOtro.value.length + '/' + maxOtro; if (err) err.hidden = true; };
+              pintarCuenta();
+              campoOtro.addEventListener('input', pintarCuenta);
+              cajaOtro.appendChild(campoOtro); cajaOtro.appendChild(cuenta);
+              form.appendChild(cajaOtro);
+            }
+          }
+          var acts = document.createElement('div'); acts.className = 'actions';
+          var enviarBtn = document.createElement('button'); enviarBtn.type = 'submit'; enviarBtn.className = 'btn btn--primary btn--sm'; enviarBtn.textContent = 'Enviar respuesta';
+          var omitir = document.createElement('button'); omitir.type = 'button'; omitir.className = 'link'; omitir.textContent = 'Omitir';
+          acts.appendChild(enviarBtn); acts.appendChild(omitir); form.appendChild(acts);
+          var err = document.createElement('p'); err.className = 'error'; err.hidden = true; form.appendChild(err);
+
+          form.addEventListener('submit', function (ev) {
+            ev.preventDefault();
+            if (!valor) { err.textContent = ej.tipo === 'texto' ? 'Escribe algo antes de enviar, o pulsa Omitir.' : 'Elige una opción, o pulsa Omitir.'; err.hidden = false; return; }
+            var envio = valor;
+            if (campoOtro && valor === etiquetaOtro) {
+              var precision = campoOtro.value.trim().replace(/\s+/g, ' ').slice(0, maxOtro);
+              if (!precision) { err.textContent = 'Escribe en dos palabras cuál, o elige una de las opciones.'; err.hidden = false; campoOtro.focus(); return; }
+              envio = etiquetaOtro + ': ' + precision;   // así llega a la hoja: "Otro: lo que escribió"
+            }
+            enviarBtn.disabled = true;
+            var r = LS.get('sala_respuestas', {}); r[ej.campo] = envio; LS.set('sala_respuestas', r);
+            enviar({ tipo: 'respuesta', numero: user.numero, ejercicio: ej.id, campo: ej.campo, valor: envio });
+            pintarGracias(ej, cuerpo, envio);
+          });
+          omitir.addEventListener('click', function () {
+            var o = LS.get('sala_omitidos', {}); o[ej.id] = estado.ejercicio_ts; LS.set('sala_omitidos', o);
+            enviar({ tipo: 'respuesta', numero: user.numero, ejercicio: ej.id, campo: ej.campo, valor: '(omitido)', omitido: true });
+            card.hidden = true; card.innerHTML = '';
+          });
+        }
+        function pintarGracias(ej, cuerpo, valor) {
+          cuerpo.innerHTML = '';
+          var box = document.createElement('div'); box.className = 'thanks';
+          var t = document.createElement('p'); t.className = 'thanks__title'; t.textContent = '¡Gracias! Tu respuesta quedó registrada.';
+          var v = document.createElement('p'); v.className = 'small'; v.textContent = valor;
+          var edit = document.createElement('button'); edit.type = 'button'; edit.className = 'link small'; edit.textContent = 'Cambiar mi respuesta';
+          edit.addEventListener('click', function () { var r = LS.get('sala_respuestas', {}); delete r[ej.campo]; LS.set('sala_respuestas', r); construirEjercicio(ej, $('#exercise')); });
+          box.appendChild(t); box.appendChild(v); box.appendChild(edit); cuerpo.appendChild(box);
+        }
+
+        /* ---------------- botones de cierre ---------------- */
+        var FRASES_CTA = { separo: 'separar tu cupo', agendo: 'agendar tu cita', dossier: 'pedir el dossier completo' };
+        function renderCtas(nuevos) {
+          var card = $('#ctas');
+          var visibles = CTA_IDS.filter(function (id) { return estado.ctas[id]; });
+          CTA_IDS.forEach(function (id) { $('#cta' + id.charAt(0).toUpperCase() + id.slice(1)).hidden = !estado.ctas[id]; });
+          if (!estado.ctas.dossier) $('#dossierForm').hidden = true;
+          card.hidden = visibles.length === 0;
+          if (nuevos && nuevos.length && !card.hidden) {
+            toast('Ya puedes ' + nuevos.map(function (id) { return FRASES_CTA[id]; }).join(' y ') + '.');
+            if (!fsActivo && window.matchMedia('(max-width:1023.98px)').matches) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+        ['#ctaSeparo', '#ctaAgendo', '#ctaDossier'].forEach(function (sel) {
+          $(sel).addEventListener('click', function (ev) {
+            var accion = this.getAttribute('data-accion');
+            // el clic se registra aunque la persona no complete la acción en el destino
+            enviar({ tipo: 'cta', numero: user.numero, accion: accion }, { beacon: true });
+            var acc = LS.get('sala_acciones', []); acc.push({ accion: accion, ts: ahoraISO() }); LS.set('sala_acciones', acc);
+            if (accion === 'dossier' && !CFG.DOSSIER_URL) {
+              ev.preventDefault();
+              var f = $('#dossierForm'); f.hidden = false;
+              if (!$('#dossierEmail').value && user.correo) $('#dossierEmail').value = user.correo;
+              $('#dossierEmail').focus();
+            }
+          });
+        });
+        $('#dossierForm').addEventListener('submit', function (ev) {
+          ev.preventDefault();
+          var email = $('#dossierEmail').value.trim();
+          if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) { $('#dossierMsg').textContent = 'Revisa el correo.'; return; }
+          enviar({ tipo: 'dossier', numero: user.numero, email: email });
+          $('#dossierMsg').textContent = 'Listo. Te lo enviamos a ' + email + '.';
+          $('#dossierEmail').disabled = true; this.querySelector('button').disabled = true;
+        });
+
+        /* ---------------- enlace (lo muestra u oculta el panel) ----------------
+           La dirección vive en ENLACE, dentro de src/data/sala.ts; el panel solo decide cuándo se ve.
+           Si no hay url configurada, la tarjeta nunca aparece aunque el panel la active. */
+        var ENLACE = CFG.ENLACE || {};
+        var enlaceUrl = String(ENLACE.url || '').trim();
+
+        function renderEnlace(anunciar) {
+          var card = $('#linkCard');
+          if (!enlaceUrl) { card.hidden = true; return; }
+          var visible = !!estado.enlace;
+          card.hidden = !visible;
+          if (visible && anunciar) {
+            toast(ENLACE.titulo || 'Hay un enlace disponible');
+            if (fsActivo) dock.scrollTop = 0;
+            else if (window.matchMedia('(max-width:1023.98px)').matches) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+          }
+        }
+        function prepararEnlace() {
+          if (!enlaceUrl) return;
+          $('#linkTitulo').textContent = ENLACE.titulo || 'Enlace';
+          if (ENLACE.descripcion) { $('#linkDesc').textContent = ENLACE.descripcion; $('#linkDesc').hidden = false; }
+          $('#linkUrl').textContent = enlaceUrl;
+          var abrir = $('#linkAbrir');
+          abrir.href = enlaceUrl;
+          abrir.textContent = ENLACE.boton || 'Abrir enlace';
+          abrir.addEventListener('click', function () { enviar({ tipo: 'enlace', numero: user.numero }, { beacon: true }); });
+          $('#linkCopiar').addEventListener('click', function () {
+            var listo = function () { toast('Enlace copiado'); };
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+              navigator.clipboard.writeText(enlaceUrl).then(listo).catch(function () { copiarAPulso(enlaceUrl, listo); });
+            } else { copiarAPulso(enlaceUrl, listo); }
+          });
+        }
+        // Respaldo para navegadores sin portapapeles (o sin permiso): selecciona y copia.
+        function copiarAPulso(texto, listo) {
+          try {
+            var ta = document.createElement('textarea');
+            ta.value = texto; ta.setAttribute('readonly', ''); ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta); ta.select();
+            var ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            if (ok) { listo(); return; }
+          } catch (e) {}
+          toast('Copia el enlace a mano: ' + texto, 5000);
+        }
+
+        /* ---------------- muro de preguntas del público ----------------
+           Todas las preguntas que entran a la hoja se ven en la sala, tipo chat. El Apps Script
+           devuelve solo hora, nombre corto y texto. Se consulta cada MURO_SEG segundos y solo
+           cuando el muro está a la vista (en pantalla completa, únicamente si está abierto),
+           para no pedirle de más al Web App cuando hay mucha gente conectada. */
+        var MURO_SEG = 12;
+        var muroAbierto = LS.get('sala_muro_fs', false) === true;
+        var muroLista = [];
+
+        function muroALaVista() { return !expulsado && !document.hidden && (!fsActivo || muroAbierto); }
+
+        function leerMuro() {
+          if (LOCAL) {
+            // Sin ENDPOINT solo existen las preguntas de este navegador (las que ve el panel local).
+            var borradas = modLocal().borradas;
+            var log = LS.get('sala_local_log', []).filter(function (p) { return p && p.tipo === 'pregunta' && !borradas[p.ts_cliente]; });
+            return Promise.resolve({ ok: true, preguntas: log.slice(-40).map(function (p) {
+              if (p.numero === 'moderador') return { ts: horaLocal(p.ts_cliente), nombre: p.nombre || 'Moderador', texto: p.texto, mod: true };
+              return { ts: horaLocal(p.ts_cliente), nombre: String(p.nombre || '').split(' ')[0], texto: p.texto };
+            }) });
+          }
+          return fetch(ENDPOINT + '?action=preguntas&t=' + Date.now(), { cache: 'no-store' }).then(function (r) { return r.json(); });
+        }
+
+        function pintarMuro(lista) {
+          muroLista = lista || [];
+          var caja = $('#wall'), ul = $('#wallLista');
+          var pegadoAbajo = caja.scrollHeight - caja.scrollTop - caja.clientHeight < 40;
+          var mias = LS.get('sala_preguntas', []).map(function (q) { return q.texto; });
+          ul.innerHTML = '';
+          muroLista.forEach(function (q) {
+            var li = document.createElement('li');
+            // los mensajes del equipo (escritos desde el panel) van resaltados
+            li.className = 'wall__item' + (q.mod ? ' wall__item--mod' : (mias.indexOf(q.texto) >= 0 ? ' wall__item--mia' : ''));
+            var quien = document.createElement('p'); quien.className = 'wall__quien';
+            quien.appendChild(document.createTextNode(q.nombre || 'Invitado'));
+            var t = document.createElement('time'); t.textContent = q.ts || ''; quien.appendChild(t);
+            var tx = document.createElement('p'); tx.className = 'wall__texto'; tx.textContent = q.texto;
+            li.appendChild(quien); li.appendChild(tx); ul.appendChild(li);
+          });
+          caja.hidden = false;
+          $('#wallVacio').hidden = muroLista.length > 0;
+          $('#wallConteo').textContent = muroLista.length ? ' · ' + muroLista.length : '';
+          // con el muro a la vista, la lista de "mis preguntas" sobra: las propias van resaltadas
+          $('#myQuestions').hidden = true;
+          if (pegadoAbajo) caja.scrollTop = caja.scrollHeight;
+        }
+
+        function refrescarMuro() {
+          return leerMuro()
+            .then(function (j) { if (j && j.ok !== false) pintarMuro(j.preguntas || []); })
+            .catch(function () {});
+        }
+        function loopMuro() {
+          if (muroALaVista()) refrescarMuro();
+          setTimeout(loopMuro, MURO_SEG * 1000);
+        }
+        // botón de pantalla completa: muestra u oculta el muro sobre el video
+        function muroEnFS(on) {
+          muroAbierto = !!on;
+          LS.set('sala_muro_fs', muroAbierto);
+          $('#fsWall').setAttribute('aria-pressed', muroAbierto ? 'true' : 'false');
+          $('#fsWallTexto').textContent = muroAbierto ? 'Ocultar preguntas' : 'Ver preguntas';
+          if (fsActivo) {
+            fsLlevar('#questions', muroAbierto);
+            if (muroAbierto) { refrescarMuro(); setTimeout(function () { dock.scrollTop = dock.scrollHeight; }, 0); }
+          }
+        }
+        muroEnFS(muroAbierto);
+
+        /* ---------------- preguntas ---------------- */
+        function renderMisPreguntas() {
+          var ul = $('#myQuestions'); ul.innerHTML = '';
+          LS.get('sala_preguntas', []).slice(-5).reverse().forEach(function (q) {
+            var li = document.createElement('li'); var tm = document.createElement('time'); tm.textContent = q.hora + ' · enviada';
+            li.appendChild(document.createTextNode(q.texto)); li.appendChild(tm); ul.appendChild(li);
+          });
+        }
+        $('#questionForm').addEventListener('submit', function (ev) {
+          ev.preventDefault();
+          var ta = $('#pregunta'), texto = ta.value.trim().replace(/\s+/g, ' ');
+          if (texto.length < 4) { $('#questionMsg').textContent = 'Escribe tu pregunta.'; return; }
+          enviar({ tipo: 'pregunta', numero: user.numero, nombre: user.nombre, texto: texto.slice(0, 500) });
+          var qs = LS.get('sala_preguntas', []); qs.push({ texto: texto, hora: horaCorta() }); LS.set('sala_preguntas', qs.slice(-20));
+          ta.value = ''; $('#questionMsg').textContent = 'Enviada. Ya la ven los demás.'; renderMisPreguntas();
+          pintarMuro(muroLista.concat([{ ts: horaCorta(), nombre: 'Tú', texto: texto }]));  // se ve al instante
+          setTimeout(refrescarMuro, 2000);                                                   // y se confirma con la hoja
+          setTimeout(function () { $('#questionMsg').textContent = ''; }, 4000);
+        });
+
+        /* ---------------- arranque ---------------- */
+        $('#fechaTexto').textContent = CFG.FECHA_TEXTO || '';
+        $('#linkWa').href = CFG.WHATSAPP_URL || '#'; $('#footWa').href = CFG.WHATSAPP_URL || '#';
+        $('#btnGcal').href = linkGcal(); $('#btnGcal2').href = linkGcal();
+        renderTiempo(); setInterval(renderTiempo, 1000);
+        if (LOCAL && window.console) console.info('[sala] MODO LOCAL: no hay ENDPOINT en src/data/sala.ts. Abre /panel en otra pestaña del mismo navegador para activar ejercicios.');
+        if (LS.get('sala_expulsado', null)) expulsar();
+        else if (user && user.numero) { registrarEntrada(); mostrarSala(); }
+      })();
+    </script>
+  </body>
+</html>

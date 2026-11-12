@@ -102,6 +102,7 @@ create table if not exists public.propiedades (
   amenidades  text,                      -- «Características y atractivos»: la Descripción
   disponibilidad text,                   -- «Inmediata», «2027»
   fotos       text,                      -- URLs de las fotos, una por renglón
+  carpeta     text,                      -- la carpeta de Drive de Fotos: «Descargar carpeta»
   direccion   text,                      -- «Cra 66 # 2 A - 33»
   latitud     text,                      -- «3.3983629»: el punto del mapa
   longitud    text,                      -- «-76.5522176»
@@ -114,6 +115,7 @@ alter table public.propiedades add column if not exists disponibilidad text;
 alter table public.propiedades add column if not exists direccion text;
 alter table public.propiedades add column if not exists latitud text;
 alter table public.propiedades add column if not exists longitud text;
+alter table public.propiedades add column if not exists carpeta text;
 
 -- ---------------------------------------------------------------------------
 --  Permisos: con la clave pública sólo se puede LEER (en `proyectos`, sólo

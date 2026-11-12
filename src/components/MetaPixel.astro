@@ -17,6 +17,19 @@
      WhatsApp del equipo       Contact             whatsapp_equipo
      «Me interesa este         Contact             whatsapp_espacio,
        espacio» (ficha)                            content_category: espacios
+     «Compartir» (ficha de     CompartirEspacio    whatsapp, facebook, x, telegram,
+       un espacio)             (personalizado)     copiar_enlace o menu_sistema;
+                                                   content_category: espacios
+     «Información general»     DescargarCarpeta    carpeta_espacio,
+       (ficha)                 (personalizado)     content_category: espacios
+     «Compartir espacios»      CompartirListado    los mismos canales de
+       (barra y pie de         (personalizado)     «Compartir»; content_category:
+       /comerciales: la lista)                     comerciales
+     «Compartir» de la         CompartirSeleccion  los mismos canales;
+       selección (/comerciales)(personalizado)     content_category: comerciales
+     «Material para            MaterialComercial   copiar_texto, ficha_pdf o
+       compartir» (ficha de    (personalizado)     imagen_historia;
+       /comerciales)                               content_category: comerciales
      «Agenda tu cita»          Schedule            agendar_reunion
      Radiografía: datos        Lead                radiografia_financiera,
        de contacto enviados                        content_category: lead_form
@@ -32,11 +45,15 @@
    · Los eventos de las páginas llegan por la prop `evento` (ver Base.astro y
      src/lib/pixel.ts).
    · Los botones se marcan en el HTML con `data-pixel` (el evento),
-     `data-pixel-nombre` y, si aplica, `data-pixel-categoria`. Un solo
+     `data-pixel-nombre` y, si aplica, `data-pixel-categoria`; con
+     `data-pixel-propio`, el evento sale como personalizado. Un solo
      escucha en el documento los reporta, así sirve también para los que
      aparecen después (las tarjetas del carrusel, la radiografía).
    · Un enlace de WhatsApp sin marca cuenta como Contact «whatsapp», para que
-     uno nuevo no se escape.
+     uno nuevo no se escape. Por eso el de «Compartir» va marcado: mandarle
+     un espacio a un amigo no es escribirle a Elexa.
+   · Compartir y descargar son personalizados a propósito: no se mezclan con
+     Lead ni Contact, que son con los que se miden y optimizan las campañas.
    · El formulario reporta desde su propio código (Radiografia.tsx).
 
    Cada evento sale una vez por página: dos clics en el mismo botón son una
@@ -93,7 +110,7 @@ const { evento = null } = Astro.props;
             if (marca.pixel) {
               var parametros = { content_name: marca.pixelNombre };
               if (marca.pixelCategoria) parametros.content_category = marca.pixelCategoria;
-              reportar('track', marca.pixel, parametros);
+              reportar(marca.pixelPropio !== undefined ? 'trackCustom' : 'track', marca.pixel, parametros);
             } else if (whatsapp.test(enlace.hostname)) {
               reportar('track', 'Contact', { content_name: 'whatsapp' });
             }

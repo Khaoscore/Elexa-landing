@@ -1,0 +1,89 @@
+/* Panel de control de la sala (/panel). Hoja propia por lo mismo que
+   sala.css: no carga global.css. */
+
+@font-face{font-family:"Duna Slab";src:url("/sala-assets/fonts/Dunaslab-Black.otf") format("opentype");font-weight:900;font-display:swap}
+:root{
+  /* Paleta de Karanis: la misma de sala.css (primary amarillo para fondos, accent amarillo
+     oscuro para texto, secondary/ink el azul de la fachada). */
+  --color-primary:#f1b221;--color-primary-hover:#dc9c0c;--color-on-primary:#18304d;--color-secondary:#18304d;
+  --color-accent:#8f5f00;--color-error:#c8102e;
+  --brisa-1:#fdfcfa;--brisa-3:#f2f1ec;--brisa-4:#d8d4c8;--aura-3:#ffe08a;--ink-300:#18304d;--ink-hover:#0f2238;--brand-100:#fbe6a2;--calorcito-5:#556170;--cielo-3:#2f7fc1;
+  --font-display:"Duna Slab",Rockwell,"Roboto Slab",Georgia,serif;--font-sans:"henderson-sans-basic",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --radius-lg:16px;--radius-xl:24px;--radius-button:99999px;--shadow:0 8px 24px #18304d1a;
+}
+*,*:before,*:after{box-sizing:border-box}
+body{margin:0;background:var(--brisa-3);color:var(--color-secondary);font-family:var(--font-sans);font-size:15px;line-height:22px}
+h1,h2,h3,p,ul{margin:0;padding:0}
+ul{list-style:none}
+a{color:inherit}
+[hidden]{display:none!important}
+.container{width:min(1100px,100% - 32px);margin-inline:auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:20px 0;flex-wrap:wrap}
+.top img{height:26px}
+.top__title{font-family:var(--font-display);font-weight:900;font-size:28px;line-height:1;text-transform:uppercase}
+.eyebrow{font-weight:700;font-size:12px;line-height:16px;letter-spacing:.04em;text-transform:uppercase;color:var(--color-accent)}
+.card{background:var(--brisa-1);border-radius:var(--radius-xl);padding:24px;box-shadow:var(--shadow)}
+.card__title{font-weight:600;font-size:18px;line-height:24px;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;align-items:start;padding-bottom:48px}
+.stack{display:flex;flex-direction:column;gap:16px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border:0;border-radius:var(--radius-button);font-family:var(--font-sans);font-weight:700;font-size:14px;line-height:24px;text-transform:uppercase;cursor:pointer;transition:transform .18s ease,background-color .18s ease;white-space:nowrap}
+.btn:hover{transform:translateY(-1px)}
+.btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn--primary{background:var(--color-primary);color:var(--color-on-primary)}
+.btn--primary:hover{background:var(--color-primary-hover)}
+.btn--ink{background:var(--ink-300);color:var(--aura-3)}
+.btn--ink:hover{background:var(--ink-hover)}
+.btn--outline{background:transparent;color:var(--color-secondary);box-shadow:inset 0 0 0 2px var(--color-secondary)}
+.btn--outline:hover{background:var(--brand-100)}
+.btn--sm{padding:6px 16px;font-size:12px}
+.btn.is-active{background:var(--color-primary);color:var(--color-on-primary);box-shadow:none}
+.input{font:inherit;padding:11px 16px;border:1.5px solid var(--brisa-4);border-radius:14px;background:#fff;color:var(--color-secondary);outline:none;width:100%}
+.input:focus{border-color:var(--color-secondary);box-shadow:0 0 0 3px #f1b22166}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.ejs{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.ej{display:flex;flex-direction:column;gap:8px;padding:14px;border-radius:var(--radius-lg);border:1.5px solid var(--brisa-4);background:#fff}
+.ej.is-active{border-color:var(--color-primary);background:#fdf3d3}
+.ej__n{font-family:var(--font-display);font-weight:900;font-size:28px;line-height:1}
+.ej__t{font-size:13px;line-height:18px;min-height:36px}
+/* tarjetas de botones de cierre: nombre como subtítulo y destino como texto secundario */
+.ej__h{font-weight:700;font-size:14px;line-height:18px;text-transform:uppercase;letter-spacing:.03em;color:var(--color-secondary)}
+.ej__d{margin-top:4px;font-size:12px;line-height:16px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--color-accent)}
+/* el botón siempre al fondo de la tarjeta, así quedan alineados aunque el texto ocupe más renglones */
+.ej > .btn{margin-top:auto}
+.state{display:flex;align-items:center;gap:10px;padding:12px 16px;border-radius:var(--radius-lg);background:var(--brisa-3);font-weight:600}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--brisa-4)}
+.dot.is-on{background:var(--color-primary);animation:blink 1.4s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.tile{padding:14px;border-radius:var(--radius-lg);background:var(--brisa-3);text-align:center}
+.tile__v{font-family:var(--font-display);font-weight:900;font-size:36px;line-height:1;color:var(--color-secondary)}
+.tile__l{margin-top:4px;font-size:12px;line-height:16px;text-transform:uppercase;font-weight:700;letter-spacing:.04em;color:var(--color-accent)}
+.qs{display:flex;flex-direction:column;gap:8px;max-height:520px;overflow:auto}
+.q{padding:12px 14px;border-radius:12px;background:var(--brisa-3)}
+.q__meta{font-size:12px;line-height:16px;color:var(--calorcito-5);margin-bottom:4px}
+.q__meta b{color:var(--color-secondary)}
+.q__t{overflow-wrap:anywhere}
+.muted{opacity:.7}
+.small{font-size:13px;line-height:18px}
+.error{color:var(--color-error);font-weight:600}
+.note{padding:12px 16px;border-radius:12px;background:#fff8e1;border:1px solid #efb30a66;font-size:13px;line-height:18px}
+.toast{position:fixed;left:50%;bottom:24px;transform:translate(-50%,20px);padding:12px 20px;border-radius:999px;background:var(--ink-300);color:var(--brisa-1);font-size:14px;font-weight:600;opacity:0;pointer-events:none;transition:.25s}
+.toast.is-on{opacity:1;transform:translate(-50%,0)}
+/* moderación: acciones por mensaje, mensajes borrados y lista de expulsados */
+.btn--xs{padding:2px 12px;font-size:11px;line-height:20px}
+.tag{display:inline-block;margin-left:8px;padding:0 8px;border-radius:999px;background:var(--ink-300);color:var(--aura-3);font-size:10px;line-height:18px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;vertical-align:1px}
+.tag--rol{margin-left:0;background:var(--color-primary);color:var(--color-on-primary);font-size:11px;line-height:22px;padding:0 10px}
+.q__acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.q--borrada{opacity:.6}
+.q--borrada .q__t{text-decoration:line-through}
+.q--fila{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.q--fila .q__meta{margin:0}
+/* mensaje del equipo escrito desde el panel */
+.mod-form{gap:8px;margin-bottom:14px}
+.mod-form textarea.input{resize:vertical;min-height:64px;padding:10px 14px}
+.mod-form__firma{flex:1 1 140px;width:auto;padding:6px 14px}
+.q--mod{background:var(--brand-100)}
+/* con MOD_KEY sólo queda la columna del chat */
+.is-mod .solo-admin{display:none}
+.grid.is-mod{grid-template-columns:minmax(0,720px);justify-content:center}
