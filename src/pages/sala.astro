@@ -35,7 +35,7 @@ const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
       content={`Sala de transmisión de ${NOMBRE} · Karanis, el street mall con marcas ancla de la Calle 14 en Cali. Un proyecto de Elexa Real Estate.`}
     />
     <meta name="robots" content="noindex, nofollow" />
-    <meta name="theme-color" content="#f2f1ec" />
+    <meta name="theme-color" content="#f0f0ef" />
     <link rel="icon" href="/favicon.ico" sizes="32x32" />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="preconnect" href="https://use.typekit.net" crossorigin />
@@ -504,7 +504,7 @@ const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
             $('#waitText').textContent = etiquetaDia(m.idx, ': ') + cap(fechaLarga(m.inicio)) + ' (hora Colombia). Puedes dejar esta pestaña abierta; la transmisión aparece aquí mismo.';
           } else {
             badge.classList.remove('badge--live'); dot.hidden = true; txt.textContent = 'Transmisión finalizada'; corto.textContent = 'Finalizó';
-            cGate.innerHTML = '<p class="countdown__live" style="color:var(--color-secondary)">Gracias por acompañarnos</p>';
+            cGate.innerHTML = '<p class="countdown__live" style="color:var(--brand-500)">Gracias por acompañarnos</p>';
             $('#waitCard').hidden = true;
           }
         }
@@ -790,7 +790,7 @@ const NOMBRE = SALA_CONFIG.EVENTO_NOMBRE;
           card.innerHTML = '';
           var eyebrow = document.createElement('p'); eyebrow.className = 'eyebrow';
           // con una sola pregunta configurada, el contador sobra ("Ejercicio 1 de 1")
-          eyebrow.innerHTML = '<span class="badge__dot" style="background:var(--color-primary)"></span> Ejercicio' + (total > 1 ? ' ' + pos + ' de ' + total : '');
+          eyebrow.innerHTML = '<span class="badge__dot" style="background:var(--accent-300)"></span> Ejercicio' + (total > 1 ? ' ' + pos + ' de ' + total : '');
           var h = document.createElement('h2'); h.className = 'card__title'; h.textContent = ej.titulo;
           card.appendChild(eyebrow); card.appendChild(h);
           var cuerpo = document.createElement('div'); cuerpo.style.marginTop = '16px'; card.appendChild(cuerpo);
