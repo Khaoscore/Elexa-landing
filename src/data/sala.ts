@@ -8,9 +8,9 @@
    Script); acá cambian los textos, los colores y los datos del evento.
 
    ⚠️ Antes de publicar el evento, completar lo que está marcado «POR
-   CONFIRMAR»: fecha, video de YouTube y Calendly de Karanis. */
+   CONFIRMAR»: el video de YouTube. */
 
-import { SITE_URL, WHATSAPP_URL } from './site';
+import { CITA_LUIS_URL, SITE_URL, WHATSAPP_URL } from './site';
 
 /* Dirección pública de la sala. Va en el evento de Google Calendar («Entra a
    la sala…»). */
@@ -18,13 +18,13 @@ const SALA_URL = `${SITE_URL}/sala`;
 
 /* Destinos de los botones y redes.
 
-   POR CONFIRMAR: el Calendly de Karanis. Mientras no exista, «Quiero agendar
-   mi cita» abre el WhatsApp de Elexa, igual que «Agenda tu cita» en el resto
-   del sitio (AGENDA_URL en site.ts).
+   «Quiero agendar mi cita» abre el Calendly de Luis para preguntas sobre los
+   proyectos, el mismo de «10 minutos con Luis» (CITA_LUIS_URL en site.ts).
+   Si ese enlace se quita, cae al WhatsApp de Elexa.
 
    La pasarela es la de inversionistas de Elexa que usaba Florentino:
    confirmar que es la misma para separar cupo en Karanis. */
-const EVENT_URL = WHATSAPP_URL;
+const EVENT_URL = CITA_LUIS_URL ?? WHATSAPP_URL;
 const CUPO_URL = 'https://micrositios.avalpaycenter.com/elexa-inversionistas-ma';
 export const INSTAGRAM_URL = 'https://www.instagram.com/elexa_real_estate/';
 export const KHAOS_URL = 'https://www.khaoscore.com/';
@@ -65,12 +65,12 @@ export const SALA_CONFIG = {
      el título de la pestaña y el del evento de Google Calendar. */
   EVENTO_NOMBRE: 'Lanzamiento virtual',
 
-  /* POR CONFIRMAR. Fecha y hora de cada transmisión (hora Colombia, UTC-5).
+  /* Fecha y hora de cada transmisión (hora Colombia, UTC-5).
      Si hay más de un día se agregan a la lista y la cuenta regresiva apunta a
      la próxima. FECHA_TEXTO tiene que decir lo mismo. */
-  EVENTOS: ['2026-11-17T19:00:00-05:00'],
+  EVENTOS: ['2026-11-23T19:00:00-05:00'],
   DURACION_MIN: 90,
-  FECHA_TEXTO: 'Martes 17 de noviembre · 7:00 p.m. (hora Colombia)',
+  FECHA_TEXTO: 'Lunes 23 de noviembre · 7:00 p.m. (hora Colombia)',
 
   /* URL pública de la sala, la que va en el evento de Google Calendar.
      Google no avisa quién guarda el evento: lo que se registra es quién pulsa

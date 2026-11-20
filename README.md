@@ -261,24 +261,54 @@ reproduce tal cual:
 
 ## Video del hero
 
-El fondo del hero de la portada es `public/img/hero/Elexa_hero_loop_v6.webm`
-(1920 × 1080, en bucle y sin sonido), con un velo oscuro encima para que el
-texto blanco se lea en los momentos claros. Al lado van los archivos que se
-sacan de él: un corte vertical del centro para teléfonos (más liviano: ~1.4 MB
-contra 5.4) y el primer cuadro como imagen fija, que es lo que se ve mientras
-carga y lo único que ven quienes tienen activado «reducir movimiento» en su
-sistema o un iPhone/iPad con iOS anterior a 17.4 (no leen WebM; no hay
-versión MP4 a propósito).
+El fondo del hero de la portada es `public/img/hero/Elexa_hero.webm`
+(1920 × 1080, 24,4 s, en bucle y sin sonido), con un velo oscuro encima para
+que el texto blanco se lea en los momentos claros. Al lado van:
 
-Para cambiar el video, poner el nuevo con el mismo nombre (o cambiar las rutas
-en `src/components/Hero.astro`) y regenerar los demás desde
-`public/img/hero/` con [ffmpeg](https://ffmpeg.org):
+- `Elexa_hero-movil.webm`: un corte vertical del centro para teléfonos
+  (516 × 1080), más liviano (1,4 MB contra 3,4).
+- `Elexa_hero-poster.jpg`: el primer cuadro como imagen fija. Es lo que se ve
+  mientras carga y lo único que ven quienes tienen activado «reducir
+  movimiento» en su sistema o un iPhone/iPad con iOS anterior a 17.4 (no leen
+  WebM; no hay versión MP4 a propósito).
+
+El original que entregó edición (`Video_hero.mp4`, H.264) abre con un fundido
+desde negro de 15 cuadros y cierra con otro a negro. Esos 15 cuadros se pasan
+al final: el bucle se ve igual (imagen → negro → imagen), pero el video
+arranca en un cuadro con imagen, que es el mismo del póster, y el paso del
+póster al video no se nota.
+
+Para cambiar el video, generar los tres archivos con [ffmpeg](https://ffmpeg.org)
+desde el original y, si el nuevo no abre con 15 cuadros de fundido, ajustar
+`N` (con `N=0` no se rota nada). Conviene usar nombres nuevos y cambiar las
+rutas en `src/components/Hero.astro`: `/img/*` se guarda un día en el
+navegador (ver `astro.config.mjs`), así que con el mismo nombre algunos
+seguirían viendo el anterior. VBR de dos pasadas con un promedio fijo y no CRF:
+las tomas aéreas tienen mucho detalle y a CRF 40 el de escritorio pesaba 9 MB.
 
 ```bash
-V=Elexa_hero_loop_v6.webm
-ffmpeg -i $V -frames:v 1 -q:v 4 Elexa_hero_loop_v6-poster.jpg
-ffmpeg -i $V -an -vf "crop=516:1080:(in_w-516)/2:0" -c:v libvpx-vp9 -b:v 0 -crf 36 -row-mt 1 Elexa_hero_loop_v6-movil.webm
+V=Video_hero.mp4; N=15
+ROT="[0:v]split[a][b];[a]trim=start_frame=$N,setpts=PTS-STARTPTS[x];[b]trim=end_frame=$N,setpts=PTS-STARTPTS[y];[x][y]concat=n=2:v=1:a=0"
+VP9="-an -c:v libvpx-vp9 -pix_fmt yuv420p -row-mt 1 -deadline good -cpu-used 2 -g 150"
+D="$VP9 -b:v 1100k -maxrate 2200k -bufsize 4400k -tile-columns 2 -passlogfile d"   # escritorio
+M="$VP9 -b:v 450k -maxrate 900k -bufsize 1800k -tile-columns 0 -passlogfile m"     # teléfonos
+CORTE="crop=516:1080:(in_w-516)/2:0"
+
+ffmpeg -y -i $V -filter_complex "$ROT[v]" -map "[v]" $D -pass 1 -f webm NUL
+ffmpeg -y -i $V -filter_complex "$ROT[v]" -map "[v]" $D -pass 2 Elexa_hero.webm
+ffmpeg -y -i $V -filter_complex "$ROT,$CORTE[v]" -map "[v]" $M -pass 1 -f webm NUL
+ffmpeg -y -i $V -filter_complex "$ROT,$CORTE[v]" -map "[v]" $M -pass 2 Elexa_hero-movil.webm
+
+# Póster: el cuadro N del original. Con mozjpeg (sharp, que ya está en el
+# proyecto) pesa la mitad que con el JPEG de ffmpeg a la misma calidad.
+ffmpeg -y -i $V -vf "select=eq(n\,$N)" -frames:v 1 poster.png
+node -e "require('sharp')('poster.png').jpeg({quality:60,mozjpeg:true}).toFile('Elexa_hero-poster.jpg')"
 ```
+
+(`NUL` es para Windows; en macOS/Linux, `/dev/null`.) En el corte de
+teléfonos, los rótulos que el video pone a la izquierda del centro (por
+ejemplo «Proyecto Florentino», entre el segundo 2 y el 4) quedan cortados.
+Ahí caen detrás del título, así que no vale la pena correr el recorte.
 
 ## Equipo
 
