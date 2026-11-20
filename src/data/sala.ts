@@ -43,7 +43,7 @@ export const SALA_CONFIG = {
      youtu.be) o sólo el ID. Para el evento real, el link del directo: video
      NO LISTADO y con «Permitir insertar» activado. Vacío, la sala muestra
      «Aún no hay video configurado». */
-  YOUTUBE: 'https://youtube.com/live/_lf964Hj2aI?feature=share',
+  YOUTUBE: 'https://youtube.com/live/VX-Yz_Hfwwk',
 
   /* URL del Web App de Google Apps Script (termina en /exec). Vacío = MODO
      LOCAL de prueba: el panel controla la sala dentro del mismo navegador y
