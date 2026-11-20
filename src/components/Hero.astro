@@ -7,8 +7,8 @@
    se abre otro, también en diagonal, donde van «Ver proyectos abiertos» y
    «¿Cómo funciona?».
 
-   Su relleno es el video de la marca (public/img/hero/Elexa_hero_loop_v6.*),
-   en bucle, sin sonido y recortado en cover. Hay dos cortes: el completo
+   Su relleno es el video de la marca (public/img/hero/Elexa_hero.*), en
+   bucle, sin sonido y recortado en cover. Hay dos cortes: el completo
    (1920 × 1080) y uno vertical del centro para teléfonos (516 × 1080, la
    proporción de la forma móvil), los dos en WebM. Mientras carga, si la
    persona pidió menos movimiento en su sistema o si el navegador no lee WebM
@@ -119,12 +119,12 @@ const poligonoMovil = `polygon(${muestrear([0, 743], tramosMovil).map((p) => `${
         loop
         playsinline
         preload="none"
-        poster="/img/hero/Elexa_hero_loop_v6-poster.jpg"
+        poster="/img/hero/Elexa_hero-poster.jpg"
         width="1920"
         height="1080"
       >
-        <source src="/img/hero/Elexa_hero_loop_v6-movil.webm" type="video/webm" media="(max-width: 767px)" />
-        <source src="/img/hero/Elexa_hero_loop_v6.webm" type="video/webm" />
+        <source src="/img/hero/Elexa_hero-movil.webm" type="video/webm" media="(max-width: 767px)" />
+        <source src="/img/hero/Elexa_hero.webm" type="video/webm" />
       </video>
     </div>
 
