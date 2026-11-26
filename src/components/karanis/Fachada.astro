@@ -1,0 +1,127 @@
+---
+/* La fachada — «Frame 112» (547:958) de «Desktop - 7»: la frase en Header 3
+   centrada (1200 de ancho, «strip mall» en morado) y, 86 más abajo, el
+   render de frente (sala/Nuevo evento/Imagenes/render 1) en «Vector 2»
+   (521:1105, 1200 × 585): un rectángulo de radio 16 con borde neutral/300 de
+   2 al que le falta la esquina de abajo a la derecha (239.5 × 62), donde se
+   apoya «Quiero participar» (200 de ancho, pegado a la esquina).
+
+   La forma es la de las tarjetas con muesca (src/lib/formas.ts): se estira
+   con el ancho sin deformar las esquinas. La foto va en cover y centrada,
+   como la recorta Figma.
+
+   No hay frame móvil: en el teléfono la muesca se comería un tercio de la
+   foto, así que ahí la foto va entera, con las esquinas redondeadas, y el
+   botón a lo ancho debajo. */
+import { estiloMuescas } from '../../lib/formas';
+import { CITA_LUIS_URL, esExterno } from '../../data/site';
+
+const forma = Object.entries(estiloMuescas([{ esquina: 'br', ancho: 239.5, alto: 62 }]))
+  .map(([propiedad, valor]) => `${propiedad}:${valor}`)
+  .join(';');
+
+const externo = esExterno(CITA_LUIS_URL) ? { target: '_blank', rel: 'noopener' } : {};
+---
+
+<section class="fachada contenedor" aria-labelledby="fachada-titulo">
+  <h2 class="fachada__titulo display t-h3" id="fachada-titulo">
+    Un <span class="acento">strip mall</span> diseñado para generar renta, que ya cuenta con inquilinos como Dollarcity,
+    D1 y la multinacional Fitness24Seven.
+  </h2>
+
+  <div class="fachada__marco">
+    <div class="fachada__foto muescas" style={forma}>
+      <img
+        src="/img/karanis/fachada.webp"
+        srcset="/img/karanis/fachada-1000.webp 1000w, /img/karanis/fachada.webp 1821w"
+        sizes="(min-width: 1240px) 1200px, calc(100vw - 48px)"
+        alt="Render de la fachada de Karanis: un edificio de dos pisos con locales a la calle, los avisos de Fitness24Seven, Dollarcity y D1, y carros parqueados al frente."
+        width="1821"
+        height="864"
+        loading="lazy"
+      />
+      <span class="muescas__trazo"></span>
+    </div>
+    <a
+      class="btn btn--primario fachada__boton"
+      href={CITA_LUIS_URL ?? undefined}
+      {...externo}
+      data-pixel="Schedule"
+      data-pixel-nombre="agendar_reunion"
+    >
+      Quiero participar
+    </a>
+  </div>
+</section>
+
+<style>
+  .fachada {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    margin-top: 64px;
+    color: var(--brand-500);
+  }
+
+  .fachada__titulo {
+    text-align: center;
+  }
+
+  .fachada__marco {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .fachada__foto {
+    aspect-ratio: 1200 / 585;
+  }
+
+  .fachada__foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Teléfono: sin muesca (la máscara y los tramos curvos del trazo se
+     quitan; queda el borde recto del box-shadow, con el mismo radio). */
+  @media (max-width: 767px) {
+    .fachada__foto {
+      border-radius: var(--radius-card);
+      -webkit-mask: none;
+      mask: none;
+    }
+
+    .fachada__foto .muescas__trazo {
+      border-radius: inherit;
+      background: none;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .fachada {
+      margin-top: 96px;
+    }
+
+    .fachada__marco {
+      display: block;
+    }
+
+    .fachada__boton {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      width: 200px;
+    }
+  }
+
+  /* Los pilares de «Por qué Karanis» terminan en y = 3088 y la frase arranca
+     en 3280. */
+  @media (min-width: 1240px) {
+    .fachada {
+      gap: 86px;
+      margin-top: 192px;
+    }
+  }
+</style>

@@ -37,15 +37,20 @@ interface Props {
   variante?: 'oscura' | 'clara';
   /** Ruta de la página actual («/nosotros»), para marcar su enlace. */
   actual?: string;
+  /** false quita «Log in» (en la barra y en el menú): /karanis no lo lleva. */
+  login?: boolean;
+  /** A dónde lleva «Hablemos»: el WhatsApp de Luis, salvo en /karanis, que
+      abre la conversación con un mensaje sobre el proyecto. */
+  hablemos?: string;
 }
 
-const { variante = 'oscura', actual = '/' } = Astro.props;
+const { variante = 'oscura', actual = '/', login = true, hablemos = HABLEMOS_URL } = Astro.props;
 
 const externo = (href: string | null) => (esExterno(href) ? { target: '_blank', rel: 'noopener' } : {});
 const esActual = (href: string) => (href === '/' ? actual === '/' : actual === href || actual.startsWith(`${href}/`));
 ---
 
-<header class:list={['nav', `nav--${variante}`]}>
+<header class:list={['nav', `nav--${variante}`, { 'nav--sin-login': !login }]}>
   <a class="nav__logo" href="/" aria-label="Elexa — inicio">
     {
       variante === 'oscura' && (
@@ -70,11 +75,11 @@ const esActual = (href: string) => (href === '/' ? actual === '/' : actual === h
   </nav>
 
   <div class="nav__acciones">
-    <a class="btn btn--borde" href={LOGIN_URL ?? undefined} {...externo(LOGIN_URL)}>Log in</a>
+    {login && <a class="btn btn--borde" href={LOGIN_URL ?? undefined} {...externo(LOGIN_URL)}>Log in</a>}
     <a
       class="btn btn--primario"
-      href={HABLEMOS_URL}
-      {...externo(HABLEMOS_URL)}
+      href={hablemos}
+      {...externo(hablemos)}
       data-pixel="Lead"
       data-pixel-nombre="hablemos_header"
       data-pixel-categoria="whatsapp"
@@ -104,7 +109,7 @@ const esActual = (href: string) => (href === '/' ? actual === '/' : actual === h
             }
           </nav>
           <div class="nav__panel-botones">
-            <a class="btn btn--borde" href={LOGIN_URL ?? undefined} {...externo(LOGIN_URL)}>Log in</a>
+            {login && <a class="btn btn--borde" href={LOGIN_URL ?? undefined} {...externo(LOGIN_URL)}>Log in</a>}
             <a
               class="btn btn--primario"
               href={AGENDA_URL ?? undefined}
@@ -417,6 +422,15 @@ const esActual = (href: string) => (href === '/' ? actual === '/' : actual === h
     .nav__acciones {
       display: flex;
       gap: var(--space-xs);
+    }
+
+    /* Sin «Log in» (/karanis) los botones guardan el ancho de los dos
+       («Frame 1», 252): con space-between, si el grupo se angosta los
+       enlaces se corren a la derecha y «Cómo participar» se mete en la
+       diagonal blanca del hero, que los espera terminando en 50 % + 167. */
+    .nav--sin-login .nav__acciones {
+      justify-content: flex-end;
+      min-width: 252px;
     }
   }
 

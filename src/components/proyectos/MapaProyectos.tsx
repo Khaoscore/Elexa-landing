@@ -13,16 +13,27 @@
    · pin elegido — «Group 12» (85 × 110, con sombra) con el símbolo encima, un
      punto morado donde está el proyecto y su nombre debajo;
    · los demás  — «Group 13» (64 × 83), más chico;
-   · panel — «Frame 87» (461 × 827, blanco, radio 24) a 22 del borde del mapa:
-     buscador, foto, nombre, dirección y categoría. La hoja no trae los tres
-     datos del diseño (área, espacio, ventaja) ni el precio de las tarjetas;
-   · tarjetas — «Background+Border» (264 × 381), montadas 50 px sobre el borde
-     de abajo del mapa. «Ver proyecto» elige ese proyecto en el mapa. La fila
-     no muestra barra de desplazamiento: se corre con dos flechas a los
-     costados, arrastrando con el dedo o arrastrando con el mouse.
+   · panel — «Frame 87» (59:2690, 613 × 876, blanco) a 22 del borde del mapa:
+     buscador; la portada con la etiqueta «Proyecto abierto» y flechas a los
+     costados que pasan al proyecto anterior o siguiente (todos, en el orden
+     de las tarjetas); nombre y dirección; las características («Esquinero»,
+     «Con ascensor») y los tres datos (Área, Espacio, Ventaja). Lo que la
+     hoja no trae no sale: sin características va la categoría en su lugar;
+   · tarjetas — «Cards» (118:702): 264 × 353 en gris, a 11 entre sí. La del
+     proyecto elegido va en el morado oscuro de la web (brand/500; el diseño
+     la trae en ink/400) y un 12 % más grande (296.5 × 397), con el
+     botón de borde blanco; las normales se montan 28 sobre el borde de abajo
+     del mapa y la elegida, 50. «Ver proyecto» elige ese proyecto en el mapa.
+     La fila no muestra barra de desplazamiento: se corre con dos flechas a
+     los costados, arrastrando con el dedo o arrastrando con el mouse.
 
    Si un proyecto no tiene foto, o no carga, en su lugar va el símbolo de
    Elexa sobre un fondo de marca.
+
+   Los proyectos con marca propia (Proyecto e, Florentino; ver
+   src/data/marcas.ts) cambian el pin de Elexa por el suyo, llevan su sello
+   sobre la foto (en la tarjeta y en el panel) y sus colores en el nombre,
+   el botón y la etiqueta; su tarjeta elegida va en su tono oscuro.
 
    En el teléfono («iPhone 13 & 14 - 3», 303:4780) no hay buscador: el panel es
    la ficha flotante «Frame 87» (342 × 336) encima de la parte de abajo del
@@ -33,8 +44,9 @@
    El mapa se arma recién en el navegador (dentro del efecto): las
    bibliotecas tocan `window`. Antes de eso es un fondo gris y el panel y las
    tarjetas ya están en el HTML. */
-import { useEffect, useId, useMemo, useRef, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type CSSProperties } from 'react';
 import type { ProyectoAnterior } from '../../lib/anteriores';
+import type { Marca } from '../../data/marcas';
 import { distancia } from '../../lib/coordenadas';
 import { crearMapa, type Mapa } from '../../lib/mapa';
 import './mapa.css';
@@ -69,7 +81,25 @@ const normalizar = (texto: string) =>
     .replace(/[̀-ͯ]/g, '')
     .toLowerCase();
 
+/* Con marca propia, su pin entero (un solo SVG con la forma del de Elexa)
+   en el lugar del de Elexa: mismo tamaño y misma punta, así el ancla no
+   cambia. */
 function htmlPin(proyecto: ProyectoAnterior, elegido: boolean): string {
+  const marca = proyecto.marca;
+  if (marca && elegido) {
+    return `
+      <span class="pin pin--elegido pin--marca">
+        <img class="pin__marca" src="${escapar(marca.pin)}" alt="" width="85" height="111">
+        <img class="pin__punto" src="/img/mapa/punto.svg" alt="" width="40" height="40">
+        <span class="pin__etiqueta">${escapar(proyecto.nombre)}</span>
+      </span>`;
+  }
+  if (marca) {
+    return `
+      <span class="pin pin--chico pin--marca">
+        <img class="pin__marca" src="${escapar(marca.pin)}" alt="" width="64" height="83">
+      </span>`;
+  }
   if (elegido) {
     return `
       <span class="pin pin--elegido">
@@ -92,10 +122,39 @@ function escapar(texto: string) {
   return texto.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 }
 
-/* La portada del proyecto o, si la hoja no trae o no carga (una foto de Drive
+/* Los colores de la marca como variables, para mapa.css (`--marca`…). */
+const estiloMarca = (marca: Marca | null) =>
+  marca
+    ? ({
+        '--marca': marca.principal,
+        '--marca-hover': marca.hover,
+        '--marca-oscuro': marca.oscuro,
+        '--marca-sobre': marca.sobre,
+      } as CSSProperties)
+    : undefined;
+
+/* Los tres datos del diseño que trae la hoja, con su título. */
+const datosDe = (p: ProyectoAnterior) =>
+  (
+    [
+      ['Área', p.area],
+      ['Espacio', p.espacio],
+      ['Ventaja', p.ventaja],
+    ] as const
+  ).filter(([, valor]) => valor);
+
+/* Una foto del proyecto o, si la hoja no trae o no carga (una foto de Drive
    que no está compartida con «Cualquier persona con el enlace»), el símbolo
    sobre fondo de marca. */
-function Foto({ className, foto, sizes }: { className: string; foto: ProyectoAnterior['foto']; sizes: string }) {
+function Foto({
+  className,
+  foto,
+  sizes,
+}: {
+  className: string;
+  foto: ProyectoAnterior['foto'];
+  sizes: string;
+}) {
   const [fallo, setFallo] = useState(false);
   const img = useRef<HTMLImageElement>(null);
 
@@ -127,6 +186,74 @@ function Foto({ className, foto, sizes }: { className: string; foto: ProyectoAnt
     <div className={`${className} sin-foto`}>
       <img src="/img/marca/simbolo-morado.svg" alt="" width="22" height="24" />
     </div>
+  );
+}
+
+/* La portada del panel, con la etiqueta «Proyecto abierto» y los botones
+   redondos de 74 de «Proyectos abiertos» adentro, en los bordes, a media
+   altura. Pasan al proyecto anterior o al siguiente entre todos los de la
+   fila de tarjetas (los que deja la búsqueda), en su orden, igual que tocar
+   su pin. En el primero la de atrás se pinta gris (neutral/300) y queda
+   deshabilitada; en el último, la de adelante.
+
+   No se vuelve a montar al cambiar de proyecto (sólo la foto): así la
+   flecha conserva el foco y con el teclado se sigue avanzando. */
+function Portada({
+  proyecto,
+  anterior,
+  siguiente,
+  alElegir,
+}: {
+  proyecto: ProyectoAnterior;
+  anterior: ProyectoAnterior | null;
+  siguiente: ProyectoAnterior | null;
+  alElegir: (p: ProyectoAnterior) => void;
+}) {
+  return (
+    <div className="mapa__galeria">
+      <Foto
+        key={proyecto.id}
+        className="mapa__foto"
+        foto={proyecto.foto}
+        sizes="(min-width: 1240px) 562px, (min-width: 1024px) 352px, 100vw"
+      />
+      {proyecto.marca && <img className="mapa__sello" src={proyecto.marca.sello} alt="" width="56" height="56" />}
+      {proyecto.abierto && <span className="mapa__abierto display">Proyecto abierto</span>}
+      {(anterior || siguiente) && (
+        <>
+          <FlechaProyecto sentido="atras" destino={anterior} alElegir={alElegir} />
+          <FlechaProyecto sentido="adelante" destino={siguiente} alElegir={alElegir} />
+        </>
+      )}
+    </div>
+  );
+}
+
+function FlechaProyecto({
+  sentido,
+  destino,
+  alElegir,
+}: {
+  sentido: 'atras' | 'adelante';
+  destino: ProyectoAnterior | null;
+  alElegir: (p: ProyectoAnterior) => void;
+}) {
+  const texto = sentido === 'atras' ? 'Proyecto anterior' : 'Proyecto siguiente';
+  return (
+    <button
+      type="button"
+      className={`mapa__foto-flecha mapa__foto-flecha--${sentido}`}
+      aria-label={destino ? `${texto}: ${destino.nombre}` : texto}
+      disabled={!destino}
+      onClick={() => destino && alElegir(destino)}
+    >
+      <img
+        src={destino ? '/img/iconos/flecha-activa.svg' : '/img/iconos/flecha-inactiva.svg'}
+        alt=""
+        width="40"
+        height="40"
+      />
+    </button>
   );
 }
 
@@ -342,7 +469,8 @@ function Flecha({ sentido, activa, controla, onClick }: FlechaProps) {
 }
 
 export default function MapaProyectos({ proyectos }: Props) {
-  const [elegidoId, setElegidoId] = useState(proyectos[0]?.id ?? '');
+  /* Arranca en un proyecto abierto, como el diseño; si no hay, en el primero. */
+  const [elegidoId, setElegidoId] = useState((proyectos.find((p) => p.abierto) ?? proyectos[0])?.id ?? '');
   const [busqueda, setBusqueda] = useState('');
   const [listo, setListo] = useState(false);
   /* Sólo cuenta en el teléfono: la × cierra la ficha flotante. */
@@ -368,6 +496,22 @@ export default function MapaProyectos({ proyectos }: Props) {
 
   const pistaId = useId();
   const { pista, puede, correr } = usePista(visibles.length);
+
+  /* La tarjeta del elegido se trae a la vista dentro de la fila (sólo la
+     fila, no la página): al cargar, de una; después, deslizándose, por
+     ejemplo al tocar un pin del mapa. */
+  const primeraVez = useRef(true);
+  useEffect(() => {
+    const el = pista.current;
+    const tarjeta = el?.querySelector<HTMLElement>('.anterior--elegido');
+    if (!el || !tarjeta) return;
+    const destino = tarjeta.offsetLeft - (el.clientWidth - tarjeta.offsetWidth) / 2;
+    el.scrollTo({
+      left: entre(destino, 0, el.scrollWidth - el.clientWidth),
+      behavior: primeraVez.current || sinAnimacion() ? 'auto' : 'smooth',
+    });
+    primeraVez.current = false;
+  }, [elegido?.id]);
 
   /* Lo que tapa el panel: a la izquierda en escritorio, abajo en el teléfono
      (si la ficha está abierta). */
@@ -496,12 +640,15 @@ export default function MapaProyectos({ proyectos }: Props) {
           </form>
 
           {elegido ? (
-            <div className="mapa__ficha">
-              <Foto
-                key={elegido.id}
-                className="mapa__foto"
-                foto={elegido.foto}
-                sizes="(min-width: 1240px) 413px, (min-width: 1024px) 352px, 100vw"
+            <div
+              className={elegido.marca ? 'mapa__ficha mapa__ficha--marca' : 'mapa__ficha'}
+              style={estiloMarca(elegido.marca)}
+            >
+              <Portada
+                proyecto={elegido}
+                anterior={visibles[visibles.indexOf(elegido) - 1] ?? null}
+                siguiente={visibles[visibles.indexOf(elegido) + 1] ?? null}
+                alElegir={(p) => elegir(p, false)}
               />
               <div className="mapa__nombre">
                 <h3 className="display">{elegido.nombre}</h3>
@@ -511,7 +658,23 @@ export default function MapaProyectos({ proyectos }: Props) {
                 <img src="/img/iconos/cancel.svg" alt="" width="38" height="38" />
                 <span className="sr-only">Cerrar la ficha de {elegido.nombre}</span>
               </button>
-              {elegido.categoria && <p className="mapa__categoria">{elegido.categoria}</p>}
+              {(elegido.caracteristicas.length > 0 || elegido.categoria) && (
+                <ul className="mapa__caracteristicas" role="list">
+                  {(elegido.caracteristicas.length ? elegido.caracteristicas : [elegido.categoria]).map((c) => (
+                    <li key={c}>{c}</li>
+                  ))}
+                </ul>
+              )}
+              {datosDe(elegido).length > 0 && (
+                <dl className="mapa__datos">
+                  {datosDe(elegido).map(([titulo, valor]) => (
+                    <div key={titulo}>
+                      <dt className="display">{titulo}</dt>
+                      <dd>{valor}</dd>
+                    </div>
+                  ))}
+                </dl>
+              )}
             </div>
           ) : (
             <p className="mapa__vacio">Ningún proyecto coincide con «{busqueda}».</p>
@@ -527,24 +690,40 @@ export default function MapaProyectos({ proyectos }: Props) {
           data-cursor={puede.atras || puede.adelante ? 'arrastrar' : undefined}
           role="list"
         >
-          {visibles.map((p) => (
-            <li key={p.id} className={p.id === elegido?.id ? 'anterior anterior--elegido' : 'anterior'}>
-              <Foto className="anterior__foto" foto={p.foto} sizes="236px" />
-              <div className="anterior__texto">
-                <p className="anterior__nombre">{p.nombre}</p>
-                {p.direccion && <p className="anterior__direccion">{p.direccion}</p>}
-                {p.categoria && <p className="anterior__datos">{p.categoria}</p>}
-              </div>
-              <button
-                type="button"
-                className="btn btn--primario anterior__boton"
-                aria-pressed={p.id === elegido?.id}
-                onClick={() => elegir(p, true)}
+          {visibles.map((p) => {
+            /* «160 m² · Piso 5 y 6 · Vista 360»; sin esos datos, la categoría. */
+            const resumen = datosDe(p)
+              .map(([, valor]) => valor)
+              .join(' · ') || p.categoria;
+            return (
+              <li
+                key={p.id}
+                className={['anterior', p.id === elegido?.id && 'anterior--elegido', p.marca && 'anterior--marca']
+                  .filter(Boolean)
+                  .join(' ')}
+                style={estiloMarca(p.marca)}
               >
-                Ver proyecto<span className="sr-only"> {p.nombre} en el mapa</span>
-              </button>
-            </li>
-          ))}
+                <div className="anterior__marco">
+                  <Foto className="anterior__foto" foto={p.foto} sizes="266px" />
+                  {p.marca && <img className="anterior__sello" src={p.marca.sello} alt="" width="40" height="40" />}
+                  {p.abierto && <span className="anterior__abierto">Proyecto abierto</span>}
+                </div>
+                <div className="anterior__texto">
+                  <p className="anterior__nombre">{p.nombre}</p>
+                  {p.direccion && <p className="anterior__direccion">{p.direccion}</p>}
+                  {resumen && <p className="anterior__datos">{resumen}</p>}
+                </div>
+                <button
+                  type="button"
+                  className="btn btn--primario anterior__boton"
+                  aria-pressed={p.id === elegido?.id}
+                  onClick={() => elegir(p, true)}
+                >
+                  Ver proyecto<span className="sr-only"> {p.nombre} en el mapa</span>
+                </button>
+              </li>
+            );
+          })}
         </ul>
 
         <Flecha sentido="atras" activa={puede.atras} controla={pistaId} onClick={() => correr(-1)} />

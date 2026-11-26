@@ -92,6 +92,13 @@ export const equipo: Integrante[] = [
     correo: 'contabilidad@elexa.com.co',
   },
   {
+    nombre: 'Carlos F. Murgueitio',
+    cargo: 'Coordinador de Cierre',
+    foto: '/img/equipo/carlos-murgueitio.webp',
+    telefono: '+57 324 5841923',
+    correo: 'gestor.socios@elexa.com.co',
+  },
+  {
     nombre: 'Nicolás Osorno',
     empresa: khaosCore,
     cargo: 'Aliado de Diseño y Tecnología',

@@ -19,15 +19,29 @@
    para el título (303:4569), el video donde el diseño pone el damero
    (303:4572, 342 de ancho) y el acordeón (303:4573) debajo. */
 import FaqAcordeon from './FaqAcordeon';
-import { preguntas } from '../lib/faq';
+import { preguntas as preguntasPortada, type Pregunta } from '../lib/faq';
 import { AGENDA_URL, esExterno } from '../data/site';
 
-const externo = esExterno(AGENDA_URL) ? { target: '_blank', rel: 'noopener' } : {};
+interface Props {
+  /** Las de la portada si no se pasan; /karanis trae las suyas. */
+  preguntas?: Pregunta[];
+  /** A dónde lleva «Agenda tu cita». */
+  agenda?: string | null;
+  /** Distancia en escritorio con la sección de arriba: 199 en la portada,
+      20 en /karanis, donde va casi pegada a la banda de «10 minutos con
+      Luis». En el teléfono y la tableta queda la de siempre. */
+  separacion?: number;
+}
 
-const VIDEO_ID = '0lzrbcof0PU';
+const { preguntas = preguntasPortada, agenda = AGENDA_URL, separacion = 199 } = Astro.props;
+
+const externo = esExterno(agenda) ? { target: '_blank', rel: 'noopener' } : {};
+
+/* El Short de youtube.com/shorts/{VIDEO_ID}. */
+const VIDEO_ID = 'o02hGseJOzQ';
 ---
 
-<section class="faq" id="preguntas" aria-labelledby="faq-titulo">
+<section class="faq" id="preguntas" aria-labelledby="faq-titulo" style={`--separacion:${separacion}px`}>
   <picture>
     <source media="(max-width: 767px)" srcset="/img/faq/fondo-faq-movil.svg" width="366" height="1588.5" />
     <img class="faq__fondo" src="/img/faq/pestana-faq.svg" alt="" width="1008" height="68" />
@@ -56,7 +70,7 @@ const VIDEO_ID = '0lzrbcof0PU';
       <FaqAcordeon client:visible={{ rootMargin: '400px' }} preguntas={preguntas} />
       <a
         class="btn btn--primario faq__cta"
-        href={AGENDA_URL ?? undefined}
+        href={agenda ?? undefined}
         {...externo}
         data-pixel="Schedule"
         data-pixel-nombre="agendar_reunion"
@@ -192,7 +206,7 @@ const VIDEO_ID = '0lzrbcof0PU';
   /* ---------- Escritorio: la composición del frame ---------- */
   @media (min-width: 1240px) {
     .faq {
-      margin-top: 199px;
+      margin-top: var(--separacion);
       padding: 49px 98px 81px;
       border-radius: 0;
       background: none;

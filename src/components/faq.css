@@ -43,7 +43,7 @@
 /* Al cerrar, el marco sigue entero durante la primera mitad, cuando la
    respuesta hace casi todo el recorrido, y en la segunda se funde con el
    borde de la pregunta, que vuelve a la vez. Fundirlo recién al final no
-   sirve: con menos de 118 px de alto la muesca ya no cabe y la esquina de
+   sirve: con menos de 84 px de alto la muesca ya no cabe y la esquina de
    abajo a la derecha queda en ángulo recto. */
 .faq__item--cerrando .faq__marco {
   transition: opacity 0.25s ease calc(var(--faq-duracion) / 2);
@@ -60,12 +60,14 @@
   font: inherit;
 }
 
+/* La fila mide 577 de los 590 de la columna: el círculo queda a 19 de la
+   caja y a 13 del borde derecho del marco abierto. */
 .faq__fila {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 27px;
-  width: 100%;
+  gap: 19px;
+  width: calc(100% - 13px);
   padding: 0;
   border: 0;
   background: none;
@@ -74,24 +76,25 @@
   cursor: pointer;
 }
 
-/* La caja de la pregunta: 74 de alto con el texto (24/30) a 19 del borde de
-   arriba y a 23 del izquierdo. Abierta pierde el borde: el marco lo pone
-   .faq__marco. */
+/* La caja de la pregunta: 508 × 50 con el texto (20/30) centrado, a 23 del
+   borde izquierdo y con 443 de ancho. Abierta, el texto baja a 19 del borde
+   de arriba y pierde el borde: el marco lo pone .faq__marco. */
 .faq__pregunta {
   flex: 1;
-  min-height: 74px;
-  padding: 18px 22px 24px;
+  min-height: 50px;
+  padding: 9px 41px 9px 22px;
   border: 1px solid var(--neutral-300);
   border-radius: var(--radius-card);
   color: var(--ink-500);
   font-size: 20px;
-  line-height: 26px;
+  line-height: 30px;
   transition:
     border-color 0.3s ease,
     padding-top var(--faq-duracion) var(--faq-curva);
 }
 
 .faq__item--abierta .faq__pregunta {
+  padding-top: 18px;
   border-color: transparent;
 }
 
@@ -103,10 +106,10 @@
 }
 
 .faq__icono {
-  flex: 0 0 74px;
+  flex: 0 0 50px;
   display: grid;
   place-items: center;
-  height: 74px;
+  height: 50px;
   border-radius: var(--radius-full);
   background: var(--brand-300);
   transition:
@@ -117,13 +120,16 @@
   background: var(--brand-300-hover);
 }
 
-/* El «+» con dos barras, con las medidas del ícono «add» de 40 (23.33 de
-   largo, 3.33 de grueso). Al abrir gira media vuelta mientras la barra
-   vertical se encoge hasta desaparecer: queda el «−». */
+/* El «+» con dos barras, con las medidas del ícono «add»: en el círculo de
+   50 el ícono mide 27.03 (barras de 15.77 × 2.25). Al abrir gira media
+   vuelta mientras la barra vertical se encoge hasta desaparecer: queda el
+   «−», que el diseño dibuja con el ícono «remove» de 40, así que además
+   crece 40 / 27.03. */
 .faq__signo {
+  --signo-grosor: 2.25px;
   position: relative;
-  width: 23.33px;
-  height: 23.33px;
+  width: 15.77px;
+  height: 15.77px;
   transition: transform var(--faq-duracion) var(--faq-curva);
 }
 
@@ -131,10 +137,10 @@
 .faq__signo::after {
   content: '';
   position: absolute;
-  top: calc(50% - 1.665px);
+  top: calc(50% - var(--signo-grosor) / 2);
   left: 0;
   width: 100%;
-  height: 3.33px;
+  height: var(--signo-grosor);
   background: var(--neutral-100);
   transition: transform var(--faq-duracion) var(--faq-curva);
 }
@@ -144,16 +150,16 @@
 }
 
 .faq__item--abierta .faq__signo {
-  transform: rotate(180deg);
+  transform: rotate(180deg) scale(1.48);
 }
 
 .faq__item--abierta .faq__signo::after {
   transform: rotate(90deg) scaleX(0);
 }
 
-/* La respuesta arranca a 126 del borde de arriba del marco (52 debajo de la
-   fila de 74), a 30 de la izquierda y con 538 de ancho; el marco termina 20
-   debajo. */
+/* La respuesta (16/22) arranca a 97 del borde de arriba del marco (38
+   debajo de la fila, que abierta mide 59), a 30 de la izquierda y con 538
+   de ancho; el marco termina 25 debajo. */
 .faq__panel {
   position: relative;
   display: grid;
@@ -171,7 +177,7 @@
 /* Al abrir, el texto entra un poco después de que empieza a abrirse; al
    cerrar sube y se apaga mientras el marco se encoge sobre él. */
 .faq__respuesta {
-  padding: 52px 21px 20px 30px;
+  padding: 38px 22px 25px 30px;
   color: var(--ink-500);
   opacity: 0;
   transform: translateY(-12px);
@@ -210,13 +216,6 @@
   }
 }
 
-@media (min-width: 1240px) {
-  .faq__pregunta {
-    font-size: 24px;
-    line-height: 30px;
-  }
-}
-
 /* ---------- Móvil — «Frame 45» (303:4573) ----------
    Cerrada: caja de 283 × 70 (borde 1, relleno 10, Mobile/Header 4 20/24) y el
    círculo de 43 centrado a su lado, a 16. Abierta: la pregunta y el círculo
@@ -230,6 +229,7 @@
 
   .faq__fila {
     gap: var(--space-md);
+    width: 100%;
   }
 
   .faq__pregunta {
@@ -241,8 +241,15 @@
     line-height: 24px;
   }
 
-  .faq__item--abierta .faq__pregunta {
-    padding-top: 18px;
+  /* El ícono de 40 en el círculo de 43, igual cerrado que abierto. */
+  .faq__signo {
+    --signo-grosor: 3.33px;
+    width: 23.33px;
+    height: 23.33px;
+  }
+
+  .faq__item--abierta .faq__signo {
+    transform: rotate(180deg);
   }
 
   /* Arriba y no centrado, para que al abrir baje deslizándose: 13.5 lo

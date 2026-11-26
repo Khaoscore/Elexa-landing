@@ -24,6 +24,7 @@ npm run check    # tipos
 | `/espacios` | Desktop - 4 | espacios en alquiler | en cada pedido |
 | `/espacios/{slug}` | Desktop - 5 | ficha de un espacio | en cada pedido |
 | `/como-participar` | Desktop - 6 | «Cómo hacer parte»: pasos, «10 minutos con Luis», galería | en el build |
+| `/karanis` | Desktop - 7 | landing de Karanis: ubicación con mapa, cifras, marcas, pasos, preguntas (ver `src/data/karanis.ts`) | en el build |
 | `/sala` | — | sala del evento virtual de Karanis (ver «La sala del evento virtual») | en el build |
 | `/panel` | — | panel del equipo para la sala (con clave) | en el build |
 
@@ -48,6 +49,8 @@ src/
 │   ├── TarjetaProyecto.tsx
 │   ├── nosotros/                  Fundador, SobreElexa, Equipo
 │   ├── participar/                Pasos, DiezMinutos («10 minutos con Luis»)
+│   ├── karanis/                   las secciones propias de /karanis (hero, ubicación,
+│   │                              cifras, «Sobre», «Por qué», fachada)
 │   ├── radiografia/               Radiografia.tsx (isla de «Libertad»: la radiografía
 │   │                              financiera completa), CampoDinero.tsx, radiografia.css
 │   ├── proyectos/                 TarjetaProyectoGrande, ProyectosAnteriores,
@@ -58,7 +61,8 @@ src/
 │   ├── supabase.ts                la consulta a la API y las URLs de imágenes
 │   ├── proyectos.ts  anteriores.ts  espacios.ts   una por tabla
 │   ├── negritas.ts                los **tramos en negrita** de las descripciones
-│   ├── faq.ts                     lee data/faq.md y arma las preguntas
+│   ├── faq.ts                     lee data/faq.md y data/faq-karanis.md y arma las preguntas
+│   ├── forma-hero.ts              la forma del hero (portada y /karanis)
 │   ├── radiografia.ts             la aritmética de la radiografía, sus textos y el envío
 │   ├── radiografia-pdf.ts         el PDF del resultado (jsPDF, se baja al llegar al final)
 │   └── formas.ts                  las tarjetas «con muesca» en CSS (ver el archivo)
@@ -67,6 +71,8 @@ src/
     ├── radiografia.ts             a dónde van los datos de la radiografía
     ├── equipo.ts                  «Nuestro equipo»
     ├── faq.md                     preguntas frecuentes (texto plano, ver el archivo)
+    ├── faq-karanis.md             las de /karanis
+    ├── karanis.ts                 dirección, coordenadas, cifras y pilares de /karanis
     ├── sala.ts                    configuración de /sala y /panel (fecha, video, endpoint…)
     └── proyectos.ts  anteriores.ts  espacios.ts   respaldo sin Supabase
 src/styles/sala.css  panel.css     hojas propias de /sala y /panel (no usan global.css)
@@ -254,8 +260,8 @@ reproduce tal cual:
 - **Ficha de un espacio en móvil**: el frame no muestra el precio; el sitio
   lo pone en la muesca de la foto, como en escritorio.
 - **Enlaces**: los destinos que todavía no existen están en `null` en
-  `src/data/site.ts` (Log in, legales…) y se ven pero no navegan. «Agenda tu
-  cita» abre el WhatsApp mientras no haya un Calendly general de Elexa. En
+  `src/data/site.ts` (Log in, legales…) y se ven pero no navegan. Todos los
+  «Agenda tu cita» abren el Calendly de Luis (`CITA_LUIS_URL`). En
   «Síguenos» del pie, Instagram y YouTube apuntan a los perfiles que nombra
   el diseño (@elexa_real_estate, @luis_inversionista).
 

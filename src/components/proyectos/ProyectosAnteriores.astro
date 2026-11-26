@@ -20,11 +20,19 @@
 
    En el teléfono es «Vector 2» (303:4864, 366 × 1048), con una pestaña más
    baja, y envuelve sólo el título y el mapa: las tarjetas van debajo, sobre
-   el blanco (ver la grilla en mapa.css). */
+   el blanco (ver la grilla en mapa.css).
+
+   `abiertos` son los nombres de los proyectos abiertos de la página: el que
+   se llame igual en la hoja lleva la etiqueta «Proyecto abierto». */
 import MapaProyectos from './MapaProyectos';
 import { getProyectosAnteriores } from '../../lib/anteriores';
 
-const proyectos = await getProyectosAnteriores();
+interface Props {
+  abiertos?: string[];
+}
+
+const { abiertos = [] } = Astro.props;
+const proyectos = await getProyectosAnteriores(abiertos);
 ---
 
 {

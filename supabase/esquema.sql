@@ -19,6 +19,7 @@
 --      rutas (están en public/img/ del repo):
 --        proyectos/proyecto-e.jpg          ← public/img/proyectos/proyecto-e.jpg
 --        proyectos/florentino.jpg          ← public/img/proyectos/florentino.jpg
+--        proyectos/karanis.jpg             ← public/img/proyectos/karanis.jpg
 --        espacios/espectacular-rooftop.jpg ← public/img/espacios/espectacular-rooftop.jpg
 --   3. Project Settings → API Keys / Data API: copiar la URL y la clave
 --      pública a SUPABASE_URL y SUPABASE_KEY (en .env y en Vercel).
@@ -65,10 +66,14 @@ alter table public.proyectos add column if not exists imagen_grande text;
 --  las manda como texto y el sitio las interpreta (src/lib/anteriores.ts).
 --  fotos: una URL por renglón; el script cambia la carpeta de Drive de la
 --  hoja por sus fotos, con la «Portada…» primero. Sin fotos (o si no son
---  públicas) sale el símbolo de Elexa.
+--  públicas) sale el símbolo de Elexa. El panel del mapa y la tarjeta
+--  muestran la primera.
+--  area, espacio, ventaja y caracteristicas son opcionales: salen en el
+--  panel y en las tarjetas sólo si la hoja tiene esas columnas y están
+--  llenas (ver src/lib/anteriores.ts).
 --  Si la tabla ya existía (la creó el script), el create no la toca y sólo
---  se le agrega `fotos`. La tabla `proyectos_anteriores` de la primera
---  versión ya no se usa.
+--  se le agregan las columnas que falten. La tabla `proyectos_anteriores` de
+--  la primera versión ya no se usa.
 -- ---------------------------------------------------------------------------
 create table if not exists public.propiedades_elexa (
   codigo              text        primary key,
@@ -78,10 +83,18 @@ create table if not exists public.propiedades_elexa (
   latitud             text,
   longitud            text,
   fotos               text,       -- una URL por renglón; la primera es la portada
+  area                text,       -- «160» (el sitio le suma « m²») o «160 m²»
+  espacio             text,       -- «Piso 5 y 6»
+  ventaja             text,       -- «Vista 360»
+  caracteristicas     text,       -- «Esquinero, Con ascensor» (coma o renglón)
   updated_at          timestamptz not null default now()
 );
 
 alter table public.propiedades_elexa add column if not exists fotos text;
+alter table public.propiedades_elexa add column if not exists area text;
+alter table public.propiedades_elexa add column if not exists espacio text;
+alter table public.propiedades_elexa add column if not exists ventaja text;
+alter table public.propiedades_elexa add column if not exists caracteristicas text;
 
 -- ---------------------------------------------------------------------------
 --  Espacios en alquiler
@@ -177,3 +190,24 @@ select * from (values
    'https://florentino.elexa.com.co', 2)
 ) as v(nombre, descripcion, imagen, imagen_grande, imagen_alt, enlace, orden)
 where not exists (select 1 from public.proyectos);
+
+-- Karanis (noviembre de 2026), el tercer proyecto abierto: con él la portada
+-- pasa al carrusel. Se agrega si no hay ninguna fila con ese nombre, así que
+-- también entra en una base que ya tenía los dos de arriba. Para sacarlo de
+-- la portada más adelante, `publicado = false` en vez de borrar la fila (si
+-- se borra, volver a correr este archivo lo vuelve a crear).
+-- «Ver más» lleva a su landing, /karanis, dentro de este mismo sitio.
+insert into public.proyectos (nombre, descripcion, imagen, imagen_grande, imagen_alt, enlace, orden)
+select 'Karanis',
+       'Un street mall en la **Calle 14 de Cali** que ya cuenta con Dollarcity, D1 y la multinacional Fitness24seven como inquilinos. Participa desde **$100 millones.**',
+       'proyectos/karanis.jpg', null,
+       'Render de Karanis en una esquina de Cali: un edificio comercial con locales a la calle y los avisos de Dollarcity, D1 y Fitness24seven.',
+       '/karanis', 3
+where not exists (select 1 from public.proyectos where nombre = 'Karanis');
+
+-- Una base en la que Karanis entró antes de que existiera la landing tiene
+-- el Calendly de Luis en `enlace`: se cambia por /karanis.
+update public.proyectos
+   set enlace = '/karanis'
+ where nombre = 'Karanis'
+   and enlace = 'https://calendly.com/lfpuerto-elexa/q-a-proyectos';

@@ -1,14 +1,14 @@
 /* El acordeón de «Preguntas frecuentes» — «Frame 45» (40:1138), 590 de ancho.
 
-   Cerrada, cada pregunta es una caja de 488 × 74 con borde de 1 px y, a 27 a
-   su derecha, el círculo morado de 74 con «add». Abierta (45:1142), el marco
+   Cerrada, cada pregunta es una caja de 508 × 50 con borde de 1 px y, a 19 a
+   su derecha, el círculo morado de 50 con «add». Abierta (45:1142), el marco
    pasa a envolver también la respuesta y deja una muesca arriba a la derecha
    donde queda el círculo, ahora con «remove».
 
-   Ese marco abierto es en Figma un vector de 589 × 266 de alto fijo. Acá el
+   Ese marco abierto es en Figma un vector de 590 × 232 de alto fijo. Acá el
    alto depende de la respuesta, así que se dibuja con las mismas muescas en
    CSS que las tarjetas de proyectos (src/lib/formas.ts), con la medida de
-   la muesca del trazado: 100.75 × 102.5.
+   la muesca del trazado: 81.9 × 68.
 
    En móvil (303:4573) la caja es de 283 × 70, el círculo de 43 queda a 16 y
    la muesca del marco abierto (303:4601) mide 58.5 × 84.5. Las dos formas
@@ -29,7 +29,7 @@ import { estiloMuescas } from '../lib/formas';
 import { partirNegritas } from '../lib/negritas';
 import './faq.css';
 
-const ESCRITORIO = estiloMuescas([{ esquina: 'tr', ancho: 100.75, alto: 102.5 }]);
+const ESCRITORIO = estiloMuescas([{ esquina: 'tr', ancho: 81.9, alto: 68 }]);
 const MOVIL = estiloMuescas([{ esquina: 'tr', ancho: 58.5, alto: 84.5 }]);
 const FORMA_ABIERTA = {
   '--marco-mascara': ESCRITORIO['--muescas-mascara'],

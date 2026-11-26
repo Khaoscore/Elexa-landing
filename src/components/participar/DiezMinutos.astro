@@ -17,10 +17,20 @@
    borde izquierdo y 306 por debajo del de arriba. */
 import { CITA_LUIS_URL, esExterno } from '../../data/site';
 
+interface Props {
+  /** Distancia en escritorio entre lo de arriba (el botón de los pasos) y
+      el borde de arriba de la banda: 176 en /como-participar, 235 en
+      /karanis. La foto asoma 283 por encima, al costado del botón. En el
+      teléfono y la tableta queda la de siempre. */
+  separacion?: number;
+}
+
+const { separacion = 176 } = Astro.props;
+
 const externo = esExterno(CITA_LUIS_URL) ? { target: '_blank', rel: 'noopener' } : {};
 ---
 
-<section class="luis" aria-labelledby="luis-titulo">
+<section class="luis" aria-labelledby="luis-titulo" style={`--separacion:${separacion}px`}>
   <div class="luis__fondo" aria-hidden="true">
     <picture>
       <source
@@ -126,12 +136,13 @@ const externo = esExterno(CITA_LUIS_URL) ? { target: '_blank', rel: 'noopener' }
     margin: 24px var(--margen) 0 0;
   }
 
-  /* Los pasos terminan en y = 985, la foto arranca en 1010, la banda en
-     1214 (204 más abajo, la mitad de la foto) y el botón en 1418, donde
-     termina la foto. La bajada termina 43 antes que la banda. */
+  /* La foto arranca 48 debajo del botón de los pasos (el diseño del teléfono
+     todavía tiene los pasos de antes, que dejaban 25), la banda 204 más
+     abajo (la mitad de la foto) y el botón donde termina la foto. La bajada
+     termina 43 antes que la banda. */
   @media (max-width: 767px) {
     .luis {
-      margin-top: 25px;
+      margin-top: var(--space-2xl);
       background: linear-gradient(transparent 204px, var(--brand-300) 0);
     }
 
@@ -185,12 +196,15 @@ const externo = esExterno(CITA_LUIS_URL) ? { target: '_blank', rel: 'noopener' }
   }
 
   @media (min-width: 1240px) {
-    /* Los pasos terminan en y = 1229, la foto arranca en 1317 y la banda en
-       1600. */
+    /* El botón de los pasos termina en y = 1167, la foto arranca en 1060
+       (al costado del botón) y la banda en 1343. Bajo 1420 de ancho la foto
+       se pasa del borde derecho: `clip` sólo en x la corta ahí sin abrir
+       un scroll de costado y la deja asomar por arriba. */
     .luis {
       justify-content: center;
       height: 360px;
-      margin-top: 371px;
+      margin-top: var(--separacion);
+      overflow-x: clip;
     }
 
     .luis__texto {

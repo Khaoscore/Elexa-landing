@@ -1,0 +1,225 @@
+---
+/* Hero de Karanis — «Frame 8» (521:1000) de «Desktop - 7», 1397 × 998, a 22
+   px de los bordes. La misma forma y la misma barra oscura de la portada
+   (src/lib/forma-hero.ts, Hero.astro); el relleno es el render de la
+   esquina (sala/Nuevo evento/Imagenes/render 2) en cover, centrado, como lo
+   recorta Figma.
+
+   Abajo a la izquierda, «Frame 98» (521:1010, 24 de relleno): «Karanis» en
+   DM Sans Black 120/82 y la bajada en Header 4 (24/30, 451 de ancho), en
+   blanco con la sombra del frame (0 4 3, negro al 25 %). En el recorte de
+   abajo a la derecha, «Frame 2» (521:1003): «Separa tu cupo» y «Conoce
+   más» (en Figma, «Ver el proyecto»), 252 de ancho, a 24 entre sí.
+   «Conoce más» abre el WhatsApp de Luis con el mensaje ya escrito
+   (WHATSAPP_KARANIS en src/data/karanis.ts), y «Hablemos» de la barra
+   también. La barra de Karanis no lleva «Log in».
+
+   No hay frame móvil de Karanis: bajo 1240 va la forma móvil de la portada,
+   con un corte vertical del mismo render (el centro, donde están los avisos)
+   y el texto abajo a la izquierda, por encima del recorte de los botones.
+   Ahí el texto cae sobre el piso claro del render, así que lleva un velo
+   oscuro de abajo hacia arriba (no viene de Figma). */
+import Navbar from '../Navbar.astro';
+import { FORMA_HERO, FORMA_HERO_MOVIL } from '../../lib/forma-hero';
+import { CUPO_URL } from '../../data/site';
+import { WHATSAPP_KARANIS } from '../../data/karanis';
+---
+
+<section class="hero-k" id="inicio">
+  <div class="hero-k__panel" style={`--forma: ${FORMA_HERO}; --forma-movil: ${FORMA_HERO_MOVIL}`}>
+    <div class="hero-k__fondo" aria-hidden="true">
+      <picture>
+        <source media="(max-width: 767px)" srcset="/img/karanis/hero-movil.webp" width="732" height="1534" />
+        <img
+          class="hero-k__foto"
+          src="/img/karanis/hero.webp"
+          srcset="/img/karanis/hero-1400.webp 1400w, /img/karanis/hero.webp 2400w"
+          sizes="calc(100vw - 44px)"
+          alt=""
+          width="2400"
+          height="1351"
+          fetchpriority="high"
+        />
+      </picture>
+    </div>
+
+    <Navbar actual="/proyectos" login={false} hablemos={WHATSAPP_KARANIS} />
+
+    <div class="hero-k__texto">
+      <h1 class="hero-k__titulo display">Karanis</h1>
+      <p class="hero-k__bajada display">
+        Strip mall diseñado para generar renta. Un proyecto colectivo de Elexa con participación desde $100 millones.
+      </p>
+    </div>
+  </div>
+
+  <div class="hero-k__acciones">
+    <a
+      class="btn btn--primario"
+      href={CUPO_URL}
+      target="_blank"
+      rel="noopener"
+      data-pixel="InitiateCheckout"
+      data-pixel-nombre="separar_cupo_hero"
+      data-pixel-categoria="karanis"
+    >
+      Separa tu cupo
+    </a>
+    <a
+      class="btn btn--borde"
+      href={WHATSAPP_KARANIS}
+      target="_blank"
+      rel="noopener"
+      data-pixel="Contact"
+      data-pixel-nombre="whatsapp_karanis"
+      data-pixel-categoria="karanis"
+    >
+      Conoce más
+    </a>
+  </div>
+</section>
+
+<style>
+  /* Las mismas medidas que el hero de la portada (Hero.astro): a
+     --margen-panel de los bordes, 767 de alto bajo 1240 y 998 desde ahí. */
+  .hero-k {
+    position: relative;
+    width: calc(100% - 2 * var(--margen-panel));
+    margin: var(--margen-panel) auto 0;
+  }
+
+  .hero-k__panel {
+    position: relative;
+    height: 767px;
+    color: var(--neutral-100);
+  }
+
+  .hero-k__fondo {
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    background: var(--ink-400);
+    clip-path: var(--forma-movil);
+  }
+
+  .hero-k__foto {
+    width: 100%;
+    height: 100%;
+    max-width: none;
+    object-fit: cover;
+  }
+
+  /* Velos de palette/ink/500 (no vienen de Figma): arriba, para que el logo
+     y los enlaces blancos de la barra se lean sobre el cielo y el aviso
+     amarillo de Fitness24Seven; abajo, en el teléfono, para el texto. */
+  .hero-k__fondo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background:
+      linear-gradient(rgba(15, 19, 22, 0.6), rgba(15, 19, 22, 0) 160px),
+      linear-gradient(to top, rgba(15, 19, 22, 0.7) 18%, rgba(15, 19, 22, 0) 58%);
+  }
+
+  /* El texto termina en y = 595, como la bajada de la portada: se ancla abajo
+     para que, si ocupa más, crezca hacia arriba. */
+  .hero-k__texto {
+    position: absolute;
+    right: 22px;
+    bottom: 172px;
+    left: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    text-shadow: 0 4px 3px rgba(0, 0, 0, 0.25);
+  }
+
+  /* Mobile/Titles/Banner (60/62). */
+  .hero-k__titulo {
+    font-size: 60px;
+    line-height: 62px;
+  }
+
+  /* Mobile/Content/Body bold. */
+  .hero-k__bajada {
+    max-width: 451px;
+    font-family: var(--font-body);
+    font-weight: 700;
+    font-variation-settings: normal;
+    letter-spacing: 0;
+    font-size: 16px;
+    line-height: 20px;
+  }
+
+  .hero-k__acciones {
+    position: absolute;
+    top: 655px;
+    right: 0;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+    width: 252px;
+  }
+
+  @media (min-width: 768px) {
+    .hero-k__titulo {
+      font-size: 96px;
+      line-height: 82px;
+    }
+
+    .hero-k__bajada {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-variation-settings: 'opsz' 14;
+      letter-spacing: -0.02em;
+      font-size: 24px;
+      line-height: 30px;
+    }
+  }
+
+  /* ---------- Escritorio: la composición del frame ----------
+     Posiciones del frame de 1440, medidas desde la esquina del panel
+     (x − 22, y − 21). */
+  @media (min-width: 1240px) {
+    .hero-k {
+      margin-top: 21px;
+    }
+
+    .hero-k__panel {
+      height: 998px;
+    }
+
+    .hero-k__fondo {
+      clip-path: var(--forma);
+    }
+
+    .hero-k__fondo::after {
+      background: linear-gradient(rgba(15, 19, 22, 0.65), rgba(15, 19, 22, 0.25) 90px, rgba(15, 19, 22, 0) 220px);
+    }
+
+    /* «Frame 98»: x = 120, y = 723 y 24 de relleno. */
+    .hero-k__texto {
+      top: 726px;
+      right: auto;
+      bottom: auto;
+      left: 122px;
+      gap: var(--space-lg);
+    }
+
+    .hero-k__titulo {
+      font-size: 120px;
+      line-height: 82px;
+    }
+
+    .hero-k__bajada {
+      width: 451px;
+    }
+
+    .hero-k__acciones {
+      top: 843px;
+      right: 99px;
+      gap: var(--space-lg);
+    }
+  }
+</style>

@@ -1,0 +1,180 @@
+---
+/* «Una ubicación que el mercado ya eligió» — «Frame 101» (521:1064) de
+   «Desktop - 7», 1200 de contenido.
+
+   · Arriba, «Frame 100» (521:1063), alineado abajo: el título en Header 1
+     (792 de ancho) y, a la derecha, una columna de 305 con el barrio y la
+     dirección en Header 4 (24/30, ink/300) y «¿Cómo llegar?» (botón de
+     borde, a lo ancho), repartidos en el alto del título.
+   · 66 más abajo, «Frame 102» (524:1195): el mapa (829 × 494, radio 37) y, a
+     66, los tres puntos (305 de ancho, a 20 entre sí): el círculo morado de
+     66 con el número (Header 4 en blanco), el título en Header 4 y el texto
+     en Body regular, los dos en brand/500.
+
+   El mapa del diseño es una captura del mapa de la ficha de un espacio
+   (/espacios/{slug}): el 3D de Mapbox con el pin de Elexa y los controles.
+   Acá va ese mismo mapa, vivo (MapaEspacio.astro), en el punto de Karanis.
+   «¿Cómo llegar?» abre la ruta en Google Maps, como en la ficha.
+
+   No hay frame móvil: bajo 1240 todo va en una columna (el título, la
+   dirección con el botón, el mapa y los puntos) y, desde 768, los puntos en
+   tres columnas. */
+import MapaEspacio from '../espacios/MapaEspacio.astro';
+import { comoLlegar } from '../../lib/espacios';
+import { KARANIS, puntosUbicacion } from '../../data/karanis';
+---
+
+<section class="ubicacion contenedor" id="proyecto" aria-labelledby="ubicacion-titulo">
+  <div class="ubicacion__cabecera">
+    <h2 class="ubicacion__titulo display t-h1" id="ubicacion-titulo">
+      Una ubicación que el mercado <span class="acento">ya eligió</span>
+    </h2>
+    <div class="ubicacion__direccion">
+      <p class="display t-h4">
+        {KARANIS.barrio}<br />
+        {KARANIS.direccion}
+      </p>
+      <a class="btn btn--borde" href={comoLlegar(KARANIS.ubicacion)} target="_blank" rel="noopener">
+        ¿Cómo llegar?
+      </a>
+    </div>
+  </div>
+
+  <div class="ubicacion__cuerpo">
+    <div class="ubicacion__mapa">
+      <MapaEspacio ubicacion={KARANIS.ubicacion} nombre={KARANIS.nombre} />
+    </div>
+
+    <ol class="ubicacion__puntos" role="list">
+      {
+        puntosUbicacion.map((punto, i) => (
+          <li class="punto">
+            <span class="punto__numero display" aria-hidden="true">
+              {String(i + 1).padStart(2, '0')}
+            </span>
+            <h3 class="punto__titulo display t-h4">{punto.titulo}</h3>
+            <p>{punto.texto}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>
+
+<style>
+  .ubicacion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+    margin-top: 64px;
+    color: var(--brand-500);
+  }
+
+  .ubicacion__cabecera {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .ubicacion__direccion {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    width: 305px;
+    max-width: 100%;
+    color: var(--ink-300);
+  }
+
+  .ubicacion__cuerpo {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xl);
+  }
+
+  .ubicacion__puntos {
+    display: grid;
+    gap: 20px;
+  }
+
+  .punto {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
+
+  .punto__numero {
+    display: grid;
+    place-items: center;
+    width: 66px;
+    height: 66px;
+    border-radius: var(--radius-full);
+    background: var(--brand-300);
+    color: var(--neutral-100);
+    font-size: 24px;
+    line-height: 30px;
+  }
+
+  /* En el teléfono la dirección y el botón van a lo ancho, como los demás
+     botones de la página. */
+  @media (max-width: 767px) {
+    .ubicacion__direccion {
+      width: auto;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .ubicacion {
+      margin-top: 96px;
+    }
+
+    .ubicacion__puntos {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  /* ---------- Escritorio: la composición del frame ----------
+     El panel del hero termina en y = 1019 y el título arranca en 1135. */
+  @media (min-width: 1240px) {
+    .ubicacion {
+      gap: 66px;
+      margin-top: 116px;
+    }
+
+    .ubicacion__cabecera {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: stretch;
+    }
+
+    .ubicacion__titulo {
+      width: 792px;
+    }
+
+    .ubicacion__direccion {
+      justify-content: space-between;
+      flex-shrink: 0;
+    }
+
+    .ubicacion__cuerpo {
+      flex-direction: row;
+      gap: 66px;
+    }
+
+    .ubicacion__mapa {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .ubicacion__mapa :global(.mapa-espacio) {
+      height: 494px;
+      border-radius: 37px;
+    }
+
+    .ubicacion__puntos {
+      grid-template-columns: none;
+      flex: 0 0 305px;
+      align-content: start;
+    }
+  }
+</style>
