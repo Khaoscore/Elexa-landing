@@ -1,7 +1,8 @@
-/* Preguntas frecuentes de la landing.
+/* Preguntas frecuentes de la landing y de /karanis.
 
-   Salen de src/data/faq.md, que se escribe como texto plano (las reglas
-   están en el comentario de arriba del archivo):
+   Salen de src/data/faq.md (la portada) y src/data/faq-karanis.md, que se
+   escriben como texto plano (las reglas están en el comentario de arriba de
+   cada archivo):
 
    · cada pregunta empieza con «## »; lo de antes de la primera se ignora
      (el título del archivo y el comentario);
@@ -18,6 +19,7 @@
    leer. */
 
 import texto from '../data/faq.md?raw';
+import textoKaranis from '../data/faq-karanis.md?raw';
 
 export type Pregunta = {
   pregunta: string;
@@ -55,3 +57,4 @@ function leerPreguntas(md: string): Pregunta[] {
 }
 
 export const preguntas = leerPreguntas(texto);
+export const preguntasKaranis = leerPreguntas(textoKaranis);

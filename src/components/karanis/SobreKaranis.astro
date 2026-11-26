@@ -1,0 +1,143 @@
+---
+/* «Sobre Karanis» — «Frame 106» (546:931) de «Desktop - 7»: a la izquierda
+   el texto («Frame 104», 546 de ancho, a 24 entre sí: el título en Header 1,
+   la bajada en Text button y el párrafo en Body regular con sus negritas,
+   todo en brand/500) y a la derecha las tres marcas que ya firmaron
+   («Frame 105», 488 de ancho, rejilla de dos columnas a 20), centrados en el
+   alto.
+
+   Cada marca es una tarjeta de radio 16 en su color: Fitness24Seven
+   (#002c4d, 234 × 170, el logo a 10 de los bordes), D1 (#ea0b2a, el logo de
+   124 con borde blanco de 4, centrado) y, abajo a lo ancho, Dollarcity
+   (#00552e, 137.3 de alto, radio 13.2, el logo de 438.5 × 99.2 centrado).
+   Las tarjetas guardan la proporción del diseño, así se achican enteras en
+   pantallas más angostas. Los colores son los de cada marca: no están en
+   los tokens de Elexa. */
+---
+
+<section class="sobre-k contenedor" aria-labelledby="sobre-k-titulo">
+  <div class="sobre-k__texto">
+    <h2 class="display t-h1" id="sobre-k-titulo">Sobre <span class="acento">Karanis</span></h2>
+    <p class="sobre-k__bajada">Es un strip mall, con locales comerciales a nivel de calle pensados para generar renta.</p>
+    <p>
+      Karanis no te pide esperar años para ver resultados, Lo usual es construir un centro comercial y después salir
+      a buscar arrendatarios. <strong>Karanis invirtió el orden.</strong> Dollarcity, D1 y Fitness24Seven{' '}
+      <strong>firmaron antes de la obra, con contratos de más de 5 años.</strong> Así se reduce el principal riesgo
+      de un local comercial, que es quedarse vacío.
+    </p>
+  </div>
+
+  <ul class="marcas-k" role="list" aria-label="Marcas que ya firmaron">
+    <li class="marca-k marca-k--fitness">
+      <img src="/img/karanis/fitness24seven.webp" alt="Fitness24Seven" width="336" height="301" loading="lazy" />
+    </li>
+    <li class="marca-k marca-k--d1">
+      <img src="/img/karanis/d1.webp" alt="D1" width="248" height="248" loading="lazy" />
+    </li>
+    <li class="marca-k marca-k--dollarcity">
+      <img src="/img/karanis/dollarcity.webp" alt="Dollarcity" width="878" height="199" loading="lazy" />
+    </li>
+  </ul>
+</section>
+
+<style>
+  .sobre-k {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+    margin-top: 64px;
+    color: var(--brand-500);
+  }
+
+  .sobre-k__texto {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  /* Text button: Roboto Bold 20/24. */
+  .sobre-k__bajada {
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 24px;
+  }
+
+  .marcas-k {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px;
+    width: 100%;
+    max-width: 488px;
+  }
+
+  .marca-k {
+    display: grid;
+    place-items: center;
+    aspect-ratio: 234 / 170;
+    border-radius: var(--radius-card);
+  }
+
+  .marca-k img {
+    height: auto;
+  }
+
+  /* El logo va suelto (absoluto) para que su alto no estire la tarjeta: el
+     alto lo pone la proporción. */
+  .marca-k--fitness {
+    position: relative;
+    background: #002c4d;
+  }
+
+  .marca-k--fitness img {
+    position: absolute;
+    inset: 10px;
+    width: calc(100% - 20px);
+    height: calc(100% - 20px);
+    object-fit: contain;
+  }
+
+  /* El logo mide 124 de los 234 de la tarjeta. */
+  .marca-k--d1 {
+    background: #ea0b2a;
+  }
+
+  .marca-k--d1 img {
+    width: 53%;
+    border: 4px solid var(--neutral-100);
+  }
+
+  .marca-k--dollarcity {
+    grid-column: 1 / -1;
+    aspect-ratio: 488 / 137.3;
+    border-radius: 13.234px;
+    background: #00552e;
+  }
+
+  .marca-k--dollarcity img {
+    width: 89.86%;
+  }
+
+  @media (min-width: 768px) {
+    .sobre-k {
+      margin-top: 96px;
+    }
+  }
+
+  /* La banda de cifras termina en y = 2139 y las marcas arrancan en 2235;
+     el texto queda centrado contra ellas. */
+  @media (min-width: 1240px) {
+    .sobre-k {
+      flex-direction: row;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .sobre-k__texto {
+      width: 546px;
+    }
+
+    .marcas-k {
+      flex-shrink: 0;
+    }
+  }
+</style>

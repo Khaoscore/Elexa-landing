@@ -1,0 +1,55 @@
+---
+/* Karanis — frame «Desktop - 7» (521:748), la landing del proyecto en
+   elexa.com.co/karanis. Las secciones en el orden del frame:
+
+   · el hero, con la barra oscura de la portada (karanis/HeroKaranis);
+   · «Una ubicación que el mercado ya eligió», con el mapa (Ubicacion);
+   · la banda de cifras (CifrasKaranis);
+   · «Sobre Karanis» y las marcas que firmaron (SobreKaranis);
+   · «Por qué Karanis» (PorQueKaranis);
+   · la fachada con «Quiero participar» (Fachada);
+   · «¿Cómo participar?» y «10 minutos con Luis», los mismos de
+     /como-participar;
+   · las preguntas frecuentes de la portada con las de Karanis
+     (src/data/faq-karanis.md).
+
+   Entre secciones, 192 en escritorio (96 + 96 de los frames). Los datos que
+   cambian (dirección, coordenadas, cifras) están en src/data/karanis.ts.
+
+   «Separa tu cupo» abre la pasarela de pago (CUPO_URL); «Conoce más», el
+   WhatsApp de Luis con el mensaje ya escrito; «Quiero participar», «Agenda
+   tu cita» y las preguntas, el Calendly de Luis, como la sala del
+   lanzamiento. Sale en el build: no lee la base de datos. */
+import Base from '../layouts/Base.astro';
+import HeroKaranis from '../components/karanis/HeroKaranis.astro';
+import Ubicacion from '../components/karanis/Ubicacion.astro';
+import CifrasKaranis from '../components/karanis/CifrasKaranis.astro';
+import SobreKaranis from '../components/karanis/SobreKaranis.astro';
+import PorQueKaranis from '../components/karanis/PorQueKaranis.astro';
+import Fachada from '../components/karanis/Fachada.astro';
+import Pasos from '../components/participar/Pasos.astro';
+import DiezMinutos from '../components/participar/DiezMinutos.astro';
+import Faq from '../components/Faq.astro';
+import { preguntasKaranis } from '../lib/faq';
+import { CITA_LUIS_URL } from '../data/site';
+---
+
+<Base
+  title="Karanis — Strip mall en Cali | Elexa"
+  description="Karanis es un strip mall en la Calle 14 de Cali que ya tiene como inquilinos a Dollarcity, D1 y Fitness24Seven. Participa desde $100 millones con hasta 9,4% de flujo estimado el primer año."
+  path="/karanis"
+  barra={false}
+  separacionPie={20}
+  imagen="/img/proyectos/karanis.jpg"
+  pixel={{ evento: 'ViewContent', parametros: { content_name: 'Karanis', content_category: 'proyectos' } }}
+>
+  <HeroKaranis />
+  <Ubicacion />
+  <CifrasKaranis />
+  <SobreKaranis />
+  <PorQueKaranis />
+  <Fachada />
+  <Pasos separacion={192} separacionMovil={64} />
+  <DiezMinutos separacion={235} />
+  <Faq preguntas={preguntasKaranis} agenda={CITA_LUIS_URL} separacion={20} />
+</Base>

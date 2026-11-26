@@ -1,17 +1,17 @@
 ---
-/* Cómo hacer parte — frame "Desktop - 6" (48:2234): el encabezado, los siete
-   pasos, «10 minutos con Luis», la galería y la invitación a la radiografía
-   financiera.
+/* Cómo hacer parte — frame "Desktop - 6" (48:2234): el encabezado,
+   «¿Cómo participar?» con los cuatro pasos, «10 minutos con Luis» y la
+   galería de reels.
 
-   Entre 180 y 181 px separan cada bloque del siguiente en Figma. Sigue
-   pendiente en el archivo «Formulario precalificación, datos y CTA.
-   Testimonios y desarrollados» (48:2443). */
+   La versión nueva del diseño ya no lleva la invitación a la radiografía
+   financiera al final (sigue en la portada, #radiografia): la galería
+   arranca 166 debajo de la banda de Luis y el pie, 181 debajo de la
+   galería. */
 import Base from '../layouts/Base.astro';
 import EncabezadoPagina from '../components/EncabezadoPagina.astro';
 import Pasos from '../components/participar/Pasos.astro';
 import DiezMinutos from '../components/participar/DiezMinutos.astro';
 import Galeria from '../components/Galeria.astro';
-import Libertad from '../components/Libertad.astro';
 
 /* Reels de @luis_inversionista, descargados de Instagram y pasados a MP4 de
    540 × 960 (el embed de Instagram no deja que arranquen solos). */
@@ -39,6 +39,5 @@ const reels = [
   </EncabezadoPagina>
   <Pasos />
   <DiezMinutos />
-  <Galeria videos={reels} alto={615} altoMuesca={81.5} separacion={181} separacionMovil={137} espacioMovil={32} />
-  <Libertad separacion={181} />
+  <Galeria videos={reels} alto={615} altoMuesca={81.5} separacion={166} separacionMovil={137} espacioMovil={32} />
 </Base>

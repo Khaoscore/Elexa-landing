@@ -20,8 +20,15 @@
      símbolo de Elexa en su lugar. También se pueden pegar enlaces de fotos
      sueltas, uno por renglón.
 
+   · Área, Espacio, Ventaja y Características son opcionales: si la hoja no
+     tiene esas columnas, se sincroniza igual sin ellas. Las que estén van a
+     Supabase tal cual (Características separadas por coma: «Esquinero, Con
+     ascensor»).
+
    Instalación o actualización:
-   1. En Supabase, que la tabla tenga la columna `fotos` (supabase/esquema.sql).
+   1. En Supabase, que la tabla tenga las columnas `fotos`, `area`, `espacio`,
+      `ventaja` y `caracteristicas` (supabase/esquema.sql). Sin ellas, al
+      agregar esas columnas a la hoja la sincronización falla.
    2. Pegar este archivo en el editor de Apps Script, reemplazando el anterior.
    3. Ejecutar installTriggers a mano: pide permiso para leer Drive (por las
       carpetas de fotos), reinstala los activadores y sincroniza.
@@ -37,7 +44,9 @@ const MAX_DELETE_FRACTION = 0.3;
 const LOCK_WAIT_MS = 60 * 1000;
 const MAX_FOTOS = 30; // por proyecto
 
-// Encabezado de la hoja → columna en Supabase (el orden en la hoja no importa).
+// Encabezado de la hoja → columna en Supabase (el orden en la hoja no importa;
+// tildes y mayúsculas tampoco). Las `opcional` se sincronizan sólo si la hoja
+// tiene la columna.
 const COLUMNS = [
   { header: 'Código', field: 'codigo' },
   { header: 'Nombre del Proyecto', field: 'nombre_del_proyecto' },
@@ -45,10 +54,15 @@ const COLUMNS = [
   { header: 'Categoría', field: 'categoria' },
   { header: 'Latitud', field: 'latitud' },
   { header: 'Longitud', field: 'longitud' },
-  { header: 'Fotos', field: 'fotos' }
+  { header: 'Fotos', field: 'fotos' },
+  { header: 'Área', field: 'area', opcional: true },
+  { header: 'Espacio', field: 'espacio', opcional: true },
+  { header: 'Ventaja', field: 'ventaja', opcional: true },
+  { header: 'Características', field: 'caracteristicas', opcional: true }
 ];
 
-const FIELDS = COLUMNS.map(c => c.field);
+// Las que tienen que estar siempre.
+const FIELDS = COLUMNS.filter(c => !c.opcional).map(c => c.field);
 
 /* ----------------------------- Utilidades ----------------------------- */
 
@@ -163,19 +177,24 @@ function resolverFotos_(celda, cache) {
 
 /* ------------------------------ Lectura ------------------------------- */
 
-// Devuelve los registros de la hoja. No modifica la hoja.
+// Devuelve los registros de la hoja y las columnas que trae (las fijas más
+// las opcionales que tenga). No modifica la hoja.
 function readSheet_() {
   const sh = sheet_();
   const lastRow = sh.getLastRow();
-  if (lastRow < 2) return [];
+  if (lastRow < 2) return { records: [], fields: FIELDS };
 
   const values = sh.getRange(1, 1, lastRow, sh.getLastColumn()).getValues();
   const headers = values[0].map(normalize_);
 
-  const cols = COLUMNS.map(c => {
+  const cols = [];
+  COLUMNS.forEach(c => {
     const index = headers.indexOf(normalize_(c.header));
-    if (index === -1) throw new Error(`Falta la columna "${c.header}" en la fila 1 de la hoja.`);
-    return { index: index, field: c.field };
+    if (index === -1) {
+      if (c.opcional) return;
+      throw new Error(`Falta la columna "${c.header}" en la fila 1 de la hoja.`);
+    }
+    cols.push({ index: index, field: c.field });
   });
   const keyIndex = cols.find(c => c.field === KEY_FIELD).index;
 
@@ -205,17 +224,17 @@ function readSheet_() {
     records.push(record);
   }
 
-  return records;
+  return { records: records, fields: cols.map(c => c.field) };
 }
 
-// Trae todas las filas actuales de Supabase, por páginas.
-function fetchExisting_() {
+// Trae todas las filas actuales de Supabase, por páginas, con esas columnas.
+function fetchExisting_(fields) {
   const all = [];
   let offset = 0;
   while (true) {
     const page = supabase_(
       'get',
-      `${TABLE}?select=${FIELDS.join(',')}&order=${KEY_FIELD}.asc&limit=${PAGE_SIZE}&offset=${offset}`
+      `${TABLE}?select=${fields.join(',')}&order=${KEY_FIELD}.asc&limit=${PAGE_SIZE}&offset=${offset}`
     );
     if (!Array.isArray(page)) throw new Error('La respuesta de Supabase no es una lista válida.');
     all.push(...page);
@@ -225,8 +244,8 @@ function fetchExisting_() {
   return all;
 }
 
-function changed_(record, previous) {
-  return FIELDS.some(f => str_(record[f]) !== str_(previous[f]));
+function changed_(record, previous, fields) {
+  return fields.some(f => str_(record[f]) !== str_(previous[f]));
 }
 
 /* ---------------------------- Sincronización --------------------------- */
@@ -243,7 +262,8 @@ function run_(force) {
   }
 
   try {
-    const rows = readSheet_();
+    const leido = readSheet_();
+    const rows = leido.records;
 
     // Nunca borrar la tabla por una hoja vacía.
     if (!rows.length) {
@@ -261,14 +281,14 @@ function run_(force) {
       return;
     }
 
-    const existing = fetchExisting_();
+    const existing = fetchExisting_(leido.fields);
     const byKey = {};
     existing.forEach(e => { byKey[str_(e[KEY_FIELD])] = e; });
 
     // 1. Solo las filas nuevas o modificadas.
     const now = new Date().toISOString();
     const toSave = rows
-      .filter(r => !byKey[r[KEY_FIELD]] || changed_(r, byKey[r[KEY_FIELD]]))
+      .filter(r => !byKey[r[KEY_FIELD]] || changed_(r, byKey[r[KEY_FIELD]], leido.fields))
       .map(r => Object.assign({}, r, { updated_at: now }));
 
     const created = toSave.filter(r => !byKey[r[KEY_FIELD]]).length;

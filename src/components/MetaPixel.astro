@@ -8,6 +8,8 @@
      /proyectos                ViewContent         content_category: proyectos
      /como-participar          IntentSignal        content_name: como_participar
                                (personalizado)
+     /karanis                  ViewContent         content_name: Karanis,
+                                                   content_category: proyectos
      «Ver proyecto»            ViewContent         content_name: Proyecto_E,
                                                    Florentino…; content_category:
                                                    proyectos
@@ -15,6 +17,8 @@
                                                    content_category: whatsapp
      WhatsApp del pie          Contact             whatsapp_footer
      WhatsApp del equipo       Contact             whatsapp_equipo
+     «Conoce más» (hero de     Contact             whatsapp_karanis,
+       /karanis)                                   content_category: karanis
      «Me interesa este         Contact             whatsapp_espacio,
        espacio» (ficha)                            content_category: espacios
      «Compartir» (ficha de     CompartirEspacio    whatsapp, facebook, x, telegram,
@@ -31,6 +35,11 @@
        compartir» (ficha de    (personalizado)     imagen_historia;
        /comerciales)                               content_category: comerciales
      «Agenda tu cita»          Schedule            agendar_reunion
+       (y «Quiero participar»
+       de /karanis)
+     «Separa tu cupo»          InitiateCheckout    separar_cupo_hero o
+       (/karanis: pasarela                         separar_cupo_por_que;
+       de pago)                                    content_category: karanis
      Radiografía: datos        Lead                radiografia_financiera,
        de contacto enviados                        content_category: lead_form
      Radiografía: resultado    CompleteRegistration  registro_completado

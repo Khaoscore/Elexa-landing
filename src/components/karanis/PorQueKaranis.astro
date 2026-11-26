@@ -1,0 +1,162 @@
+---
+/* «Por qué Karanis» — «Frame 52» (545:827) de «Desktop - 7».
+
+   A la izquierda («Frame 47», 546 de ancho): el título en Header 1 y, a 16,
+   la bajada en Header 4 (ink/300); a 32, «Separa tu cupo» (con 32 de
+   relleno a los lados en lugar de 24).
+
+   A la derecha («Frame 60», 477 de ancho, a 20 entre sí), los tres pilares:
+   el círculo morado de 66 con el ícono de 40 en blanco y, a 24, el título en
+   Header 4 y el texto en Body regular (brand/500, a 8 entre sí) sobre una
+   línea de 1 px en brand/300 («Vector 6»), a 16 debajo del texto.
+
+   No hay frame móvil: bajo 1240 los pilares van debajo y el botón a lo
+   ancho en el teléfono. */
+import { CUPO_URL } from '../../data/site';
+import { pilares } from '../../data/karanis';
+---
+
+<section class="porque contenedor" aria-labelledby="porque-titulo">
+  <div class="porque__texto">
+    <div class="porque__cabecera">
+      <h2 class="display t-h1" id="porque-titulo">Por qué <span class="acento">Karanis</span></h2>
+      <p class="porque__bajada display t-h4">Karanis es una forma más simple de tener finca raíz que renta.</p>
+    </div>
+    <a
+      class="btn btn--primario porque__boton"
+      href={CUPO_URL}
+      target="_blank"
+      rel="noopener"
+      data-pixel="InitiateCheckout"
+      data-pixel-nombre="separar_cupo_por_que"
+      data-pixel-categoria="karanis"
+    >
+      Separa tu cupo
+    </a>
+  </div>
+
+  <ul class="porque__pilares" role="list">
+    {
+      pilares.map((pilar) => (
+        <li class="pilar">
+          <span class="pilar__icono">
+            <img src={`/img/iconos/${pilar.icono}.svg`} alt="" width="40" height="40" loading="lazy" />
+          </span>
+          <div class="pilar__texto">
+            <h3 class="display t-h4">{pilar.titulo}</h3>
+            <p>{pilar.texto}</p>
+          </div>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<style>
+  .porque {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2xl);
+    margin-top: 96px;
+    color: var(--brand-500);
+  }
+
+  .porque__texto {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xl);
+  }
+
+  .porque__cabecera {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .porque__bajada {
+    color: var(--ink-300);
+  }
+
+  .porque__boton {
+    padding-inline: 31px;
+  }
+
+  .porque__pilares {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+
+  .pilar {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-lg);
+  }
+
+  .pilar__icono {
+    display: grid;
+    flex-shrink: 0;
+    place-items: center;
+    width: 66px;
+    height: 66px;
+    border-radius: var(--radius-full);
+    background: var(--brand-300);
+  }
+
+  .pilar__texto {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--brand-300);
+  }
+
+  /* En el teléfono el botón va a lo ancho y el ícono un poco más chico. */
+  @media (max-width: 767px) {
+    .porque {
+      margin-top: 64px;
+    }
+
+    .porque__boton {
+      align-self: stretch;
+    }
+
+    .pilar {
+      gap: var(--space-md);
+    }
+
+    .pilar__icono {
+      width: 52px;
+      height: 52px;
+    }
+
+    .pilar__icono img {
+      width: 32px;
+      height: 32px;
+    }
+  }
+
+  /* Las marcas de «Sobre Karanis» terminan en y = 2562 y el título arranca
+     en 2754. */
+  @media (min-width: 1240px) {
+    .porque {
+      flex-direction: row;
+      justify-content: space-between;
+      margin-top: 192px;
+    }
+
+    .porque__texto {
+      width: 546px;
+    }
+
+    .porque__pilares {
+      flex: 0 0 477px;
+    }
+
+    .pilar__texto {
+      flex: 0 0 387px;
+    }
+  }
+</style>

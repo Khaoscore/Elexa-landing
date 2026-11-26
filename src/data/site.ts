@@ -10,8 +10,7 @@ export const SITE_URL = 'https://www.elexa.com.co';
 export const SITE_NAME = 'Elexa Real Estate Investments';
 
 /* Los mismos destinos que usan las landings de Florentino y Proyecto e: el
-   WhatsApp de Luis (333 430 7840), el de «Hablemos», «Agenda tu cita» y el
-   pie. */
+   WhatsApp de Luis (333 430 7840), el de «Hablemos» y el pie. */
 export const WHATSAPP_URL = 'https://wa.link/avoqut';
 
 /* La línea de alquiler (324 584 1936), distinta de la de Luis: «Me interesa
@@ -29,14 +28,20 @@ export const RADIOGRAFIA_URL = 'https://florentino.elexa.com.co/radiografia';
 /* «Hablemos», el botón de la barra: la conversación por WhatsApp. */
 export const HABLEMOS_URL = WHATSAPP_URL;
 
-/* «Agenda tu cita» (barra, preguntas frecuentes y radiografía). Florentino y
-   Proyecto e tienen cada uno su Calendly; para la marca general todavía no hay
-   uno, así que por ahora abre el WhatsApp. */
-export const AGENDA_URL: string | null = WHATSAPP_URL;
-
-/* «Agenda tu cita» de «10 minutos con Luis» (/como-participar): el Calendly
-   de Luis para preguntas sobre los proyectos. */
+/* El Calendly de Luis para preguntas sobre los proyectos: los dos «Agenda tu
+   cita» de /como-participar (debajo de los pasos y en «10 minutos con Luis»),
+   los de /karanis y la sala. */
 export const CITA_LUIS_URL: string | null = 'https://calendly.com/lfpuerto-elexa/q-a-proyectos';
+
+/* «Agenda tu cita» de la barra, las preguntas frecuentes de la portada y la
+   radiografía: el mismo Calendly de Luis, para que todos los «Agenda tu cita»
+   lleven al mismo lugar. La conversación por WhatsApp queda en «Hablemos». */
+export const AGENDA_URL: string | null = CITA_LUIS_URL;
+
+/* «Separa tu cupo» (/karanis y «Separo mi cupo» de la sala): la pasarela de
+   pago de inversionistas de Elexa, la misma de las landings de Florentino y
+   Proyecto e. */
+export const CUPO_URL = 'https://micrositios.avalpaycenter.com/elexa-inversionistas-ma';
 
 /* «Log in», el botón de la barra: el portal de inversionistas (Agora). */
 export const LOGIN_URL: string | null = 'https://elexa.portal.agorareal.com/#/login?redirectUrl=%2F';

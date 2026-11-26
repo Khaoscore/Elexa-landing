@@ -10,7 +10,7 @@
    ⚠️ Antes de publicar el evento, completar lo que está marcado «POR
    CONFIRMAR»: el video de YouTube. */
 
-import { CITA_LUIS_URL, SITE_URL, WHATSAPP_URL } from './site';
+import { CITA_LUIS_URL, CUPO_URL, SITE_URL, WHATSAPP_URL } from './site';
 
 /* Dirección pública de la sala. Va en el evento de Google Calendar («Entra a
    la sala…»). */
@@ -22,10 +22,10 @@ const SALA_URL = `${SITE_URL}/sala`;
    proyectos, el mismo de «10 minutos con Luis» (CITA_LUIS_URL en site.ts).
    Si ese enlace se quita, cae al WhatsApp de Elexa.
 
-   La pasarela es la de inversionistas de Elexa que usaba Florentino:
+   La pasarela es la de inversionistas de Elexa que usaba Florentino
+   (CUPO_URL en site.ts, la misma de «Separa tu cupo» en /karanis):
    confirmar que es la misma para separar cupo en Karanis. */
 const EVENT_URL = CITA_LUIS_URL ?? WHATSAPP_URL;
-const CUPO_URL = 'https://micrositios.avalpaycenter.com/elexa-inversionistas-ma';
 export const INSTAGRAM_URL = 'https://www.instagram.com/elexa_real_estate/';
 export const KHAOS_URL = 'https://www.khaoscore.com/';
 

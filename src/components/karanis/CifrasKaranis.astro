@@ -1,0 +1,106 @@
+---
+/* Banda de cifras de Karanis — «Frame 7» (526:1215) de «Desktop - 7»,
+   1440 × 232, de lado a lado sobre palette/ink/400, con el mismo símbolo
+   gigante en multiply de la banda de la portada (Cifras.astro: 1671 × 1833
+   desde x = −116, 22 por debajo del borde de arriba).
+
+   Cuatro columnas iguales (285, a 20 entre sí) con 48 arriba y abajo. En
+   cada una, a 16 entre sí: lo de antes de la cifra en Text button (Roboto
+   Bold 20/24), la cifra en Header 1 y el texto en Body regular.
+
+   No hay frame móvil: bajo 1240 van de a dos, con la cifra más chica en el
+   teléfono para que «4 meses» y «3 marcas» entren en media columna. */
+import { cifrasKaranis } from '../../data/karanis';
+---
+
+<section class="cifras-k" aria-label="Karanis en cifras">
+  <img class="cifras-k__simbolo" src="/img/deco/simbolo-cifras.svg" alt="" width="1671" height="1833" loading="lazy" />
+  <ul class="cifras-k__lista contenedor" role="list">
+    {
+      cifrasKaranis.map((c) => (
+        <li class="cifras-k__item">
+          <span class="cifras-k__antes">{c.antes}</span>
+          <span class="cifras-k__cifra display t-h1">{c.cifra}</span>
+          <span>{c.texto}</span>
+        </li>
+      ))
+    }
+  </ul>
+</section>
+
+<style>
+  .cifras-k {
+    position: relative;
+    overflow: hidden;
+    margin-top: 64px;
+    padding-block: var(--space-2xl);
+    background: var(--ink-400);
+    color: var(--neutral-100);
+  }
+
+  /* Centrado, como en la portada: en el frame de 1440 arranca en x = −116. */
+  .cifras-k__simbolo {
+    position: absolute;
+    top: 22px;
+    left: 50%;
+    translate: -50%;
+    width: 1671px;
+    max-width: none;
+    height: auto;
+    mix-blend-mode: multiply;
+    pointer-events: none;
+  }
+
+  .cifras-k__lista {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-xl) 20px;
+  }
+
+  .cifras-k__item {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .cifras-k__antes {
+    font-weight: 700;
+    font-size: 20px;
+    line-height: 24px;
+  }
+
+  .cifras-k__cifra {
+    white-space: nowrap;
+  }
+
+  @media (max-width: 767px) {
+    .cifras-k__item {
+      gap: var(--space-xs);
+    }
+
+    .cifras-k__antes {
+      font-size: 16px;
+      line-height: 20px;
+    }
+
+    .cifras-k__cifra {
+      font-size: 32px;
+      line-height: 36px;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .cifras-k {
+      margin-top: 96px;
+    }
+  }
+
+  /* El mapa termina en y = 1811 y la banda arranca en 1907. */
+  @media (min-width: 1240px) {
+    .cifras-k__lista {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+  }
+</style>
