@@ -252,6 +252,20 @@ reproduce tal cual:
   fuera del lienzo, a la izquierda de «Desktop - 1»). El componente
   `ConstruimosValor.astro` y sus imágenes (`public/img/valor/`) siguen en el
   repo por si vuelve; hoy no se usa en ninguna página.
+- **Portada en móvil**: el frame del teléfono («iPhone 13 & 14 - 1») sigue
+  con la portada anterior (otro orden, la foto de Luis Felipe en «Lo que
+  hacemos» y el video en las preguntas). El sitio sigue al escritorio en
+  todos los anchos: el mismo orden, «Lo que hacemos» con el video debajo
+  del texto y las preguntas sin video. Las fotos de Luis Felipe
+  (`public/img/nosotros/luis-felipe*.webp`, sin `-historia`) quedaron sin
+  uso, por si vuelven.
+- **Preguntas frecuentes**: en la portada el video pasó a «Lo que hacemos»;
+  en /karanis el frame sigue con el video al lado del acordeón (`video` en
+  `Faq.astro`). Los dos usan el mismo Short (`VIDEO_ELEXA_ID` en
+  `src/data/site.ts`).
+- **Textos de «Cómo nos diferenciamos» y de las cifras**: el archivo sigue
+  con los anteriores («10 + arrendatarios», «+30», «+7»…); el sitio deja los
+  que se actualizaron después.
 - **Cifras en móvil**: los frames del teléfono dicen «+8» años (y en la
   portada ponen esa cifra primero); los de escritorio siguen con «+7» al
   final, y el sitio sigue al escritorio hasta que se unifiquen.

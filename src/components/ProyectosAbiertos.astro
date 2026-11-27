@@ -44,8 +44,9 @@ const proyectos = await getProyectosAbiertos();
 }
 
 <style>
-  /* Debajo de «Cómo nos diferenciamos»: en el frame móvil las columnas
-     terminan en y = 2322 y el panel arranca en 2407. */
+  /* Justo debajo de la banda de cifras, a la distancia del panel con los
+     bordes (en escritorio, 20: la banda termina en y = 4038 y el panel
+     arranca en 4058). */
   .proyectos {
     /* El relleno lateral del panel. La pista del carrusel lo usa para
        estirarse hasta el borde del panel (ver proyectos.css). */
@@ -56,7 +57,7 @@ const proyectos = await getProyectosAbiertos();
     align-items: flex-start;
     gap: var(--space-2xl);
     width: var(--ancho-panel);
-    margin: 85px auto 0;
+    margin: var(--margen-panel) auto 0;
     padding: var(--space-md) var(--panel-pad);
     border-radius: var(--radius-panel);
     background: var(--neutral-200);
@@ -80,7 +81,6 @@ const proyectos = await getProyectosAbiertos();
   @media (min-width: 768px) {
     .proyectos {
       --panel-pad: 40px;
-      margin-top: 64px;
       padding-block: 43px;
     }
 
@@ -94,12 +94,10 @@ const proyectos = await getProyectosAbiertos();
     }
   }
 
-  /* Debajo de «Cómo nos diferenciamos»: las columnas terminan en y = 2421 y
-     el panel arranca en 2589. */
   @media (min-width: 1240px) {
     .proyectos {
       --panel-pad: 98px;
-      margin-top: 168px;
+      margin-top: 20px;
     }
 
     .proyectos__cabecera h2 {

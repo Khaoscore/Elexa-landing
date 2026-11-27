@@ -48,7 +48,7 @@ const cifras = [
   .cifras {
     position: relative;
     overflow: hidden;
-    margin-top: 22px;
+    margin-top: 64px;
     padding-block: var(--space-2xl);
     background: var(--ink-400);
     color: var(--neutral-100);
@@ -124,7 +124,13 @@ const cifras = [
     }
   }
 
+  /* Debajo de «Cómo nos diferenciamos»: las columnas terminan en y = 3769.7
+     y la banda arranca en 3884. */
   @media (min-width: 1240px) {
+    .cifras {
+      margin-top: 114.3px;
+    }
+
     .cifras__lista {
       display: flex;
       justify-content: space-between;

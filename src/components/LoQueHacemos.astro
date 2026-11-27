@@ -1,79 +1,94 @@
 ---
-/* «Lo que hacemos» — texto «Frame 15» (15:627, 488 × 268) a la izquierda y la
-   foto de Luis Felipe «Vector 5» (155:620, 589 × 354) a la derecha, centrados
-   en vertical. La foto ya viene recortada con su forma desde Figma (es una
-   imagen estática, no un dato), con 1 px de margen por el trazo.
+/* «Lo que hacemos» — «Frame 120» (583:2081): fila centrada con 111 entre las
+   dos piezas.
+   · A la izquierda, el símbolo de Elexa en brand/300 al 10 % («simbolo»,
+     583:2072, 666.5 × 733.9) y encima, centrado, el texto («Frame 15»,
+     15:627, 488 de ancho): título y dos párrafos.
+   · A la derecha, el Short de Elexa donde el diseño pone el damero
+     («Rectangle 13», 40:820, 427 × 734, radio 24). Es vertical (9:16): se
+     queda con el alto del diseño y cede el ancho (413) para que no queden
+     franjas negras a los costados.
 
-   En el frame móvil («Frame 94», 303:4443) la foto va primero, a lo ancho de
-   la forma del hero (366, a 12 de los bordes), con su propio recorte
-   («Vector 5», 303:4444, 366 × 354), y el texto («Frame 15», 303:4445)
-   debajo, a 31. El ícono de Instagram ahí mide 24 (303:4447). */
-import { INSTAGRAM_URL } from '../data/site';
+   El símbolo y el texto van en la misma celda de una rejilla, así el bloque
+   mide lo que el más alto de los dos y el texto queda en el centro del
+   símbolo, como en Figma, a cualquier ancho.
+
+   El frame móvil sigue con la versión anterior (foto de Luis Felipe y
+   párrafo del fundador): debajo de 1240 se apila el texto (con el símbolo
+   detrás, a su ancho) y el video debajo, que en el teléfono ocupa todo el
+   ancho, como el que antes iba en las preguntas frecuentes. */
+import { VIDEO_ELEXA_ID } from '../data/site';
 ---
 
 <section class="nosotros contenedor" id="nosotros" aria-labelledby="nosotros-titulo">
-  <div class="nosotros__texto">
-    <a class="nosotros__ig display" href={INSTAGRAM_URL} target="_blank" rel="noopener">
-      <picture>
-        <source media="(max-width: 767px)" srcset="/img/nosotros/instagram-movil.svg" width="24" height="24" />
-        <img src="/img/iconos/instagram.svg" alt="" width="30" height="30" />
-      </picture>
-      @luis_inversionista
-    </a>
-    <h2 class="display t-h1" id="nosotros-titulo">Lo que <span class="acento">hacemos</span></h2>
-    <div class="nosotros__cuerpo">
-      <p>
-        Desarrollamos y estructuramos inversiones inmobiliarias colectivas que ayudan a nuestros socios a <strong
-          >proteger, crecer y hacer rentar su patrimonio.</strong
-        >
-      </p>
-      <p>
-        <strong>Luis Felipe Puerto Tobón</strong> — Fundador y Director General, creó un equipo que origina,
-        estructura, desarrolla y opera cada proyecto.
-      </p>
+  <div class="nosotros__bloque">
+    <img class="nosotros__simbolo" src="/img/nosotros/simbolo-hacemos.svg" alt="" width="666.466" height="733.903" />
+
+    <div class="nosotros__texto">
+      <h2 class="display t-h1" id="nosotros-titulo">Lo que <span class="acento">hacemos</span></h2>
+      <div class="nosotros__cuerpo">
+        <p>
+          Desarrollamos y estructuramos inversiones inmobiliarias colectivas que ayudan a nuestros socios a <strong
+            >proteger, crecer y hacer rentar su patrimonio.</strong
+          >
+        </p>
+        <p>
+          Quien quiere invertir en bienes raíces casi siempre termina comprando un apartamento. Elexa estructura
+          proyectos colectivos para que, con ese mismo capital, <strong
+            >sus socios accedan a locales, oficinas, bodegas y rentas cortas.</strong
+          >
+        </p>
+      </div>
     </div>
   </div>
 
-  <picture class="nosotros__foto">
-    <source media="(max-width: 767px)" srcset="/img/nosotros/luis-felipe-movil.webp" width="368" height="356" />
-    <img
-      src="/img/nosotros/luis-felipe.webp"
-      alt="Luis Felipe Puerto Tobón, fundador de Elexa, en la oficina frente al logo de la empresa."
-      width="591"
-      height="356"
+  <div class="nosotros__video">
+    <iframe
+      src={`https://www.youtube-nocookie.com/embed/${VIDEO_ELEXA_ID}?rel=0&playsinline=1`}
+      title="Video de Elexa"
       loading="lazy"
-    />
-  </picture>
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+      referrerpolicy="strict-origin-when-cross-origin"
+      allowfullscreen></iframe>
+  </div>
 </section>
 
 <style>
   .nosotros {
     display: flex;
     flex-direction: column;
+    align-items: center;
     gap: 31px;
     margin-top: 31px;
   }
 
+  .nosotros__bloque {
+    display: grid;
+    place-items: center;
+    width: 100%;
+  }
+
+  .nosotros__simbolo,
   .nosotros__texto {
+    grid-area: 1 / 1;
+  }
+
+  /* Debajo de 1240, al ancho del texto (488 como mucho): a su medida de
+     escritorio dejaría 240 vacíos arriba y abajo del texto. */
+  .nosotros__simbolo {
+    width: min(100%, 488px);
+    height: auto;
+    opacity: 0.1;
+    pointer-events: none;
+  }
+
+  .nosotros__texto {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
+    width: 100%;
     max-width: 488px;
-  }
-
-  /* Mobile/Header 4 (20/24) con el ícono de 24; en escritorio 24/30 y 30. */
-  .nosotros__ig {
-    display: inline-flex;
-    align-items: center;
-    gap: var(--space-md);
-    align-self: flex-start;
-    font-size: 20px;
-    line-height: 24px;
-    color: var(--brand-300);
-    text-decoration: none;
-  }
-  .nosotros__ig:hover {
-    text-decoration: underline;
   }
 
   h2 {
@@ -81,9 +96,7 @@ import { INSTAGRAM_URL } from '../data/site';
   }
 
   /* Los dos párrafos van separados por un renglón vacío (dos saltos en
-     Figma). En el frame móvil el texto es 16/20, pero el renglón vacío y los
-     dos que lo tocan quedaron con 22: el bloque mide 166 y el segundo
-     párrafo arranca 26 más abajo del final del primero. */
+     Figma): 22 en escritorio. En el teléfono, el cuerpo en 16/20. */
   .nosotros__cuerpo {
     display: flex;
     flex-direction: column;
@@ -92,29 +105,19 @@ import { INSTAGRAM_URL } from '../data/site';
     line-height: 20px;
   }
 
-  .nosotros__foto {
-    order: -1;
+  .nosotros__video {
+    width: min(100%, 412.875px);
+    aspect-ratio: 9 / 16;
+    overflow: hidden;
+    border-radius: var(--radius-card);
+    background: var(--brand-500);
+  }
+
+  .nosotros__video iframe {
     display: block;
-    max-width: 589px;
-  }
-
-  .nosotros__foto img {
-    width: calc(100% + 2px);
-    height: auto;
-    margin: -1px;
-  }
-
-  /* La foto móvil (368 × 356 con el trazo) sobresale 1 px por cada lado de
-     los 366 de la forma: sin max-width para que no se encoja a 366. */
-  @media (max-width: 767px) {
-    .nosotros__foto {
-      max-width: none;
-      margin-inline: calc(var(--margen-panel) - var(--margen));
-    }
-
-    .nosotros__foto img {
-      max-width: none;
-    }
+    width: 100%;
+    height: 100%;
+    border: 0;
   }
 
   @media (min-width: 768px) {
@@ -123,36 +126,37 @@ import { INSTAGRAM_URL } from '../data/site';
       margin-top: 64px;
     }
 
-    .nosotros__ig {
-      font-size: 24px;
-      line-height: 30px;
-    }
-
     .nosotros__cuerpo {
       gap: 22px;
       line-height: 22px;
     }
+
+    .nosotros__video {
+      border-radius: var(--radius-panel);
+    }
   }
 
+  /* El hero termina en y = 1019.5 y el símbolo y el video arrancan en 1214. */
   @media (min-width: 1240px) {
     .nosotros {
       flex-direction: row;
-      align-items: center;
-      justify-content: space-between;
-      margin-top: 76.5px;
+      justify-content: center;
+      gap: 111px;
+      margin-top: 194.5px;
     }
 
-    .nosotros__foto {
-      order: 0;
+    .nosotros__bloque {
+      flex: 0 0 666.466px;
     }
 
-    .nosotros__texto {
-      width: 488px;
+    .nosotros__simbolo {
+      width: 666.466px;
     }
 
-    .nosotros__foto {
-      width: 589px;
-      height: 354px;
+    .nosotros__video {
+      flex: 0 0 auto;
+      width: auto;
+      height: 734px;
     }
   }
 </style>
