@@ -1,8 +1,16 @@
 ---
 /* «Preguntas frecuentes» — panel gris «Vector 1» (20:754, 1397 × 1149) con
-   una pestaña elevada en el centro donde va el título (40:1078). Debajo, la
-   imagen (40:820, 488 × 839) a la izquierda y el acordeón (40:1138) con
-   «Agenda tu cita» (58:2650) a la derecha.
+   una pestaña elevada en el centro. Dos composiciones, según la página:
+
+   · Portada («Desktop - 1»): la pestaña queda vacía; a la izquierda, el
+     título y el párrafo («Frame 33», 40:1078, 488 de ancho, a 181 del borde
+     de arriba del panel) y debajo, a 74, el símbolo de Elexa en brand/300 al
+     10 % (583:2106, 488 × 537.4); a la derecha, a la altura del título, el
+     acordeón (40:1138) con «Agenda tu cita» (58:2650) centrado debajo, a 41.
+     El video que iba acá pasó a «Lo que hacemos».
+   · /karanis («Desktop - 7», `video`): el título va en la pestaña (550:1570)
+     y debajo, el Short de Elexa (550:1655, 488 × 839) a la izquierda y el
+     acordeón (560:1876) a la derecha.
 
    Como el hero, el panel va siempre a --margen-panel de los bordes, también
    en pantallas más anchas que el frame; el contenido sigue en los 1200 del
@@ -11,16 +19,18 @@
    del trazado, de x = 193.3 a 1201) a su tamaño, en el mismo lugar respecto
    del centro, y debajo el cuerpo, un rectángulo de radio 24 que arranca a
    66.7 del borde de arriba. Entre 768 y 1240 px el panel es un rectángulo
-   redondeado y el video se oculta.
+   redondeado y el video y el símbolo se ocultan.
 
-   En el lugar de la imagen va un Short de YouTube (vertical, 9:16).
+   Título, video o símbolo y acordeón van en una sola rejilla
+   (.faq__cuerpo): cada composición sólo cambia dónde cae cada pieza.
 
    Móvil — panel «Vector 1» (303:4568, 366 × 1588.5) con su propia pestaña
    para el título (303:4569), el video donde el diseño pone el damero
-   (303:4572, 342 de ancho) y el acordeón (303:4573) debajo. */
+   (303:4572, 342 de ancho; sólo en /karanis: el frame móvil de la portada
+   todavía no se actualizó) y el acordeón (303:4573) debajo. */
 import FaqAcordeon from './FaqAcordeon';
 import { preguntas as preguntasPortada, type Pregunta } from '../lib/faq';
-import { AGENDA_URL, esExterno } from '../data/site';
+import { AGENDA_URL, VIDEO_ELEXA_ID, esExterno } from '../data/site';
 
 interface Props {
   /** Las de la portada si no se pasan; /karanis trae las suyas. */
@@ -31,40 +41,59 @@ interface Props {
       20 en /karanis, donde va casi pegada a la banda de «10 minutos con
       Luis». En el teléfono y la tableta queda la de siempre. */
   separacion?: number;
+  /** La composición de /karanis: título en la pestaña y el Short al lado
+      del acordeón. Sin él, la de la portada. */
+  video?: boolean;
 }
 
-const { preguntas = preguntasPortada, agenda = AGENDA_URL, separacion = 199 } = Astro.props;
+const { preguntas = preguntasPortada, agenda = AGENDA_URL, separacion = 199, video = false } = Astro.props;
 
 const externo = esExterno(agenda) ? { target: '_blank', rel: 'noopener' } : {};
-
-/* El Short de youtube.com/shorts/{VIDEO_ID}. */
-const VIDEO_ID = 'o02hGseJOzQ';
 ---
 
-<section class="faq" id="preguntas" aria-labelledby="faq-titulo" style={`--separacion:${separacion}px`}>
+<section
+  class:list={['faq', video ? 'faq--video' : 'faq--portada']}
+  id="preguntas"
+  aria-labelledby="faq-titulo"
+  style={`--separacion:${separacion}px`}
+>
   <picture>
     <source media="(max-width: 767px)" srcset="/img/faq/fondo-faq-movil.svg" width="366" height="1588.5" />
     <img class="faq__fondo" src="/img/faq/pestana-faq.svg" alt="" width="1008" height="68" />
   </picture>
 
-  <div class="faq__cabecera">
-    <h2 class="display t-h2" id="faq-titulo">Preguntas <span class="acento">frecuentes</span></h2>
-    <p>
-      Estamos convencidos de que alcanzar la libertad financiera es una posibilidad real para cualquiera que se lo
-      proponga.
-    </p>
-  </div>
-
   <div class="faq__cuerpo">
-    <div class="faq__video">
-      <iframe
-        src={`https://www.youtube-nocookie.com/embed/${VIDEO_ID}?rel=0&playsinline=1`}
-        title="Video de Elexa"
-        loading="lazy"
-        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-        referrerpolicy="strict-origin-when-cross-origin"
-        allowfullscreen></iframe>
+    <div class="faq__cabecera">
+      <h2 class="display t-h2" id="faq-titulo">Preguntas <span class="acento">frecuentes</span></h2>
+      <p>
+        Estamos convencidos de que alcanzar la libertad financiera es una posibilidad real para cualquiera que se lo
+        proponga.
+      </p>
     </div>
+
+    {
+      video ? (
+        <div class="faq__video">
+          <iframe
+            src={`https://www.youtube-nocookie.com/embed/${VIDEO_ELEXA_ID}?rel=0&playsinline=1`}
+            title="Video de Elexa"
+            loading="lazy"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            referrerpolicy="strict-origin-when-cross-origin"
+            allowfullscreen
+          />
+        </div>
+      ) : (
+        <img
+          class="faq__simbolo"
+          src="/img/faq/simbolo-faq.svg"
+          alt=""
+          width="488"
+          height="537.379"
+          loading="lazy"
+        />
+      )
+    }
 
     <div class="faq__columna">
       <FaqAcordeon client:visible={{ rootMargin: '400px' }} preguntas={preguntas} />
@@ -97,22 +126,22 @@ const VIDEO_ID = 'o02hGseJOzQ';
     display: none;
   }
 
+  .faq__cuerpo {
+    display: grid;
+    grid-template-columns: minmax(0, 590px);
+    justify-content: center;
+    row-gap: 40px;
+  }
+
   .faq__cabecera {
     display: flex;
     flex-direction: column;
     gap: var(--space-lg);
-    max-width: 590px;
-    margin-inline: auto;
     text-align: center;
   }
 
-  .faq__cuerpo {
-    display: flex;
-    justify-content: center;
-    margin-top: 40px;
-  }
-
-  .faq__video {
+  .faq__video,
+  .faq__simbolo {
     display: none;
   }
 
@@ -121,8 +150,6 @@ const VIDEO_ID = 'o02hGseJOzQ';
     flex-direction: column;
     align-items: center;
     gap: 51px;
-    width: 100%;
-    max-width: 590px;
   }
 
   .faq__cta {
@@ -157,6 +184,11 @@ const VIDEO_ID = 'o02hGseJOzQ';
       height: auto;
     }
 
+    .faq__cuerpo {
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: var(--space-lg);
+    }
+
     .faq__cabecera {
       gap: var(--space-md);
     }
@@ -166,12 +198,6 @@ const VIDEO_ID = 'o02hGseJOzQ';
     .faq__cabecera h2 {
       max-width: 254px;
       margin-inline: auto;
-    }
-
-    .faq__cuerpo {
-      flex-direction: column;
-      gap: var(--space-lg);
-      margin-top: var(--space-lg);
     }
 
     /* El damero mide 342 × 551; el Short guarda su 9:16 (342 × 608) para no
@@ -193,7 +219,6 @@ const VIDEO_ID = 'o02hGseJOzQ';
 
     .faq__columna {
       gap: var(--space-2xl);
-      max-width: none;
     }
   }
 
@@ -235,41 +260,99 @@ const VIDEO_ID = 'o02hGseJOzQ';
     }
 
     .faq__cuerpo {
-      justify-content: space-between;
-      align-items: flex-start;
-      gap: 40px;
+      align-items: start;
       max-width: var(--contenido);
-      margin: 66px auto 0;
+      margin-inline: auto;
     }
 
-    /* 488 de ancho como la imagen del frame, con el alto del Short (9:16) para
-       que no queden franjas negras; entre 1240 y 1440 el panel es más angosto
-       y el video es el que cede. */
-    .faq__video {
+    .faq__columna {
+      grid-column: 2;
+      align-items: flex-start;
+    }
+
+    /* -- /karanis: el título en la pestaña y, debajo, el video y el acordeón.
+       El video, 488 de ancho como el damero del frame, con el alto del Short
+       (9:16) para que no queden franjas negras; entre 1240 y 1440 el panel es
+       más angosto y el video es el que cede. */
+    .faq--video .faq__cuerpo {
+      grid-template-columns: minmax(0, 488px) 590px;
+      justify-content: space-between;
+      column-gap: 40px;
+      row-gap: 66px;
+    }
+
+    .faq--video .faq__cabecera {
+      grid-column: 1 / -1;
+      justify-self: center;
+      max-width: 590px;
+    }
+
+    .faq--video .faq__video,
+    .faq--video .faq__columna {
+      grid-row: 2;
+    }
+
+    .faq--video .faq__video {
       display: block;
-      flex: 0 1 488px;
-      min-width: 0;
+      grid-column: 1;
       aspect-ratio: 9 / 16;
       overflow: hidden;
       border-radius: var(--radius-panel);
       background: var(--brand-500);
     }
 
-    .faq__video iframe {
+    .faq--video .faq__video iframe {
       display: block;
       width: 100%;
       height: 100%;
       border: 0;
     }
 
-    .faq__columna {
-      flex: 0 0 590px;
-      align-items: flex-start;
+    /* En el frame el botón queda a 122 del borde izquierdo de la columna. */
+    .faq--video .faq__cta {
+      margin-left: 122px;
     }
 
-    /* En el frame el botón queda a 122 del borde izquierdo de la columna. */
-    .faq__cta {
-      margin-left: 122px;
+    /* -- Portada: título y símbolo a la izquierda (488), el acordeón a la
+       derecha (590), los dos arrancando a 181 del borde de arriba del panel.
+       El acordeón ocupa las dos filas; la segunda se queda con lo que sobra
+       para que el símbolo no baje. El botón, centrado bajo el acordeón, a 41,
+       y 73 hasta el borde de abajo. Entre 1240 y 1440 el panel es más
+       angosto y la columna de la izquierda es la que cede. */
+    .faq--portada {
+      padding-top: 181px;
+      padding-bottom: 73px;
+    }
+
+    .faq--portada .faq__cuerpo {
+      grid-template-columns: minmax(0, 488px) 590px;
+      grid-template-rows: auto 1fr;
+      justify-content: space-between;
+      row-gap: 0;
+    }
+
+    .faq--portada .faq__cabecera {
+      grid-area: 1 / 1;
+      text-align: left;
+    }
+
+    .faq--portada .faq__simbolo {
+      display: block;
+      grid-area: 2 / 1;
+      width: 100%;
+      height: auto;
+      margin-top: 74px;
+      opacity: 0.1;
+      pointer-events: none;
+    }
+
+    .faq--portada .faq__columna {
+      grid-row: 1 / span 2;
+      gap: 41px;
+    }
+
+    .faq--portada .faq__cta {
+      align-self: center;
     }
   }
 </style>

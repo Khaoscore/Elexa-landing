@@ -46,6 +46,10 @@ export const CUPO_URL = 'https://micrositios.avalpaycenter.com/elexa-inversionis
 /* «Log in», el botón de la barra: el portal de inversionistas (Agora). */
 export const LOGIN_URL: string | null = 'https://elexa.portal.agorareal.com/#/login?redirectUrl=%2F';
 
+/* El Short de Elexa (youtube.com/shorts/{id}): al lado de «Lo que hacemos» en
+   la portada y en las preguntas frecuentes de /karanis. */
+export const VIDEO_ELEXA_ID = 'o02hGseJOzQ';
+
 /* «Ver más proyectos» (portada) y «Ver espacios disponibles» (/proyectos). */
 export const PROYECTOS_URL = '/proyectos';
 export const ESPACIOS_URL = '/espacios';

@@ -57,7 +57,7 @@ export const equipo: Integrante[] = [
     correo: 'ilucumi@elexa.com.co',
   },
   {
-    nombre: 'Juan Pablo',
+    nombre: 'Juan Pablo Barón',
     cargo: 'Director Administrativo',
     foto: '/img/equipo/juan-pablo.webp',
     telefono: '+57 302 2964122',
@@ -71,21 +71,21 @@ export const equipo: Integrante[] = [
     correo: 'marketing@elexa.com.co',
   },
   {
-    nombre: 'Johan',
+    nombre: 'Johan Saavedra',
     cargo: 'Ingeniero de Proyectos',
     foto: '/img/equipo/johan.webp',
     telefono: '+57 301 5031398',
     correo: 'proyectos@elexa.com.co',
   },
   {
-    nombre: 'Jonathan',
+    nombre: 'Jonathan Giraldo',
     cargo: 'Contador',
     foto: '/img/equipo/jonathan.webp',
     telefono: '+57 312 3209545',
     correo: 'contador@elexa.com.co',
   },
   {
-    nombre: 'Andrea',
+    nombre: 'Andrea Camargo',
     cargo: 'Auxiliar Contable',
     foto: '/img/equipo/andrea.webp',
     telefono: '+57 300 4513120',
